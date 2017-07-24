@@ -1,0 +1,22 @@
+
+allprojects {
+    apply plugin: 'idea'
+    group = 'com.mapr.emea.ps'
+    version = "0.0.1"
+}
+
+subprojects {
+    apply plugin: 'eclipse'
+
+    repositories {
+        maven { url "http://repository.mapr.com/maven/releases/" }
+        mavenCentral()
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+    }
+}
+

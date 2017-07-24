@@ -1,0 +1,71 @@
+apply plugin: 'java'
+
+
+archivesBaseName = 'sandbox-admin-api'
+
+configurations {
+    bundle {
+        transitive = false
+    }
+}
+
+
+dependencies {
+    // Only these artifacts will be bundled in RPM without transistive deps
+/*    bundle "org.apache.commons:commons-lang3:3.4"
+    bundle "com.google.guava:guava:18.0"
+    bundle "org.apache.httpcomponents:httpclient:4.5.1"
+    bundle "org.apache.httpcomponents:httpcore:4.4.3"
+    bundle project(':hbase-sandbox-client')
+    bundle project(':sandbox-admin-api')
+    bundle project(':drill-storage-hbase') */
+}
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:3.7.1'
+    }
+}
+
+apply plugin: 'nebula.ospackage'
+
+buildRpm {
+    packageName = "mapr-clustercheck"
+    version = project.version
+    release = '1'
+    arch = NOARCH
+    os = LINUX
+    addParentDirs = false
+
+//    preInstall file('rpmscripts/preinstall.sh').text.replaceAll("HBASE_PATH", project.ext.requiredHBasePath).replaceAll("DRILL_PATH", project.ext.requiredDrillPath)
+    preInstall file('rpmscripts/preinstall.sh')
+    postInstall file('rpmscripts/postinstall.sh')
+    preUninstall file('rpmscripts/preremove.sh')
+    postUninstall file('rpmscripts/postremove.sh')
+
+    directory("/opt/mapr/clustercheck", 0755)
+
+    requires('ansible')
+
+    into '/opt/mapr/clustercheck'
+    from('bin/') {
+        into 'bin/'
+        fileMode 0755
+    }
+
+/*    from('conf/') {
+        into 'conf'
+    }
+
+    from(configurations.bundle) {
+        into 'lib'
+    } */
+
+    link('/usr/bin/maprclustercheck', '/opt/mapr/clustercheck/bin/clustercheck.sh')
+}
+
+build.finalizedBy(buildRpm)
