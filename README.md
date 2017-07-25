@@ -5,7 +5,9 @@ This cluster check suite is intented to check against a current cluster installa
 ## Tracking
 
 [Tasks, Features and Issues](https://github.com/mapr-emea/mapr-clustercheck/issues)
+
 [Specification Phase](https://github.com/mapr-emea/mapr-clustercheck/projects/2)
+
 [Release v0.1](https://github.com/mapr-emea/mapr-clustercheck/projects/3)
 
 ## Features
