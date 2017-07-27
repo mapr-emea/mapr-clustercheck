@@ -49,7 +49,7 @@ buildRpm {
 
     directory("/opt/mapr/clustercheck", 0755)
 
-    requires('ansible')
+    requires('awk')
 
     into '/opt/mapr/clustercheck'
     from('bin/') {
