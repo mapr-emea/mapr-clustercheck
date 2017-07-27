@@ -3,4 +3,4 @@
   setup:
   register: testen
 - local_action: copy content='{{testen | to_nice_json}}' dest="/tmp/ttt/{{ ansible_hostname }}"
-// https://stackoverflow.com/questions/20499074/run-local-python-script-on-remote-server
+# https://stackoverflow.com/questions/20499074/run-local-python-script-on-remote-server

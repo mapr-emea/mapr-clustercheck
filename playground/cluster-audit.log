@@ -1,0 +1,415 @@
+NodeSet: 10.0.0.24 10.0.0.167 10.0.0.239
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+bind-utils-9.9.4-50.el7_3.1.x86_64
+pciutils-3.5.1-1.el7.x86_64
+dmidecode-3.0-2.1.el7_3.x86_64
+net-tools-2.0-0.17.20131004git.el7.x86_64
+ethtool-4.5-3.el7.x86_64
+
+#################### Hardware audits ################################
+Wed Jul 26 06:09:16 EDT 2017
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+DMI Sys Info:
+System Information
+	Manufacturer: Xen
+	Product Name: HVM domU
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+DMI BIOS:
+BIOS Information
+	Vendor: Xen
+	Version: 4.2.amazon
+	Release Date: 02/16/2017
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+model name	: Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Architecture:          x86_64
+CPU(s):                8
+On-line CPU(s) list:   0-7
+Thread(s) per core:    2
+Core(s) per socket:    4
+Socket(s):             1
+Model name:            Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz
+CPU MHz:               2300
+Hypervisor vendor:     Xen
+L1d cache:             32K
+L1i cache:             32K
+L2 cache:              256K
+L3 cache:              46080K
+NUMA node0 CPU(s):     0-7
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Thread(s) per core:    2
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+MemTotal:       32518860 kB
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+DIMM slots: 2
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+DIMM count is: 2
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+DIMM Details
+Memory Device
+	Size: 16384 MB
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+00:03.0 Ethernet controller: Intel Corporation 82599 Ethernet Controller Virtual Function (rev 01)
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Settings for eth0:
+	Speed: 10000Mb/s
+	Link detected: yes
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Storage Controller: 
+00:01.1 IDE interface: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+SCSI RAID devices in dmesg: 
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Block Devices: 
+     1	NAME SIZE
+     2	xvda 100G
+     3	xvdb 250G
+     4	xvdc 250G
+     5	xvdd 250G
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Udev rules: 
+80-net-name-slot.rules
+################################################################################
+
+#################### Linux audits ################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Red Hat Enterprise Linux Server release 7.3 (Maipo)
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Linux 3.10.0-514.el7.x86_64 #1 SMP Wed Oct 19 11:24:13 EDT 2016 x86_64
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Time Sync Check:
+Wed Jul 26 06:09:20 EDT 2017
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+MapR Repos Check 
+/etc/yum.repos.d/external_repos.repo:baseurl = http://package.mapr.com/releases/v5.2.1/redhat/
+/etc/yum.repos.d/external_repos.repo:baseurl = http://package.mapr.com/releases/MEP/MEP-3.0.0//redhat/
+Installed Packages
+Name        : mapr-core
+Arch        : x86_64
+Version     : 5.2.1.42646.GA
+Release     : 1
+Size        : 0.0  
+Repo        : installed
+From repo   : maprtech
+Summary     : MapR
+License     : MapR Technologies, Inc., CopyRight
+Description : MapR: core package
+
+Name        : mapr-spark
+Arch        : noarch
+Version     : 2.1.0.201703271134
+Release     : 1
+Size        : 204 M
+Repo        : installed
+From repo   : maprecosystem
+Summary     : MapR
+License     : MapR Technologies, Inc., CopyRight
+Description : MapR: Spark Package
+            : Tag: 2.1.0-mapr-1703
+            : Commit:
+
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+NFS packages installed 
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Required RPMs:
+package nfs-utils is not installed
+################################################################################
+---------------
+10.0.0.[167,239] (2)
+---------------
+Optional RPMs:
+package atop is not installed
+package dstat is not installed
+package ftop is not installed
+package git is not installed
+package htop is not installed
+package iftop is not installed
+package iotop is not installed
+package jq is not installed
+package lsof is not installed
+package lvm2 is not installed
+package mysql is not installed
+package mysql-server is not installed
+package nc is not installed
+package nmap is not installed
+package ntop is not installed
+package smartmontools is not installed
+package tmux is not installed
+package tree is not installed
+package vim is not installed
+package xml2 is not installed
+package zsh is not installed
+---------------
+10.0.0.24
+---------------
+Optional RPMs:
+package atop is not installed
+package dstat is not installed
+package ftop is not installed
+package htop is not installed
+package iftop is not installed
+package iotop is not installed
+package lsof is not installed
+package lvm2 is not installed
+package mysql is not installed
+package mysql-server is not installed
+package nc is not installed
+package nmap is not installed
+package ntop is not installed
+package smartmontools is not installed
+package tmux is not installed
+package tree is not installed
+package vim is not installed
+package xml2 is not installed
+package zsh is not installed
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+SElinux status: SELINUX=disabled
+Disabled
+################################################################################
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+iptables.service
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Sysctl Values: 
+vm.swappiness = 1
+net.ipv4.tcp_retries2 = 5
+vm.overcommit_memory = 0
+################################################################################
+/etc/sysctl.conf values should be:
+vm.swappiness = 1
+net.ipv4.tcp_retries2 = 5
+vm.overcommit_memory = 0
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Transparent Huge Pages: [always] madvise never
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Checking for LUKS
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Disk Controller Max Transfer Size:
+      4 /sys/block/xvda/queue/max_hw_sectors_kb: 128
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Disk Controller Configured Transfer Size:
+      4 /sys/block/xvda/queue/max_sectors_kb: 128
+################################################################################
+Check Mounted FS
+---------------
+10.0.0.24
+---------------
+Type                     Size Use% Mounted on
+xfs                      100G   9% /
+fuse.posix-client-basic  2.1T  25% /mapr
+---------------
+10.0.0.167
+---------------
+Type  Size Use% Mounted on
+xfs   100G   6% /
+---------------
+10.0.0.239
+---------------
+Type                     Size Use% Mounted on
+xfs                      100G   6% /
+fuse.posix-client-basic  2.1T  25% /mapr
+################################################################################
+Check for nosuid and noexec mounts
+---------------
+10.0.0.[24,239] (2)
+---------------
+sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
+proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
+securityfs on /sys/kernel/security type securityfs (rw,nosuid,nodev,noexec,relatime)
+devpts on /dev/pts type devpts (rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000)
+pstore on /sys/fs/pstore type pstore (rw,nosuid,nodev,noexec,relatime)
+posix-client-basic on /mapr type fuse.posix-client-basic (rw,nosuid,nodev,relatime,user_id=0,group_id=0,allow_other)
+---------------
+10.0.0.167
+---------------
+sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
+proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
+securityfs on /sys/kernel/security type securityfs (rw,nosuid,nodev,noexec,relatime)
+devpts on /dev/pts type devpts (rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000)
+pstore on /sys/fs/pstore type pstore (rw,nosuid,nodev,noexec,relatime)
+################################################################################
+Check for /tmp permission
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+1777
+################################################################################
+Check for tmpwatch on NM local dir
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+grep: /etc/cron.daily/tmpwatch: No such file or directory
+Not in tmpwatch: /tmp/hadoop-mapr/nm-local-dir
+################################################################################
+Java Version
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Loaded plugins: amazon-id, rhui-lb, search-disabled-repos
+Installed Packages
+copy-jdk-configs.noarch          1.2-1.el7     @rhui-REGION-rhel-server-releases
+java-1.8.0-openjdk.x86_64        1:1.8.0.131-3.b12.el7_3
+                                               @rhui-REGION-rhel-server-releases
+java-1.8.0-openjdk-devel.x86_64  1:1.8.0.131-3.b12.el7_3
+                                               @rhui-REGION-rhel-server-releases
+java-1.8.0-openjdk-headless.x86_64
+                                 1:1.8.0.131-3.b12.el7_3
+                                               @rhui-REGION-rhel-server-releases
+javapackages-tools.noarch        3.4.1-11.el7  @rhui-REGION-rhel-server-releases
+python-javapackages.noarch       3.4.1-11.el7  @rhui-REGION-rhel-server-releases
+tzdata-java.noarch               2017b-1.el7   @rhui-REGION-rhel-server-releases
+################################################################################
+Hostname IP addresses
+10.0.0.24: 10.0.0.24 
+10.0.0.167: 10.0.0.167 
+10.0.0.239: 10.0.0.239 
+################################################################################
+DNS lookup
+10.0.0.239: ip-10-0-0-239.ps.mapr.com has address 10.0.0.239
+10.0.0.24: ip-10-0-0-24.ps.mapr.com has address 10.0.0.24
+10.0.0.167: ip-10-0-0-167.ps.mapr.com has address 10.0.0.167
+################################################################################
+Reverse DNS lookup
+10.0.0.24: 24.0.0.10.in-addr.arpa domain name pointer ip-10-0-0-24.ps.mapr.com.
+10.0.0.167: 167.0.0.10.in-addr.arpa domain name pointer ip-10-0-0-167.ps.mapr.com.
+10.0.0.239: 239.0.0.10.in-addr.arpa domain name pointer ip-10-0-0-239.ps.mapr.com.
+################################################################################
+Check for system wide nproc and nofile limits
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+/etc/security/limits.d/20-nproc.conf:*          soft    nproc     4096
+/etc/security/limits.d/20-nproc.conf:root       soft    nproc     unlimited
+/etc/security/limits.conf:mapr - nofile 65535
+/etc/security/limits.conf:mapr - nproc unlimited
+################################################################################
+Check for root ownership of /opt/mapr
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+root:root drwxr-xr-x /opt/mapr
+################################################################################
+Check for mapr login
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+mapr account for MapR Hadoop 
+mapr:x:5000:5000:MapR default user:/home/mapr:/bin/bash
+################################################################################
+Check for mapr user specific open file and process limits
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Open process limit(should be >=32K): unlimited
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Open file limit(should be >=32K): 65535
+################################################################################
+Check for mapr users java exec permission and version
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Java version: openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+################################################################################
+---------------
+10.0.0.[24,167,239] (3)
+---------------
+Locale setting(must be en_US): LANG=en_US.UTF-8
+################################################################################
+Check for mapr passwordless ssh (only for MapR v3.x)
+################################################################################
