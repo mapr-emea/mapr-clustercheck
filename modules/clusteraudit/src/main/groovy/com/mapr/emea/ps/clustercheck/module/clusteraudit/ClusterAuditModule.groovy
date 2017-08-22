@@ -1,7 +1,9 @@
 package com.mapr.emea.ps.clustercheck.module.clusteraudit
 
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckModule
+import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
+import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 
@@ -13,18 +15,27 @@ class ClusterAuditModule implements ExecuteModule {
     @Autowired
     @Qualifier("ssh")
     def ssh
+    @Autowired
+    @Qualifier("globalYamlConfig")
+    Map<String, ?> globalYamlConfig
 
     @Override
-    Map<String, ?> execute() {
+    void validate() throws ModuleValidationException {
+        // TODO implement check with hostname
+    }
 
+    @Override
+    ClusterCheckResult execute() {
+        def clusteraudit = globalYamlConfig.modules.clusteraudit as Map<String, ?>
+        def role = clusteraudit.getOrDefault("role", "all")
         def result = Collections.synchronizedList([])
 
         ssh.run {
             settings {
                 pty = true
             }
-//    session(ssh.remotes.node01) {
-            session(ssh.remotes.role("node")) {
+
+            session(ssh.remotes.role(role)) {
                 def node = [:]
                 node['hostname'] = execute 'hostname -f'
 
@@ -102,7 +113,7 @@ Settings for eth0:
                 result.add(node)
             }
         }
-        return [nodes: result]
+        return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommandations: ["Not yet implemented"])
 //        return [firstName:'John', lastName:'Doe', age:25]
     }
 

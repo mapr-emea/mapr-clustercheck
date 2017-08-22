@@ -1,0 +1,21 @@
+nodes:
+  - host: 10.0.0.24
+    ssh_user: ec2-user
+    ssh_identity: '/Users/chufe/.ssh/id_rsa'
+    roles:
+       - datacenter1
+  - host: 10.0.0.167
+    ssh_user: ec2-user
+    ssh_identity: '/Users/chufe/.ssh/id_rsa'
+    roles:
+      - datacenter1
+  - host: 10.0.0.239
+    ssh_user: ec2-user
+    ssh_identity: '/Users/chufe/.ssh/id_rsa'
+    roles:
+      - datacenter1
+
+modules:
+  clusteraudit:
+    enabled: true
+    role: datacenter1

@@ -1,0 +1,11 @@
+spring:
+  profiles:
+    active: default
+logging:
+  level:
+    org.springframework: ERROR
+    com.mapr: INFO
+    org.hidetake.groovy: ERROR
+  pattern:
+ #   console: '${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}'
+    console: '%d{yyyy-MMM-dd HH:mm:ss} %clr(${LOG_LEVEL_PATTERN:-%5p}) %msg%n'
