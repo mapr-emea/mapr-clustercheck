@@ -1,1 +1,4 @@
+include 'clustercheck-core'
+include 'modules:clusteraudit'
+include 'clustercheck-suite'
 include 'rpm'

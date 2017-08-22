@@ -1,4 +1,0 @@
-- name: Cluster audit
-  hosts: all
-  roles:
-    - clusteraudit-config

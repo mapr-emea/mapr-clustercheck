@@ -1,0 +1,12 @@
+apply plugin: 'groovy'
+apply plugin: 'org.springframework.boot'
+
+bootRepackage {
+	mainClass = 'com.mapr.emea.ps.clustercheck.core.MaprClusterCheckApplication'
+	executable = true
+}
+
+dependencies {
+	compile project(':clustercheck-core')
+	compile project(':modules:clusteraudit')
+}
