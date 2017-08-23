@@ -84,9 +84,9 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         // TODO
         log.info("... Writing summary JSON result ")
         writeGlobalJsonOutput(outputDir, moduleResults, startTime, durationInMs)
-//        writeGlobalReportOutput(annotation, outputDir, result)
-
-
+        log.info("... Writing summary TEXT report ")
+        writeGlobalReportOutput(outputDir, moduleResults, startTime, durationInMs)
+        log.info("... Execution completed")
     }
 
     List<ModuleInternalResult> runModuleExecution(Map<String, Object> modules, File outputDir) {
@@ -166,7 +166,7 @@ def recommendationHeader = """
         def outputText = outputHeader + result.result.reportText + recommendationHeader
         int i = 1
         for (String recommendation : result.result.recommendations) {
-            outputText += "----------------------- Recommendation ${i} ----------------\n"
+            outputText += ">>>>> Recommendation ${i} <<<<<\n"
             outputText += recommendation + "\n"
             i++
         }
@@ -182,10 +182,52 @@ def recommendationHeader = """
 
     def writeGlobalJsonOutput(File outputDir, List<ModuleInternalResult> moduleInternalResults, long startTime, long durationInMs) {
         def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        def moduleResults = moduleInternalResults.collect { [moduleName: it.module.name(), moduleVersion: it.module.version(), moduleExecutedAt: it.executedAt, result: it.result.reportJson, recommendations: it.result.recommendations, ]}
+        def moduleResults = moduleInternalResults.collect { [moduleName: it.module.name(), moduleVersion: it.module.version(), moduleExecutedAt: it.executedAt, moduleDurationInMs: it.moduleDurationInMs, result: it.result.reportJson, recommendations: it.result.recommendations, ]}
         def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: sdf.format(new Date(startTime)), executionDurationInMs: durationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleResults: moduleResults, configuration: globalYamlConfig]
         def json = JsonOutput.toJson(globalJson)
         def outputFile = new File(outputDir.getAbsolutePath() + "/result.json")
         outputFile.text = JsonOutput.prettyPrint(json)
+    }
+
+
+    def writeGlobalReportOutput(File outputDir, List<ModuleInternalResult> moduleInternalResults, long startTime, long durationInMs) {
+        def executionHost = InetAddress.getLocalHost().getCanonicalHostName()
+        def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        def executedAtFormated = sdf.format(new Date(startTime))
+        def outputText = """========================= REPORT INFO ====================================
+Customer: ${globalYamlConfig.customer_name}
+Cluster name: ${globalYamlConfig.cluster_name}
+Executed at: ${executedAtFormated}
+Execution duration in ms: ${durationInMs}
+Executed on host: ${executionHost}
+
+"""
+        for (ModuleInternalResult internalResult : moduleInternalResults) {
+            outputText += """========================= MODULE ${internalResult.module.name()} ==================================
+Module name: ${internalResult.module.name()}
+Module version: ${internalResult.module.version()}
+Module executed at: ${internalResult.executedAt}
+Module execution duration in ms: ${internalResult.moduleDurationInMs}
+------------------------- MODULE REPORT ----------------------------------------
+"""
+            outputText += internalResult.result.reportText
+            outputText += """
+
+------------------------- MODULE RECOMMENDATIONS -------------------------------
+"""
+            int countRec = 1
+            for (String recommendation : internalResult.result.recommendations) {
+                outputText += ">>>>> Recommendation ${countRec} <<<<<\n"
+                outputText += recommendation + "\n"
+                countRec++
+            }
+        }
+        outputText += """
+
+========================= CONFIGURATION ==================================
+"""
+        outputText += (configFile as File).text
+        def outputFile = new File(outputDir.getAbsolutePath() + "/report.txt")
+        outputFile.text = outputText
     }
 }
