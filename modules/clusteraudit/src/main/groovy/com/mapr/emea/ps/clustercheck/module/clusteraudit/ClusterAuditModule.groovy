@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 /**
  * Created by chufe on 22.08.17.
  */
+// TODO implement TEXT report
+// TODO implement diffs and give recommendations
 @ClusterCheckModule(name = "clusteraudit", version = "1.0")
 class ClusterAuditModule implements ExecuteModule {
     @Autowired
@@ -90,6 +92,9 @@ class ClusterAuditModule implements ExecuteModule {
                 node['ethernet'] = [:]
                 node['ethernet']['controller'] = getColonProperty(lspci, "Ethernet controller")
                 node['ethernet']['interfaces'] = []
+                // TODO add NIC stuff
+                // TODO add missing stuff from cluster audit
+                // TODO grep RPM packages
                 // mtu size
                 // dropped packets, errors
                 // ip + mask

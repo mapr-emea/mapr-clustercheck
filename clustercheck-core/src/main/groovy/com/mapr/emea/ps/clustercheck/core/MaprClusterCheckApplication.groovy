@@ -103,9 +103,10 @@ class MaprClusterCheckApplication implements CommandLineRunner {
             }
         }
         template['modules'] = modulesYaml
-        String output = yaml.dump(template);
-        new File(configFile).text = output
-
+        String output = yaml.dump(template)
+        def configFile = new File(configFile)
+        configFile.text = output
+        log.info(">>> Configuration template written to ${configFile.absolutePath}")
     }
 
     void executeCommandValidate(Map<String, Object> modules) {
@@ -272,7 +273,8 @@ Executed on host: ${executionHost}
 
 """
         for (ModuleInternalResult internalResult : moduleInternalResults) {
-            outputText += """========================= MODULE ${internalResult.module.name()} ==================================
+            outputText += """
+========================= MODULE ${internalResult.module.name()} ==================================
 Module name: ${internalResult.module.name()}
 Module version: ${internalResult.module.version()}
 Module executed at: ${internalResult.executedAt}
