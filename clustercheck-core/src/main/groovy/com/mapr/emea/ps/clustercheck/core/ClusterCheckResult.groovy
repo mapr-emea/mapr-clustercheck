@@ -6,5 +6,5 @@ package com.mapr.emea.ps.clustercheck.core
 class ClusterCheckResult {
     Object reportJson; // set Map or List
     String reportText;
-    List<String> recommandations = []
+    List<String> recommendations = []
 }

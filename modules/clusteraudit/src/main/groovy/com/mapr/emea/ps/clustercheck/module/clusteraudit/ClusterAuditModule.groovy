@@ -113,7 +113,7 @@ Settings for eth0:
                 result.add(node)
             }
         }
-        return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommandations: ["Not yet implemented"])
+        return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
 //        return [firstName:'John', lastName:'Doe', age:25]
     }
 
