@@ -31,15 +31,15 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     ApplicationContext ctx;
 
     static void main(String[] args) {
-        this.args = args;
         if(args.length != 2) {
             printHelpAndExit()
         }
-            // TODO check commands
+        command = args[0]
+        configFile = args[1]
+        // TODO check commands
             // TODO check path
-        else {
-            SpringApplication.run MaprClusterCheckApplication, args
-        }
+
+        SpringApplication.run MaprClusterCheckApplication, args
     }
 
     private static void printHelpAndExit() {
@@ -64,96 +64,108 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         // TODO implement template
         def modules = ctx.getBeansWithAnnotation(ClusterCheckModule)
         log.info("Number of modules found: " + modules.size())
-        log.info("====== Starting validation ======")
-        int countErrors = 0
-        for (Object module : modules.values()) {
-            if(module instanceof ExecuteModule) {
-                ExecuteModule m = (ExecuteModule)module
-                def annotation = m.getClass().getAnnotation(ClusterCheckModule)
-                log.info("Validating " + annotation.name() + " - " + annotation.version())
-                try {
-                    module.validate()
-                }
-                catch(ModuleValidationException ex) {
-                    log.error("   " + ex.getMessage())
-                    countErrors++;
-                }
-            }
-            else {
-                log.warn("Cannot validate module")
-            }
-
-        }
-        log.info("====== Validation finished ======")
+        int countErrors = runValidation(modules)
         if(countErrors > 0) {
             log.error("Validation occured, please fix them and re-run.")
             return
         }
 
-        log.info("====== Starting execution =======")
         def sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
         def outputDir = new File(globalYamlConfig.outputDir + "/" + sdf.format(new Date()))
         if(outputDir.exists()) {
             log.error("Output directory already exists " + outputDir.getAbsolutePath())
             return
         }
-        log.info("Creating output directory " + outputDir.getAbsolutePath())
+        log.info("... Creating output directory " + outputDir.getAbsolutePath())
         outputDir.mkdir()
+        def startTime = System.currentTimeMillis()
+        def moduleResults = runModuleExecution(modules, outputDir)
+        def durationInMs = System.currentTimeMillis() - startTime
+        // TODO
+        log.info("... Writing summary JSON result ")
+        writeGlobalJsonOutput(outputDir, moduleResults, startTime, durationInMs)
+//        writeGlobalReportOutput(annotation, outputDir, result)
+
+
+    }
+
+    List<ModuleInternalResult> runModuleExecution(Map<String, Object> modules, File outputDir) {
+        def moduleResults = []
+        log.info("====== Starting execution =======")
         for (Object module : modules.values()) {
-            if(module instanceof ExecuteModule) {
-                ExecuteModule m = (ExecuteModule)module
+            if (module instanceof ExecuteModule) {
+                ExecuteModule m = (ExecuteModule) module
                 def annotation = m.getClass().getAnnotation(ClusterCheckModule)
                 log.info("Executing " + annotation.name() + " - " + annotation.version())
                 long moduleStart = System.currentTimeMillis()
                 def result = m.execute()
                 long moduleDurationInMs = System.currentTimeMillis() - moduleStart
-                writeModuleJsonOutput(annotation, outputDir, result, moduleDurationInMs)
-                writeModuleReportOutput(annotation, outputDir, result, moduleDurationInMs)
-            }
-            else {
+                def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                def internalResult = new ModuleInternalResult(result: result, module: annotation, moduleDurationInMs: moduleDurationInMs, executedAt: sdf.format(new Date()))
+                writeModuleJsonOutput(outputDir, internalResult)
+                writeModuleReportOutput(outputDir, internalResult)
+                moduleResults << internalResult
+            } else {
                 log.warn("Cannot execute module")
             }
 
         }
-        // TODO
-//        writeGlobalJsonOutput(annotation, outputDir, result)
-//        writeGlobalReportOutput(annotation, outputDir, result)
-
         log.info("====== Execution finished ======")
-
+        return moduleResults
     }
 
-    def writeModuleJsonOutput(ClusterCheckModule annotation, File outputDir, ClusterCheckResult clusterCheckResult, long moduleDurationInMs) {
-        def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executionDate: sdf.format(new Date()), executionDurationInMs: moduleDurationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleName: annotation.name(), moduleVersion: annotation.version(), moduleResult: clusterCheckResult.reportJson, moduleRecommendations: clusterCheckResult.recommendations, configuration: globalYamlConfig]
+    int runValidation(Map<String, Object> modules) {
+        log.info("====== Starting validation ======")
+        int countErrors = 0
+        for (Object module : modules.values()) {
+            if (module instanceof ExecuteModule) {
+                ExecuteModule m = (ExecuteModule) module
+                def annotation = m.getClass().getAnnotation(ClusterCheckModule)
+                log.info("Validating " + annotation.name() + " - " + annotation.version())
+                try {
+                    module.validate()
+                }
+                catch (ModuleValidationException ex) {
+                    log.error("   " + ex.getMessage())
+                    countErrors++;
+                }
+            } else {
+                log.warn("Cannot validate module")
+            }
+
+        }
+        log.info("====== Validation finished ======")
+        return countErrors
+    }
+
+    def writeModuleJsonOutput(File outputDir, ModuleInternalResult result) {
+        def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: result.executedAt, executionDurationInMs: result.moduleDurationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleName: result.module.name(), moduleVersion: result.module.version(), moduleResult: result.result.reportJson, moduleRecommendations: result.result.recommendations, configuration: globalYamlConfig]
         def json = JsonOutput.toJson(globalJson)
-        def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + annotation.name())
+        def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + result.module.name())
         outputModuleDir.mkdirs()
         def outputFile = new File(outputModuleDir.getAbsolutePath() + "/result.json")
         outputFile.text = JsonOutput.prettyPrint(json)
     }
 
-    def writeModuleReportOutput(ClusterCheckModule annotation, File outputDir, ClusterCheckResult clusterCheckResult, long moduleDurationInMs) {
-        def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        def executedAt = sdf.format(new Date())
+    def writeModuleReportOutput(File outputDir, ModuleInternalResult result) {
         def executionHost = InetAddress.getLocalHost().getCanonicalHostName()
         def outputHeader = """========================= REPORT INFO ====================================
 Customer: ${globalYamlConfig.customer_name}
 Cluster name: ${globalYamlConfig.cluster_name}
-Executed at: ${executedAt}
-Execution duration in ms: ${moduleDurationInMs}
+Executed at: ${result.executedAt}
+Execution duration in ms: ${result.moduleDurationInMs}
 Executed on host: ${executionHost}
-Module name: ${annotation.name()}
-Module version: ${annotation.version()}
+Module name: ${result.module.name()}
+Module version: ${result.module.version()}
 ========================= MODULE REPORT ==================================
 """
 def recommendationHeader = """
 
 ========================= MODULE RECOMMENDATIONS =========================
 """
-        def outputText = outputHeader + clusterCheckResult.reportText + recommendationHeader
+        def outputText = outputHeader + result.result.reportText + recommendationHeader
         int i = 1
-        for (String recommendation : clusterCheckResult.recommendations) {
+        for (String recommendation : result.result.recommendations) {
             outputText += "----------------------- Recommendation ${i} ----------------\n"
             outputText += recommendation + "\n"
             i++
@@ -162,18 +174,18 @@ def recommendationHeader = """
 ========================= CONFIGURATION ==================================
 """
         outputText += (configFile as File).text
-        def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + annotation.name())
+        def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + result.module.name())
         outputModuleDir.mkdirs()
         def outputFile = new File(outputModuleDir.getAbsolutePath() + "/report.txt")
         outputFile.text = outputText
     }
 
-    def writeGlobalJsonOutput(ClusterCheckModule annotation, File outputDir, ClusterCheckResult clusterCheckResult) {
-        def modulesResult = []
-        def globalJson = [executionDate: "Date", executionDuration: "duration", executionHost: "hostname", modules: modulesResult]
+    def writeGlobalJsonOutput(File outputDir, List<ModuleInternalResult> moduleInternalResults, long startTime, long durationInMs) {
+        def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        def moduleResults = moduleInternalResults.collect { [moduleName: it.module.name(), moduleVersion: it.module.version(), moduleExecutedAt: it.executedAt, result: it.result.reportJson, recommendations: it.result.recommendations, ]}
+        def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: sdf.format(new Date(startTime)), executionDurationInMs: durationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleResults: moduleResults, configuration: globalYamlConfig]
         def json = JsonOutput.toJson(globalJson)
         def outputFile = new File(outputDir.getAbsolutePath() + "/result.json")
         outputFile.text = JsonOutput.prettyPrint(json)
-
     }
 }

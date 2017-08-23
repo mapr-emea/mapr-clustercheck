@@ -50,7 +50,7 @@ class ClusterAuditModule implements ExecuteModule {
                 node['bios'] = [:]
                 node['bios']['vendor'] = getColonProperty(bios, "Vendor")
                 node['bios']['version'] = getColonProperty(bios, "Version")
-                node['bios']['release_Date'] = getColonProperty(bios, "Release Date")
+                node['bios']['release_date'] = getColonProperty(bios, "Release Date")
 
                 // CPU
                 def cpu = execute('lscpu')
