@@ -48,7 +48,9 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         if(CMD_RUN.equalsIgnoreCase(command)
             || CMD_VALIDATE.equalsIgnoreCase(command)
             || CMD_GENERATETEMPLATE.equalsIgnoreCase(command)) {
-            SpringApplication.run MaprClusterCheckApplication, args
+            def app = new SpringApplication(MaprClusterCheckApplication)
+            app.setLogStartupInfo(false)
+            app.run(args)
         }
         else {
             printHelpAndExit()
