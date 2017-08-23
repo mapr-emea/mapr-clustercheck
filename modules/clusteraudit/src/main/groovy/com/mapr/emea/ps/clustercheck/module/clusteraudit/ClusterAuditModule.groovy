@@ -20,6 +20,11 @@ class ClusterAuditModule implements ExecuteModule {
     Map<String, ?> globalYamlConfig
 
     @Override
+    Map<String, ?> yamlModuleProperties() {
+        return [testprop: "sampleVal"]
+    }
+
+    @Override
     void validate() throws ModuleValidationException {
         // TODO implement check with hostname
     }

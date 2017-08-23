@@ -11,6 +11,9 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import groovy.json.JsonOutput
+import org.springframework.core.io.Resource
+import org.springframework.core.io.ResourceLoader
+import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 
 import java.text.SimpleDateFormat
@@ -19,10 +22,16 @@ import java.text.SimpleDateFormat
 @SpringBootApplication
 class MaprClusterCheckApplication implements CommandLineRunner {
     static final Logger log = LoggerFactory.getLogger(MaprClusterCheckApplication.class);
+    public static final String CMD_RUN = "run"
+    public static final String CMD_VALIDATE = "validate"
+    public static final String CMD_GENERATETEMPLATE = "generatetemplate"
 
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
+
+    @Autowired
+    ResourceLoader resourceLoader;
 
     static String command;
     static String configFile;
@@ -36,10 +45,14 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         }
         command = args[0]
         configFile = args[1]
-        // TODO check commands
-            // TODO check path
-
-        SpringApplication.run MaprClusterCheckApplication, args
+        if(CMD_RUN.equalsIgnoreCase(command)
+            || CMD_VALIDATE.equalsIgnoreCase(command)
+            || CMD_GENERATETEMPLATE.equalsIgnoreCase(command)) {
+            SpringApplication.run MaprClusterCheckApplication, args
+        }
+        else {
+            printHelpAndExit()
+        }
     }
 
     private static void printHelpAndExit() {
@@ -53,26 +66,66 @@ class MaprClusterCheckApplication implements CommandLineRunner {
 
     @Bean("globalYamlConfig")
     static Map<String, ?> globalYamlConfig() {
+        if(CMD_GENERATETEMPLATE.equals(command)) {
+            return [:]
+        }
         Yaml parser = new Yaml()
         return parser.load((configFile as File).text) as Map<String, ?>
     }
 
     @Override
     void run(String... args) throws Exception {
-        // TODO implement validate
-        // TODO implement run
-        // TODO implement template
         def modules = ctx.getBeansWithAnnotation(ClusterCheckModule)
         log.info("Number of modules found: " + modules.size())
+        if(CMD_RUN.equals(command)) {
+            executeCommandRun(modules)
+        } else if(CMD_VALIDATE.equals(command)) {
+            executeCommandValidate(modules)
+        } else if(CMD_GENERATETEMPLATE.equals(command)) {
+            executeGenerateTemplate(modules)
+        }
+    }
+
+    void executeGenerateTemplate(Map<String, Object> modules) {
+        def dumperOptions1 = new DumperOptions();
+        dumperOptions1.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Yaml yaml = new Yaml(dumperOptions1)
+        def resource = resourceLoader.getResource("classpath:templatecfg.yml")
+        def template = yaml.load(resource.inputStream) as Map<String, ?>
+        def modulesYaml = [:]
+        for (Object module  : modules.values()) {
+            if (module instanceof ExecuteModule) {
+                ExecuteModule m = (ExecuteModule) module
+                def annotation = m.getClass().getAnnotation(ClusterCheckModule)
+                modulesYaml[annotation.name()] = [enabled: true] << m.yamlModuleProperties()
+            }
+        }
+        template['modules'] = modulesYaml
+        String output = yaml.dump(template);
+        new File(configFile).text = output
+
+    }
+
+    void executeCommandValidate(Map<String, Object> modules) {
         int countErrors = runValidation(modules)
-        if(countErrors > 0) {
-            log.error("Validation occured, please fix them and re-run.")
+        if (countErrors > 0) {
+            log.error(">>> Number of errors total: " + countErrors)
+        }
+        else {
+            log.info(">>> Everything is good. You can start cluster checks")
+        }
+    }
+
+    void executeCommandRun(Map<String, Object> modules) {
+        int countErrors = runValidation(modules)
+        if (countErrors > 0) {
+            log.error(">>> Validation errors occured, please fix them and re-run.")
             return
         }
 
         def sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
         def outputDir = new File(globalYamlConfig.outputDir + "/" + sdf.format(new Date()))
-        if(outputDir.exists()) {
+        if (outputDir.exists()) {
             log.error("Output directory already exists " + outputDir.getAbsolutePath())
             return
         }
@@ -81,10 +134,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         def startTime = System.currentTimeMillis()
         def moduleResults = runModuleExecution(modules, outputDir)
         def durationInMs = System.currentTimeMillis() - startTime
-        // TODO
-        log.info("... Writing summary JSON result ")
         writeGlobalJsonOutput(outputDir, moduleResults, startTime, durationInMs)
-        log.info("... Writing summary TEXT report ")
         writeGlobalReportOutput(outputDir, moduleResults, startTime, durationInMs)
         log.info("... Execution completed")
     }
@@ -96,15 +146,23 @@ class MaprClusterCheckApplication implements CommandLineRunner {
             if (module instanceof ExecuteModule) {
                 ExecuteModule m = (ExecuteModule) module
                 def annotation = m.getClass().getAnnotation(ClusterCheckModule)
-                log.info("Executing " + annotation.name() + " - " + annotation.version())
-                long moduleStart = System.currentTimeMillis()
-                def result = m.execute()
-                long moduleDurationInMs = System.currentTimeMillis() - moduleStart
-                def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                def internalResult = new ModuleInternalResult(result: result, module: annotation, moduleDurationInMs: moduleDurationInMs, executedAt: sdf.format(new Date()))
-                writeModuleJsonOutput(outputDir, internalResult)
-                writeModuleReportOutput(outputDir, internalResult)
-                moduleResults << internalResult
+                if(!globalYamlConfig.containsKey("modules") || !globalYamlConfig.modules.containsKey(annotation.name())) {
+                    log.warn(">>> Skipping module ${annotation.name()}, because it is not configured.")
+                }
+                else if(!globalYamlConfig.modules[annotation.name()].enabled) {
+                    log.info(">>> Skipping module ${annotation.name()}, because it is disabled.")
+                }
+                else {
+                    log.info("Executing " + annotation.name() + " - " + annotation.version())
+                    long moduleStart = System.currentTimeMillis()
+                    def result = m.execute()
+                    long moduleDurationInMs = System.currentTimeMillis() - moduleStart
+                    def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                    def internalResult = new ModuleInternalResult(result: result, module: annotation, moduleDurationInMs: moduleDurationInMs, executedAt: sdf.format(new Date()))
+                    writeModuleJsonOutput(outputDir, internalResult)
+                    writeModuleReportOutput(outputDir, internalResult)
+                    moduleResults << internalResult
+                }
             } else {
                 log.warn("Cannot execute module")
             }
@@ -121,13 +179,21 @@ class MaprClusterCheckApplication implements CommandLineRunner {
             if (module instanceof ExecuteModule) {
                 ExecuteModule m = (ExecuteModule) module
                 def annotation = m.getClass().getAnnotation(ClusterCheckModule)
-                log.info("Validating " + annotation.name() + " - " + annotation.version())
-                try {
-                    module.validate()
+                if(!globalYamlConfig.containsKey("modules") || !globalYamlConfig.modules.containsKey(annotation.name())) {
+                    log.warn(">>> Skipping module ${annotation.name()}, because it is not configured.")
                 }
-                catch (ModuleValidationException ex) {
-                    log.error("   " + ex.getMessage())
-                    countErrors++;
+                else if(!globalYamlConfig.modules[annotation.name()].enabled) {
+                    log.info(">>> Skipping module ${annotation.name()}, because it is disabled.")
+                }
+                else {
+                    log.info("Validating " + annotation.name() + " - " + annotation.version())
+                    try {
+                        module.validate()
+                    }
+                    catch (ModuleValidationException ex) {
+                        log.error("   " + ex.getMessage())
+                        countErrors++;
+                    }
                 }
             } else {
                 log.warn("Cannot validate module")
@@ -186,6 +252,7 @@ def recommendationHeader = """
         def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: sdf.format(new Date(startTime)), executionDurationInMs: durationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleResults: moduleResults, configuration: globalYamlConfig]
         def json = JsonOutput.toJson(globalJson)
         def outputFile = new File(outputDir.getAbsolutePath() + "/result.json")
+        log.info("... Writing summary JSON result: ${outputFile.absolutePath}")
         outputFile.text = JsonOutput.prettyPrint(json)
     }
 
@@ -228,6 +295,7 @@ Module execution duration in ms: ${internalResult.moduleDurationInMs}
 """
         outputText += (configFile as File).text
         def outputFile = new File(outputDir.getAbsolutePath() + "/report.txt")
+        log.info("... Writing summary TEXT report: ${outputFile.absolutePath} ")
         outputFile.text = outputText
     }
 }

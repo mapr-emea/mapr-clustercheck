@@ -1,0 +1,14 @@
+cluster_name: demo.mapr.com
+customer_name: Your company name
+outputDir: /path/for/results
+
+nodes:
+  - host: hostname1.fqdn
+    ssh_user: sshuser
+    ssh_identity: '/home/user/.ssh/id_rsa'
+  - host: hostname2.fqdn
+    ssh_user: sshuser
+    ssh_identity: '/home/user/.ssh/id_rsa'
+  - host: hostname3.fqdn
+    ssh_user: sshuser
+    ssh_identity: '/home/user/.ssh/id_rsa'
