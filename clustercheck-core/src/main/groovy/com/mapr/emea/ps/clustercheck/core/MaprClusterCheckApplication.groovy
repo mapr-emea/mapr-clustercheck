@@ -250,7 +250,7 @@ def recommendationHeader = """
 
     def writeGlobalJsonOutput(File outputDir, List<ModuleInternalResult> moduleInternalResults, long startTime, long durationInMs) {
         def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        def moduleResults = moduleInternalResults.collect { [moduleName: it.module.name(), moduleVersion: it.module.version(), moduleExecutedAt: it.executedAt, moduleDurationInMs: it.moduleDurationInMs, result: it.result.reportJson, recommendations: it.result.recommendations, ]}
+        def moduleResults = moduleInternalResults.collect { [moduleName: it.module.name(), moduleVersion: it.module.version(), moduleExecutedAt: it.executedAt, moduleDurationInMs: it.moduleDurationInMs, moduleResult: it.result.reportJson, recommendations: it.result.recommendations, ]}
         def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: sdf.format(new Date(startTime)), executionDurationInMs: durationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleResults: moduleResults, configuration: globalYamlConfig]
         def json = JsonOutput.toJson(globalJson)
         def outputFile = new File(outputDir.getAbsolutePath() + "/result.json")

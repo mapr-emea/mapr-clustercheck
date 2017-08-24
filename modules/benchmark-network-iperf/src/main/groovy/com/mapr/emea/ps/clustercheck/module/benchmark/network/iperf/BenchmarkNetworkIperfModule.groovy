@@ -1,4 +1,4 @@
-package com.mapr.emea.ps.clustercheck.module.benchmark.network
+package com.mapr.emea.ps.clustercheck.module.benchmark.network.iperf
 
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckModule
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
@@ -14,8 +14,8 @@ import org.springframework.core.io.ResourceLoader
  * Created by chufe on 22.08.17.
  */
 @ClusterCheckModule(name = "benchmark-network-iperf", version = "1.0")
-class BenchmarkNetworkModule implements ExecuteModule {
-    static final Logger log = LoggerFactory.getLogger(BenchmarkNetworkModule.class);
+class BenchmarkNetworkIperfModule implements ExecuteModule {
+    static final Logger log = LoggerFactory.getLogger(BenchmarkNetworkIperfModule.class);
 
     @Autowired
     @Qualifier("ssh")
@@ -128,7 +128,7 @@ class BenchmarkNetworkModule implements ExecuteModule {
             session(ssh.remotes.role(role)) {
                 def homePath = execute 'echo $HOME'
                 execute "mkdir -p ${homePath}/.clustercheck"
-                def iperfInputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/benchmark/network/iperf").getInputStream()
+                def iperfInputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/benchmark/network/iperf/iperf").getInputStream()
                 put from: iperfInputStream, into: "${homePath}/.clustercheck/iperf"
                 execute "chmod +x ${homePath}/.clustercheck/iperf"
             }
