@@ -13,6 +13,8 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
+// TODO check the NIC speed and add to report
+// TODO Give recommendation about speed
 @ClusterCheckModule(name = "benchmark-network-iperf", version = "1.0")
 class BenchmarkNetworkIperfModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkNetworkIperfModule.class);

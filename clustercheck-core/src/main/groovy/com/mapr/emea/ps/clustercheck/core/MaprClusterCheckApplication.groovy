@@ -39,19 +39,18 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     ApplicationContext ctx;
 
     static void main(String[] args) {
-        if(args.length != 2) {
+        if (args.length != 2) {
             printHelpAndExit()
         }
         command = args[0]
         configFile = args[1]
-        if(CMD_RUN.equalsIgnoreCase(command)
-            || CMD_VALIDATE.equalsIgnoreCase(command)
-            || CMD_GENERATETEMPLATE.equalsIgnoreCase(command)) {
+        if (CMD_RUN.equalsIgnoreCase(command)
+                || CMD_VALIDATE.equalsIgnoreCase(command)
+                || CMD_GENERATETEMPLATE.equalsIgnoreCase(command)) {
             def app = new SpringApplication(MaprClusterCheckApplication)
             app.setLogStartupInfo(false)
             app.run(args)
-        }
-        else {
+        } else {
             printHelpAndExit()
         }
     }
@@ -67,7 +66,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
 
     @Bean("globalYamlConfig")
     static Map<String, ?> globalYamlConfig() {
-        if(CMD_GENERATETEMPLATE.equals(command)) {
+        if (CMD_GENERATETEMPLATE.equals(command)) {
             return [:]
         }
         Yaml parser = new Yaml()
@@ -78,11 +77,11 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     void run(String... args) throws Exception {
         def modules = ctx.getBeansWithAnnotation(ClusterCheckModule)
         log.info("Number of modules found: " + modules.size())
-        if(CMD_RUN.equals(command)) {
+        if (CMD_RUN.equals(command)) {
             executeCommandRun(modules)
-        } else if(CMD_VALIDATE.equals(command)) {
+        } else if (CMD_VALIDATE.equals(command)) {
             executeCommandValidate(modules)
-        } else if(CMD_GENERATETEMPLATE.equals(command)) {
+        } else if (CMD_GENERATETEMPLATE.equals(command)) {
             executeGenerateTemplate(modules)
         }
     }
@@ -94,7 +93,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         def resource = resourceLoader.getResource("classpath:templatecfg.yml")
         def template = yaml.load(resource.inputStream) as Map<String, ?>
         def modulesYaml = [:]
-        for (Object module  : modules.values()) {
+        for (Object module : modules.values()) {
             if (module instanceof ExecuteModule) {
                 ExecuteModule m = (ExecuteModule) module
                 def annotation = m.getClass().getAnnotation(ClusterCheckModule)
@@ -112,8 +111,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         int countErrors = runValidation(modules)
         if (countErrors > 0) {
             log.error(">>> Number of errors total: " + countErrors)
-        }
-        else {
+        } else {
             log.info(">>> Everything is good. You can start cluster checks")
         }
     }
@@ -148,13 +146,11 @@ class MaprClusterCheckApplication implements CommandLineRunner {
             if (module instanceof ExecuteModule) {
                 ExecuteModule m = (ExecuteModule) module
                 def annotation = m.getClass().getAnnotation(ClusterCheckModule)
-                if(!globalYamlConfig.containsKey("modules") || !globalYamlConfig.modules.containsKey(annotation.name())) {
+                if (!globalYamlConfig.containsKey("modules") || !globalYamlConfig.modules.containsKey(annotation.name())) {
                     log.warn(">>> Skipping module ${annotation.name()}, because it is not configured.")
-                }
-                else if(!globalYamlConfig.modules[annotation.name()].enabled) {
+                } else if (!globalYamlConfig.modules[annotation.name()].enabled) {
                     log.info(">>> Skipping module ${annotation.name()}, because it is disabled.")
-                }
-                else {
+                } else {
                     log.info("Executing " + annotation.name() + " - " + annotation.version())
                     long moduleStart = System.currentTimeMillis()
                     def result = m.execute()
@@ -181,13 +177,11 @@ class MaprClusterCheckApplication implements CommandLineRunner {
             if (module instanceof ExecuteModule) {
                 ExecuteModule m = (ExecuteModule) module
                 def annotation = m.getClass().getAnnotation(ClusterCheckModule)
-                if(!globalYamlConfig.containsKey("modules") || !globalYamlConfig.modules.containsKey(annotation.name())) {
+                if (!globalYamlConfig.containsKey("modules") || !globalYamlConfig.modules.containsKey(annotation.name())) {
                     log.warn(">>> Skipping module ${annotation.name()}, because it is not configured.")
-                }
-                else if(!globalYamlConfig.modules[annotation.name()].enabled) {
+                } else if (!globalYamlConfig.modules[annotation.name()].enabled) {
                     log.info(">>> Skipping module ${annotation.name()}, because it is disabled.")
-                }
-                else {
+                } else {
                     log.info("Validating " + annotation.name() + " - " + annotation.version())
                     try {
                         module.validate()
@@ -227,16 +221,20 @@ Module name: ${result.module.name()}
 Module version: ${result.module.version()}
 ========================= MODULE REPORT ==================================
 """
-def recommendationHeader = """
+        def recommendationHeader = """
 
 ========================= MODULE RECOMMENDATIONS =========================
 """
         def outputText = outputHeader + result.result.reportText + recommendationHeader
         int i = 1
-        for (String recommendation : result.result.recommendations) {
-            outputText += ">>>>> Recommendation ${i} <<<<<\n"
-            outputText += recommendation + "\n"
-            i++
+        if (result.result.recommendations) {
+            for (String recommendation : result.result.recommendations) {
+                outputText += ">>>>> Recommendation ${i} <<<<<\n"
+                outputText += recommendation + "\n"
+                i++
+            }
+        } else {
+            outputText += ">>>>> No recommendations\n"
         }
         outputText += """
 ========================= CONFIGURATION ==================================
@@ -250,7 +248,9 @@ def recommendationHeader = """
 
     def writeGlobalJsonOutput(File outputDir, List<ModuleInternalResult> moduleInternalResults, long startTime, long durationInMs) {
         def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        def moduleResults = moduleInternalResults.collect { [moduleName: it.module.name(), moduleVersion: it.module.version(), moduleExecutedAt: it.executedAt, moduleDurationInMs: it.moduleDurationInMs, moduleResult: it.result.reportJson, recommendations: it.result.recommendations, ]}
+        def moduleResults = moduleInternalResults.collect {
+            [moduleName: it.module.name(), moduleVersion: it.module.version(), moduleExecutedAt: it.executedAt, moduleDurationInMs: it.moduleDurationInMs, moduleResult: it.result.reportJson, recommendations: it.result.recommendations,]
+        }
         def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: sdf.format(new Date(startTime)), executionDurationInMs: durationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleResults: moduleResults, configuration: globalYamlConfig]
         def json = JsonOutput.toJson(globalJson)
         def outputFile = new File(outputDir.getAbsolutePath() + "/result.json")
@@ -269,7 +269,6 @@ Cluster name: ${globalYamlConfig.cluster_name}
 Executed at: ${executedAtFormated}
 Execution duration in ms: ${durationInMs}
 Executed on host: ${executionHost}
-
 """
         for (ModuleInternalResult internalResult : moduleInternalResults) {
             outputText += """
@@ -286,10 +285,14 @@ Module execution duration in ms: ${internalResult.moduleDurationInMs}
 ------------------------- MODULE RECOMMENDATIONS -------------------------------
 """
             int countRec = 1
-            for (String recommendation : internalResult.result.recommendations) {
-                outputText += ">>>>> Recommendation ${countRec} <<<<<\n"
-                outputText += recommendation + "\n"
-                countRec++
+            if (internalResult.result.recommendations) {
+                for (String recommendation : internalResult.result.recommendations) {
+                    outputText += ">>>>> Recommendation ${countRec} <<<<<\n"
+                    outputText += recommendation + "\n"
+                    countRec++
+                }
+            } else {
+                outputText += ">>>>> No recommendations\n"
             }
         }
         outputText += """

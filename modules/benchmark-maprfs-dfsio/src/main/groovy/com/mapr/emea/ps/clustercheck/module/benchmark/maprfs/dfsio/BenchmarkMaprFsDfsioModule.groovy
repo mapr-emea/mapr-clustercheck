@@ -51,7 +51,30 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
         setupBenchmarkVolume(moduleconfig, role)
         def result = runDfsioBenchmark(moduleconfig, role)
         deleteBenchmarkVolume(moduleconfig, role)
-        return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
+        return new ClusterCheckResult(reportJson: result, reportText: generateTextReport(result), recommendations: [])
+    }
+
+    def generateTextReport(results) {
+        def textReport = ""
+        for (def result : results) {
+            textReport += """Executed on host: ${result.executedOnHost}
+>>> DFSIO write:
+>>>    Number of files: ${result.write.numberOfFiles}
+>>>    Total processed: ${result.write.totalProcessedInMB} MB
+>>>    Throughput: ${result.write.throughputInMBperSecond} MB/second
+>>>    Average IO rate: ${result.write.averageIORateInMBperSecond} MB/second
+>>>    IO rate std deviation: ${result.write.ioRateStdDeviation}
+>>>    Execution time: ${result.write.testExecTimeInSeconds} seconds
+>>> DFSIO read:
+>>>    Number of files: ${result.read.numberOfFiles}
+>>>    Total processed: ${result.read.totalProcessedInMB} MB
+>>>    Throughput: ${result.read.throughputInMBperSecond} MB/second
+>>>    Average IO rate: ${result.read.averageIORateInMBperSecond} MB/second
+>>>    IO rate std deviation: ${result.read.ioRateStdDeviation}
+>>>    Execution time: ${result.read.testExecTimeInSeconds} seconds
+"""
+        }
+        return textReport
     }
 
     def setupBenchmarkVolume(Map<String, ?> moduleconfig, role) {
@@ -79,8 +102,10 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 pty = true
             }
             session(ssh.remotes.role(role)) {
-                executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name benchmarks | xargs echo'" // xargs echo removes return code
-                executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name benchmarks | xargs echo'" // xargs echo removes return code
+                executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name benchmarks | xargs echo'"
+                // xargs echo removes return code
+                executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name benchmarks | xargs echo'"
+                // xargs echo removes return code
                 sleep(3000)
             }
         }
@@ -133,7 +158,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                         write         : [
                                 numberOfFiles             : getDoubleValueFromTokens(writeTokens, "Number of files"),
                                 totalProcessedInMB        : getDoubleValueFromTokens(writeTokens, "Total MBytes processed"),
-                                throughputInMB            : getDoubleValueFromTokens(writeTokens, "Throughput mb/sec"),
+                                throughputInMBperSecond   : getDoubleValueFromTokens(writeTokens, "Throughput mb/sec"),
                                 averageIORateInMBperSecond: getDoubleValueFromTokens(writeTokens, "Average IO rate mb/sec"),
                                 ioRateStdDeviation        : getDoubleValueFromTokens(writeTokens, "IO rate std deviation"),
                                 testExecTimeInSeconds     : getDoubleValueFromTokens(writeTokens, "Test exec time sec")
@@ -141,7 +166,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                         read          : [
                                 numberOfFiles             : getDoubleValueFromTokens(readTokens, "Number of files"),
                                 totalProcessedInMB        : getDoubleValueFromTokens(readTokens, "Total MBytes processed"),
-                                throughputInMB            : getDoubleValueFromTokens(readTokens, "Throughput mb/sec"),
+                                throughputInMBperSecond   : getDoubleValueFromTokens(readTokens, "Throughput mb/sec"),
                                 averageIORateInMBperSecond: getDoubleValueFromTokens(readTokens, "Average IO rate mb/sec"),
                                 ioRateStdDeviation        : getDoubleValueFromTokens(readTokens, "IO rate std deviation"),
                                 testExecTimeInSeconds     : getDoubleValueFromTokens(readTokens, "Test exec time sec")
