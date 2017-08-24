@@ -38,22 +38,21 @@ class ClusterAuditModule implements ExecuteModule {
         def result = Collections.synchronizedList([])
 
         ssh.run {
-            settings {
-                pty = true
-            }
-
+//            settings {
+//                pty = true
+//            }
             session(ssh.remotes.role(role)) {
                 def node = [:]
                 node['hostname'] = execute 'hostname -f'
 
                 // Sysinfo
-                def dmicodeSysInfo = execute('sudo dmidecode | grep -A2 \'^System Information\'')
+                def dmicodeSysInfo = executeSudo('dmidecode | grep -A2 \'^System Information\'')
                 node['sysinfo'] = [:]
                 node['sysinfo']['manufacturer'] = getColonProperty(dmicodeSysInfo, "Manufacturer")
                 node['sysinfo']['product_name'] = getColonProperty(dmicodeSysInfo, "Product Name")
 
                 // BIOS
-                def bios = execute('sudo dmidecode | grep -A3 \'^BIOS I\'')
+                def bios = executeSudo('dmidecode | grep -A3 \'^BIOS I\'')
                 node['bios'] = [:]
                 node['bios']['vendor'] = getColonProperty(bios, "Vendor")
                 node['bios']['version'] = getColonProperty(bios, "Version")
@@ -87,8 +86,8 @@ class ClusterAuditModule implements ExecuteModule {
                 node['memory']['dimm_info'] = execute('sudo dmidecode -t memory | awk \'/Memory Device$/,/^$/ {print}\'')
 
                 // NIC / Ethernet
-                def lspci = dropEverythingBeforeString(execute('sudo lspci'), ' ')
-                def ifconfig = execute('sudo ifconfig -a')
+                def lspci = dropEverythingBeforeString(executeSudo('lspci'), ' ')
+                def ifconfig = executeSudo('ifconfig -a')
                 node['ethernet'] = [:]
                 node['ethernet']['controller'] = getColonProperty(lspci, "Ethernet controller")
                 node['ethernet']['interfaces'] = []

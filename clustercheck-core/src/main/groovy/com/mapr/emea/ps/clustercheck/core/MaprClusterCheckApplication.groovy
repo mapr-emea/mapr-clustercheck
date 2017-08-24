@@ -11,7 +11,6 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import groovy.json.JsonOutput
-import org.springframework.core.io.Resource
 import org.springframework.core.io.ResourceLoader
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
