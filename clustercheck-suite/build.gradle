@@ -11,3 +11,13 @@ dependencies {
 	compile project(':modules:clusteraudit')
 	compile project(':modules:benchmark-network-iperf')
 }
+
+task copyArtifact(type: Copy) {
+    from "${project.buildDir}/libs/clustercheck-suite-${project.version}.jar"
+    into "${project.parent.buildDir}/"
+    rename { String fileName ->
+        fileName.replace("clustercheck-suite-${project.version}.jar", "clustercheck-suite")
+    }
+}
+
+build.finalizedBy(copyArtifact)

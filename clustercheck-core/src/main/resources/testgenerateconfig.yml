@@ -17,4 +17,9 @@ modules:
     tests:
     - threads: 1
       dataPerThread: 4096M
-
+    - threads: 2
+      dataPerThread: 2048M
+    - threads: 4
+      dataPerThread: 1024M
+    - threads: 8
+      dataPerThread: 512M
