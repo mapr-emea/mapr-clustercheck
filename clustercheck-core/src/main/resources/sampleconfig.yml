@@ -25,3 +25,8 @@ modules:
     role: datacenter1
   benchmark-network:
     enabled: true
+#    testMatrix:
+#      - threads: 1
+#        dataPerThread: 512M
+#      - threads: 2
+#        dataPerThread: 512M

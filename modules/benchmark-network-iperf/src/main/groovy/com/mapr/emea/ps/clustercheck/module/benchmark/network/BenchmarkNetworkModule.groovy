@@ -13,10 +13,9 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
-@ClusterCheckModule(name = "benchmark-network", version = "1.0")
+@ClusterCheckModule(name = "benchmark-network-iperf", version = "1.0")
 class BenchmarkNetworkModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkNetworkModule.class);
-
 
     @Autowired
     @Qualifier("ssh")
@@ -52,11 +51,15 @@ class BenchmarkNetworkModule implements ExecuteModule {
 
     def runIperfTests(role) {
         def testMatrix = [
-                [threads: 1, dataPerThread: "4096M"],
-                [threads: 2, dataPerThread: "2048M"],
-                [threads: 4, dataPerThread: "1024M"],
-                [threads: 8, dataPerThread: "512M"]
+                [threads: 1, dataPerThread: "512M"],
+                [threads: 2, dataPerThread: "256M"]
         ]
+//        def testMatrix = [
+//                [threads: 1, dataPerThread: "4096M"],
+//                [threads: 2, dataPerThread: "2048M"],
+//                [threads: 4, dataPerThread: "1024M"],
+//                [threads: 8, dataPerThread: "512M"]
+//        ]
         def result = []
         // only one command executed with runInOrder
         log.info(">>>>> Run Iperf Tests ... this can take some time.")

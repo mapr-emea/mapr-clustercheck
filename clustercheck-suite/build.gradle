@@ -9,5 +9,5 @@ bootRepackage {
 dependencies {
 	compile project(':clustercheck-core')
 	compile project(':modules:clusteraudit')
-	compile project(':modules:benchmark-network')
+	compile project(':modules:benchmark-network-iperf')
 }
