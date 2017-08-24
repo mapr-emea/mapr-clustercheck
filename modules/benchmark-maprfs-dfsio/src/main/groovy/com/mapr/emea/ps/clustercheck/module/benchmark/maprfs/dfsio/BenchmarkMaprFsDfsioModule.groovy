@@ -30,7 +30,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "benchmark-maprfs-executor", "dfsioFilesPerDisk": 1, "dfsioFileSizeInMB": 8196, "topology": "/data", replication: 1]
+        return [role: "clusterjob-execution", "dfsioFilesPerDisk": 1, "dfsioFileSizeInMB": 8196, "topology": "/data", replication: 1]
     }
 
     @Override
@@ -41,6 +41,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
             throw new ModuleValidationException("Please specify a role for 'benchmark-maprfs'-module which is not 'all'. Usually it should run only on one node.")
         }
         // TODO check for valid ticket, if secure cluster
+        // TODO check that role has only one node inside
     }
 
     @Override
