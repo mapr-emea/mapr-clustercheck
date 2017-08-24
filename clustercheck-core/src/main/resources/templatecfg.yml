@@ -1,6 +1,7 @@
 cluster_name: demo.mapr.com
 customer_name: Your company name
-outputDir: /path/for/results
+output_dir: /path/for/results
+mapr_user: mapr
 
 nodes:
   - host: hostname1.fqdn

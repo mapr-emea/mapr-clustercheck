@@ -1,4 +1,5 @@
 include 'clustercheck-core'
 include 'modules:clusteraudit'
 include 'modules:benchmark-network-iperf'
+include 'modules:benchmark-maprfs-dfsio'
 include 'clustercheck-suite'

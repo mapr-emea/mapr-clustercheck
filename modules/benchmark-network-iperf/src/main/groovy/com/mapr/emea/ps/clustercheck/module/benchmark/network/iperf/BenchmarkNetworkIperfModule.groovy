@@ -45,8 +45,8 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
 
     @Override
     ClusterCheckResult execute() {
-        def clusteraudit = globalYamlConfig.modules['benchmark-network-iperf'] as Map<String, ?>
-        def role = clusteraudit.getOrDefault("role", "all")
+        def moduleConfig = globalYamlConfig.modules['benchmark-network-iperf'] as Map<String, ?>
+        def role = moduleConfig.getOrDefault("role", "all")
         checkIfIperfIsRunningAndStop(role)
         copyIperfToRemoteHost(role)
         startIperfServer(role)

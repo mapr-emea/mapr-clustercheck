@@ -126,7 +126,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         }
 
         def sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
-        def outputDir = new File(globalYamlConfig.outputDir + "/" + sdf.format(new Date()))
+        def outputDir = new File(globalYamlConfig.output_dir + "/" + sdf.format(new Date()))
         if (outputDir.exists()) {
             log.error("Output directory already exists " + outputDir.getAbsolutePath())
             return
@@ -193,7 +193,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
                         module.validate()
                     }
                     catch (ModuleValidationException ex) {
-                        log.error("   " + ex.getMessage())
+                        log.error(">>> " + ex.getMessage())
                         countErrors++;
                     }
                 }

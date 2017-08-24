@@ -10,6 +10,7 @@ dependencies {
 	compile project(':clustercheck-core')
 	compile project(':modules:clusteraudit')
 	compile project(':modules:benchmark-network-iperf')
+	compile project(':modules:benchmark-maprfs-dfsio')
 }
 
 task copyArtifact(type: Copy) {

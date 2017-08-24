@@ -1,6 +1,7 @@
 cluster_name: demo.mapr.com
 customer_name: MapR PS
-outputDir: /Users/chufe/clustercheck
+output_dir: /Users/chufe/clustercheck
+mapr_user: mapr
 
 nodes:
   - host: 10.0.0.24
@@ -8,6 +9,7 @@ nodes:
     ssh_identity: '/Users/chufe/.ssh/id_rsa'
     roles:
        - datacenter1
+       - benchmark-maprfs-dfsio
   - host: 10.0.0.167
     ssh_user: ec2-user
     ssh_identity: '/Users/chufe/.ssh/id_rsa'
@@ -28,3 +30,7 @@ modules:
     tests:
     - threads: 1
       dataPerThread: 4096M
+  benchmark-maprfs-dfsio:
+    enabled: true
+    role: benchmark-maprfs-dfsio
+
