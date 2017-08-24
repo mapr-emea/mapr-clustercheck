@@ -1,10 +1,13 @@
 cluster_name: demo.mapr.com
 customer_name: Your company name
-outputDir: /path/for/results
+output_dir: /path/for/results
+mapr_user: mapr
 nodes:
 - host: hostname1.fqdn
   ssh_user: sshuser
   ssh_identity: /home/user/.ssh/id_rsa
+  roles:
+  - clusterjob-execution
 - host: hostname2.fqdn
   ssh_user: sshuser
   ssh_identity: /home/user/.ssh/id_rsa
@@ -12,14 +15,22 @@ nodes:
   ssh_user: sshuser
   ssh_identity: /home/user/.ssh/id_rsa
 modules:
-  benchmark-network-iperf:
+  benchmark-maprfs-rwtest:
     enabled: true
     tests:
-    - threads: 1
-      dataPerThread: 4096M
-    - threads: 2
-      dataPerThread: 2048M
-    - threads: 4
-      dataPerThread: 1024M
-    - threads: 8
-      dataPerThread: 512M
+    - volume: standard
+      compression: 'off'
+      topology: /data
+      sizeInMB: 16384
+      replication: 3
+    - volume: standard
+      compression: 'on'
+      topology: /data
+      sizeInMB: 16384
+      replication: 3
+    - volume: local
+      compression: 'off'
+      useDiskPercentage: 5
+    - volume: local
+      compression: 'on'
+      useDiskPercentage: 5

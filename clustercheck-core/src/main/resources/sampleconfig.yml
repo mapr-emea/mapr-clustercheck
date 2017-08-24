@@ -33,4 +33,22 @@ modules:
   benchmark-maprfs-dfsio:
     enabled: true
     role: clusterjob-execution
-
+  benchmark-maprfs-rwtest:
+    enabled: true
+    tests:
+    - volume_type: standard
+      compression: 'off'
+      topology: /data
+      sizeInMB: 8192
+      replication: 3
+    - volume_type: standard
+      compression: 'on'
+      topology: /data
+      sizeInMB: 8192
+      replication: 3
+    - volume_type: local
+      compression: 'off'
+      use_disk_percentage: 5
+    - volume_type: local
+      compression: 'on'
+      use_disk_percentage: 5
