@@ -40,7 +40,7 @@ class ClusterAuditModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [testprop: "sampleVal"]
+        return []
     }
 
     @Override

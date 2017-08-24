@@ -15,22 +15,45 @@ nodes:
   ssh_user: sshuser
   ssh_identity: /home/user/.ssh/id_rsa
 modules:
+  clusteraudit:
+    enabled: true
+    testprop: sampleVal
+  benchmark-network-iperf:
+    enabled: true
+    tests:
+    - threads: 1
+      dataPerThread: 4096M
+    - threads: 2
+      dataPerThread: 2048M
+    - threads: 4
+      dataPerThread: 1024M
+    - threads: 8
+      dataPerThread: 512M
+  benchmark-maprfs-dfsio:
+    enabled: true
+    role: clusterjob-execution
+    dfsioFilesPerDisk: 1
+    dfsioFileSizeInMB: 8196
+    topology: /data
+    replication: 1
   benchmark-maprfs-rwtest:
     enabled: true
     tests:
-    - volume: standard
+    - volume_type: standard
       compression: 'off'
       topology: /data
-      sizeInMB: 16384
+      size_in_mb: 16384
       replication: 3
-    - volume: standard
+      threads: 1
+    - volume_type: standard
       compression: 'on'
       topology: /data
-      sizeInMB: 16384
+      size_in_mb: 16384
       replication: 3
-    - volume: local
+      threads: 1
+    - volume_type: local
       compression: 'off'
-      useDiskPercentage: 5
-    - volume: local
+      use_disk_percentage: 5
+    - volume_type: local
       compression: 'on'
-      useDiskPercentage: 5
+      use_disk_percentage: 5
