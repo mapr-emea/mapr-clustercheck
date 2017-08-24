@@ -52,10 +52,10 @@ class BenchmarkNetworkModule implements ExecuteModule {
 
     def runIperfTests(role) {
         def testMatrix = [
-                [threads: 1, dataPerThread: "8196M"],
-                [threads: 2, dataPerThread: "4096M"],
-                [threads: 4, dataPerThread: "2048M"],
-                [threads: 8, dataPerThread: "1024M"]
+                [threads: 1, dataPerThread: "4096M"],
+                [threads: 2, dataPerThread: "2048M"],
+                [threads: 4, dataPerThread: "1024M"],
+                [threads: 8, dataPerThread: "512M"]
         ]
         def result = []
         // only one command executed with runInOrder
