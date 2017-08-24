@@ -12,6 +12,23 @@ import org.springframework.beans.factory.annotation.Qualifier
  */
 // TODO implement TEXT report
 // TODO implement diffs and give recommendations
+
+// custom module?
+// TODO grab yarn config
+// TODO grab env.sh
+// TODO grab hadoop config
+// TODO grab mfs config
+// TODO grab zooconf config
+// TODO grab storage pools
+// TODO grab disks
+// TODO grab clusters.conf
+// TODO grab check truststores with clusters conf
+// TODO grab pam conf
+// TODO grab sssd conf
+// TODO grab nscd conf
+// TODO grab ecosystem components
+
+
 @ClusterCheckModule(name = "clusteraudit", version = "1.0")
 class ClusterAuditModule implements ExecuteModule {
     @Autowired
@@ -38,9 +55,9 @@ class ClusterAuditModule implements ExecuteModule {
         def result = Collections.synchronizedList([])
 
         ssh.run {
-//            settings {
-//                pty = true
-//            }
+            settings {
+                pty = true
+            }
             session(ssh.remotes.role(role)) {
                 def node = [:]
                 node['hostname'] = execute 'hostname -f'
@@ -123,7 +140,6 @@ Settings for eth0:
             }
         }
         return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
-//        return [firstName:'John', lastName:'Doe', age:25]
     }
 
     def getColonProperty(String memoryString, String memoryProperty) {
