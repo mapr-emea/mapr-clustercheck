@@ -20,8 +20,8 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkMaprFsRwTestModule.class);
 
     def defaultTestMatrix = [
-            [volume_type: "standard", compression: "off", topology: "/data", size_in_mb: 16384, replication: 3],
-            [volume_type: "standard", compression: "on", topology: "/data", size_in_mb: 16384, replication: 3],
+            [volume_type: "standard", compression: "off", topology: "/data", size_in_mb: 16384, replication: 3, threads: 1],
+            [volume_type: "standard", compression: "on", topology: "/data", size_in_mb: 16384, replication: 3, threads: 1],
             [volume_type: "local", compression: "off", use_disk_percentage: 5],
             [volume_type: "local", compression: "on", use_disk_percentage: 5]
     ]
@@ -162,6 +162,8 @@ sleep 3
             def replication = standardConfig.getOrDefault("replication", 3)
             def compression = standardConfig.getOrDefault("compression", "off")
             def sizeInMB = standardConfig.getOrDefault("size_in_mb", 8192)
+            def threads = standardConfig.getOrDefault("threads", 1)
+            // TODO implement multiple threads
 
             ssh.runInOrder {
                 settings {
@@ -177,6 +179,7 @@ sleep 3
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume create -name benchmarks -path /benchmarks -replication ${replication} ${topologyStr}'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -chmod 777 /benchmarks'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /benchmarks'"
+                    // TODO implement multiple threads, copy from local volume
                     // Run Write test
                     def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${sizeInMB} maprfs:///'"
                     // Run Read test, read is enabled by negative value....
@@ -194,6 +197,7 @@ sleep 3
                             replication: replication,
                             compression: compression,
                             dataSizeInMB: sizeInMB,
+                            threads: threads,
                             writeRateInMBperSecond: getDoubleMegaBytesValueFromTokens(writeResult),
                             readRateInMBperSecond: getDoubleMegaBytesValueFromTokens(readResult),
                     ]
