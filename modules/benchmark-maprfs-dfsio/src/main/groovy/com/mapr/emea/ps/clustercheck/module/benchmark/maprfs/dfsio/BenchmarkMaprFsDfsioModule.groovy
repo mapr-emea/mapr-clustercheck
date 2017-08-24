@@ -18,13 +18,6 @@ import org.springframework.core.io.ResourceLoader
 class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkMaprFsDfsioModule.class);
 
-    def defaultTestMatrix = [
-            [threads: 1, dataPerThread: "4096M"],
-            [threads: 2, dataPerThread: "2048M"],
-            [threads: 4, dataPerThread: "1024M"],
-            [threads: 8, dataPerThread: "512M"]
-    ]
-
     @Autowired
     @Qualifier("ssh")
     def ssh
