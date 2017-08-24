@@ -58,9 +58,9 @@ class MaprClusterCheckApplication implements CommandLineRunner {
 
     private static void printHelpAndExit() {
         println "USAGE: "
-        println "  Run checks:                      ./clusterchecksuite run /path/to/myconfig.yaml"
-        println "  Validate configuration file:     ./clusterchecksuite validate /path/to/myconfig.yaml"
-        println "  Create configuration template:   ./clusterchecksuite generatetemplate /path/to/myconfig.yaml"
+        println "  Run checks:                      ./maprclustercheck run /path/to/myconfig.yaml"
+        println "  Validate configuration file:     ./maprclustercheck validate /path/to/myconfig.yaml"
+        println "  Create configuration template:   ./maprclustercheck generatetemplate /path/to/myconfig.yaml"
         println ""
         System.exit(1)
     }

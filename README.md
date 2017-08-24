@@ -76,12 +76,12 @@ $ chmod +x ~/clustercheck-suite
 ## Run on cluster
 
 ```
-$ ./clusterchecksuite
+$ ./maprclustercheck
 
 USAGE: 
-  Run checks:                      ./clusterchecksuite run /path/to/myconfig.yaml
-  Validate configuration file:     ./clusterchecksuite validate /path/to/myconfig.yaml
-  Create configuration template:   ./clusterchecksuite generatetemplate /path/to/myconfig.yaml
+  Run checks:                      ./maprclustercheck run /path/to/myconfig.yaml
+  Validate configuration file:     ./maprclustercheck validate /path/to/myconfig.yaml
+  Create configuration template:   ./maprclustercheck generatetemplate /path/to/myconfig.yaml
 ```
 
 Based on the bundled modules the checks are executed. It is helpful to generate a configuration file template with `clusterchecksuite generatetemplate`, because this takes all bundled modules into account and generates a configuration file based on this.
