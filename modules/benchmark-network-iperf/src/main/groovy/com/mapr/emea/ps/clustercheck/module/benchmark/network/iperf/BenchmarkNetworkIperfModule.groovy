@@ -17,6 +17,13 @@ import org.springframework.core.io.ResourceLoader
 class BenchmarkNetworkIperfModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkNetworkIperfModule.class);
 
+    def defaultTestMatrix = [
+            [threads: 1, dataPerThread: "4096M"],
+            [threads: 2, dataPerThread: "2048M"],
+            [threads: 4, dataPerThread: "1024M"],
+            [threads: 8, dataPerThread: "512M"]
+    ]
+
     @Autowired
     @Qualifier("ssh")
     def ssh
@@ -29,17 +36,16 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [:]
+        return [tests:defaultTestMatrix]
     }
 
     @Override
     void validate() throws ModuleValidationException {
-        // TODO implement check with hostname
     }
 
     @Override
     ClusterCheckResult execute() {
-        def clusteraudit = globalYamlConfig.modules['benchmark-network'] as Map<String, ?>
+        def clusteraudit = globalYamlConfig.modules['benchmark-network-iperf'] as Map<String, ?>
         def role = clusteraudit.getOrDefault("role", "all")
         checkIfIperfIsRunningAndStop(role)
         copyIperfToRemoteHost(role)
@@ -50,16 +56,9 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
     }
 
     def runIperfTests(role) {
-        def testMatrix = [
-                [threads: 1, dataPerThread: "512M"],
-                [threads: 2, dataPerThread: "256M"]
-        ]
-//        def testMatrix = [
-//                [threads: 1, dataPerThread: "4096M"],
-//                [threads: 2, dataPerThread: "2048M"],
-//                [threads: 4, dataPerThread: "1024M"],
-//                [threads: 8, dataPerThread: "512M"]
-//        ]
+        def moduleConfig = globalYamlConfig.modules['benchmark-network-iperf'] as Map<String, ?>
+        def testMatrix = moduleConfig.getOrDefault("tests", defaultTestMatrix)
+
         def result = []
         // only one command executed with runInOrder
         log.info(">>>>> Run Iperf Tests ... this can take some time.")

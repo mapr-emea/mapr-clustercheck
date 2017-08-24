@@ -12,6 +12,9 @@ nodes:
   ssh_user: sshuser
   ssh_identity: /home/user/.ssh/id_rsa
 modules:
-  clusteraudit:
+  benchmark-network-iperf:
     enabled: true
-    testprop: sampleVal
+    tests:
+    - threads: 1
+      dataPerThread: 4096M
+

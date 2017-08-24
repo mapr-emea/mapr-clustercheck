@@ -23,10 +23,8 @@ modules:
   clusteraudit:
     enabled: true
     role: datacenter1
-  benchmark-network:
+  benchmark-network-iperf:
     enabled: true
-#    testMatrix:
-#      - threads: 1
-#        dataPerThread: 512M
-#      - threads: 2
-#        dataPerThread: 512M
+    tests:
+    - threads: 1
+      dataPerThread: 4096M
