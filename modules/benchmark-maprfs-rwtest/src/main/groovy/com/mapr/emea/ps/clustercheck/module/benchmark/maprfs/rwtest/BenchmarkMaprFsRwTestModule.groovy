@@ -63,7 +63,7 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
         localConfigs.each { localConfig ->
             def compression = localConfig.getOrDefault("compression", "off")
             def useDiskPercentage = localConfig.getOrDefault("use_disk_percentage", 5)
-
+            log.info(">>>>> Run test on local volume - use free disk: ${useDiskPercentage}% - compression: ${compression}" )
 
             ssh.runInOrder {
                 settings {
@@ -164,6 +164,7 @@ sleep 3
             def sizeInMB = standardConfig.getOrDefault("size_in_mb", 8192)
             def threads = standardConfig.getOrDefault("threads", 1)
             // TODO implement multiple threads
+            log.info(">>>>> Run test on standard volume - size: ${sizeInMB} MB - threads: ${threads} - topology: ${topology} - replication: ${replication} - compression: ${compression}" )
 
             ssh.runInOrder {
                 settings {

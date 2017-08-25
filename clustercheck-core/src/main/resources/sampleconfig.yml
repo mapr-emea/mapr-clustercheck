@@ -39,16 +39,16 @@ modules:
     - volume_type: standard
       compression: 'off'
       topology: /data
-      sizeInMB: 8192
+      size_in_mb: 256
       replication: 3
     - volume_type: standard
       compression: 'on'
       topology: /data
-      sizeInMB: 8192
+      size_in_mb: 256
       replication: 3
     - volume_type: local
       compression: 'off'
-      use_disk_percentage: 5
+      size_in_mb: 256
     - volume_type: local
       compression: 'on'
-      use_disk_percentage: 5
+      size_in_mb: 256
