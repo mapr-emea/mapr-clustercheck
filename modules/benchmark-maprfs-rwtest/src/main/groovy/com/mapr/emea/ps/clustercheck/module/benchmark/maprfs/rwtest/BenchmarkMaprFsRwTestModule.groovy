@@ -57,13 +57,14 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
 
 
     def runLocalVolumeBenchmark(Map<String, ?> moduleconfig, role) {
-        log.info(">>>>> Running local volume benchmark... be patient this can take a while.")
+        log.info(">>> Running local volume benchmark... be patient this can take a while.")
         def localConfigs = moduleconfig.tests.findAll { it.volume_type == "local" }
         def result = []
         localConfigs.each { localConfig ->
             def compression = localConfig.getOrDefault("compression", "off")
             def useDiskPercentage = localConfig.getOrDefault("use_disk_percentage", 5)
-            log.info(">>>>> Run test on local volume - use free disk: ${useDiskPercentage}% - compression: ${compression}" )
+            def sizeString = localConfig.containsKey("size_in_mb") ? "size: ${localConfig.size_in_mb} MB" : "use free disk: ${useDiskPercentage}%"
+            log.info(">>>>> Run test on local volume - ${sizeString} - compression: ${compression}" )
 
             ssh.runInOrder {
                 settings {
@@ -154,7 +155,7 @@ sleep 3
     }
 
     def runStandardVolumeBenchmark(Map<String, ?> moduleconfig, role) {
-        log.info(">>>>> Running standard volume benchmark... be patient this can take a while.")
+        log.info(">>> Running standard volume benchmark... be patient this can take a while.")
         def standardConfigs = moduleconfig.tests.findAll { it.volume_type == "standard" }
         def result = []
         standardConfigs.each { standardConfig ->
