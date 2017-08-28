@@ -125,8 +125,8 @@ sleep 3
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name ${volumeName} | xargs echo'"// xargs echo removes return code
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name ${volumeName} | xargs echo'"
                     sleep(2000)
-                    def writeRates = writeResult.tokenize('\n').findAll{ it.startsWith("Write rate")}.collect{ Double.valueOf(it.tokenize(' ')[-2]) }
-                    def readRates = readResult.tokenize('\n').findAll{ it.startsWith("Read rate")}.collect{ Double.valueOf(it.tokenize(' ')[-2]) }
+                    def writeRates = writeResult.tokenize('\n').findAll{ it.startsWith("Write rate:")}.collect{ it.substring("Write rate:".size()).tokenize(' ')[0] as Double }
+                    def readRates = readResult.tokenize('\n').findAll{ it.startsWith("Read rate:")}.collect{ it.substring("Read rate:".size()).tokenize(' ')[0] as Double }
                     result << [
                             host: remote.host,
                             volumeType: "local",
@@ -220,8 +220,8 @@ sleep 3
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name benchmarks | xargs echo'"// xargs echo removes return code
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name benchmarks | xargs echo'"
                     sleep(2000)
-                    def writeRates = writeResult.tokenize('\n').findAll{ it.startsWith("Write rate")}.collect{ Double.valueOf(it.tokenize(' ')[-2]) }
-                    def readRates = readResult.tokenize('\n').findAll{ it.startsWith("Read rate")}.collect{ Double.valueOf(it.tokenize(' ')[-2]) }
+                    def writeRates = writeResult.tokenize('\n').findAll{ it.startsWith("Write rate:")}.collect{ it.substring("Write rate:".size()).tokenize(' ')[0] as Double }
+                    def readRates = readResult.tokenize('\n').findAll{ it.startsWith("Read rate:")}.collect{ it.substring("Read rate:".size()).tokenize(' ')[0] as Double }
 
                     result << [
                             host: remote.host,
