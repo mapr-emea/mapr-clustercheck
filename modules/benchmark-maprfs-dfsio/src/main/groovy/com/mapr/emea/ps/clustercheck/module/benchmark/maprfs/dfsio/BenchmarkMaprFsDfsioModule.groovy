@@ -70,7 +70,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 >    Compression: ${result.compression},
 >    Topology: ${result.topology},
 >    Replication: ${result.replication}"""
-            for (def test  : result.results) {
+            for (def test : result.results) {
                 textReport += """>>> Host settings:         
 >>>    Executed on: ${test.executedOnHost},
 >>>    Total disks: ${test.totalDisks},
@@ -213,7 +213,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 compression : compression,
                 topology    : topology,
                 replication : replication,
-                results     : result]
+                tests       : result]
     }
 
 

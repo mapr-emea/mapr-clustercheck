@@ -64,6 +64,7 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
         def result = []
         // only one command executed with runInOrder
         testMatrix.each { matrixItem ->
+            def iperfTests = []
             log.info(">>>>> Running iperf tests - Threads: ${matrixItem.threads} - Data per thread: ${matrixItem.data_per_thread}")
             log.info(">>>>> ... this can take some time.")
             globalYamlConfig.nodes.each { node ->
@@ -72,19 +73,17 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
                     session(ssh.remotes.role(role)) {
                         def currentHost = remote.host
                         if (node.host != currentHost) {
-                            def iperfTests = []
-                            //    log.info(">>>>> Run Iperf Server: ${node.host} - Client: ${currentHost} - Threads: ${matrixItem.threads} - Data per thread: ${matrixItem.data_per_thread}")
                             def iperfResult = execute "\$HOME/.clustercheck/iperf -c ${node.host} -n ${matrixItem.data_per_thread} -P ${matrixItem.threads} -y C"
                             def iperfTokens = iperfResult.tokenize(',')
                             def dataCopiedInBytes = Long.valueOf(iperfTokens[-2])
                             def throughputInBitPerSecond = Long.valueOf(iperfTokens[-1])
-                            iperfTests << [dataPerThread: matrixItem.data_per_thread, threads: matrixItem.threads, dataCopiedInBytes: dataCopiedInBytes as Long, throughputInBitsPerSecond: throughputInBitPerSecond as Long]
-                            result << [serverHost: node.host, clientHost: currentHost, tests: iperfTests]
+                            iperfTests << [serverHost: node.host, clientHost: currentHost, dataCopiedInBytes: dataCopiedInBytes as Long, throughputInBitsPerSecond: throughputInBitPerSecond as Long]
                             sleep(1000)
                         }
                     }
                 }
             }
+            result << [dataPerThread: matrixItem.data_per_thread, threads: matrixItem.threads, tests: iperfTests]
         }
         return result
     }
