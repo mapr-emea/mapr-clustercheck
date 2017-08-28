@@ -126,7 +126,7 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
         def numExecutors = moduleconfig.getOrDefault("num_executors", 10)
         def executorCores = moduleconfig.getOrDefault("executor_cores", 2)
         def executorMemory = moduleconfig.getOrDefault("executor_memory", "4G")
-        log.info(">>>>> Generate Data for Spark TeraSort: DataSize: ${dataSize} - NumExecutors: ${numExecutors} - ExecutorCores: ${executorCores} - ExecutorMemory: ${executorMemory}")
+        log.info(">>>>> Generate Data for Spark TeraSort: Data size: ${dataSize} - Number of executors: ${numExecutors} - Executor cores: ${executorCores} - Executor memory: ${executorMemory}")
         log.info(">>>>> ... be patient")
         def start = System.currentTimeMillis()
         ssh.runInOrder {
