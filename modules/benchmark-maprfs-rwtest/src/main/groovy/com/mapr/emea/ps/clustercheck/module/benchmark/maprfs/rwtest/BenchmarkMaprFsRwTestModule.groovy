@@ -63,8 +63,8 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
         localConfigs.each { localConfig ->
             def compression = localConfig.getOrDefault("compression", "off")
             def useDiskPercentage = localConfig.getOrDefault("use_disk_percentage", 5)
-            def sizeString = localConfig.containsKey("size_in_mb") ? "size: ${localConfig.size_in_mb} MB" : "use free disk: ${useDiskPercentage}%"
-            log.info(">>>>> Run test on local volume - ${sizeString} - compression: ${compression}" )
+            def sizeString = localConfig.containsKey("size_in_mb") ? "Size: ${localConfig.size_in_mb} MB" : "Use free disk: ${useDiskPercentage}%"
+            log.info(">>>>> Run test on local volume - ${sizeString} - Compression: ${compression}" )
 
             ssh.runInOrder {
                 settings {
