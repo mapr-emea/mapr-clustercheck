@@ -29,7 +29,7 @@ modules:
     enabled: true
     tests:
     - threads: 1
-      dataPerThread: 4096M
+      data_per_thread: 4096M
   benchmark-maprfs-dfsio:
     enabled: true
     role: clusterjob-execution
@@ -42,15 +42,23 @@ modules:
       size_in_mb: 256
       threads: 3
       replication: 3
-#    - volume_type: standard
-#      compression: 'on'
-#      topology: /data
-#      size_in_mb: 256
-#      threads: 3
-#      replication: 3
-#    - volume_type: local
-#      compression: 'off'
-#      size_in_mb: 256
-#    - volume_type: local
-#      compression: 'on'
-#      size_in_mb: 256
+    - volume_type: standard
+      compression: 'on'
+      topology: /data
+      size_in_mb: 256
+      threads: 3
+      replication: 3
+    - volume_type: local
+      compression: 'off'
+      size_in_mb: 256
+    - volume_type: local
+      compression: 'on'
+      size_in_mb: 256
+  benchmark-yarn-terasort-mr:
+    enabled: true
+    role: clusterjob-execution
+    chunk_size_in_mb: 256
+    rows: 5000000
+    reduce_tasks_per_node: 2
+    topology: /data
+    replication: 3

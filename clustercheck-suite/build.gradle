@@ -12,6 +12,7 @@ dependencies {
 	compile project(':modules:benchmark-network-iperf')
 	compile project(':modules:benchmark-maprfs-dfsio')
 	compile project(':modules:benchmark-maprfs-rwtest')
+	compile project(':modules:benchmark-yarn-terasort-mr')
 }
 
 task copyArtifact(type: Copy) {

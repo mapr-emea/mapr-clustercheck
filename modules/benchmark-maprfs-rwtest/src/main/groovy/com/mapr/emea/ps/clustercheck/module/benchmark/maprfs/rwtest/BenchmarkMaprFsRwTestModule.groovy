@@ -190,7 +190,7 @@ sleep 3
                     def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${threads}); do 
-    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${dataSizePerThread} maprfs:/// & 
+    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmarks/RWTestSingleTest ${dataSizePerThread} maprfs:/// & 
 done 
 wait 
 sleep 3 
@@ -206,7 +206,7 @@ sleep 3
                     def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${threads}); do 
-    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${dataSizePerThread * -1} maprfs:/// & 
+    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmarks/RWTestSingleTest ${dataSizePerThread * -1} maprfs:/// & 
 done 
 wait 
 sleep 3 
@@ -229,10 +229,10 @@ sleep 3
                             topology: topology,
                             replication: replication,
                             compression: compression,
-                            dataSizeInMB: sizeInMB,
-                            threads: threads,
-                            writeRatesInMBperSecond: writeRates,
-                            readRatesInMBperSecond: readRates,
+                            dataSizeInMB: sizeInMB as Long,
+                            threads: threads as Long,
+                            writeRatesInMBperSecond: writeRates as Long,
+                            readRatesInMBperSecond: readRates as Long,
                             sumWriteRateInMBperSecond: writeRates.sum(),
                             sumReadRateInMBperSecond: readRates.sum()
                     ]

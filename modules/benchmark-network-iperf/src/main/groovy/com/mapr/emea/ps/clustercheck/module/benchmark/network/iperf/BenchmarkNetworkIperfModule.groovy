@@ -20,10 +20,10 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkNetworkIperfModule.class);
 
     def defaultTestMatrix = [
-            [threads: 1, dataPerThread: "4096M"],
-            [threads: 2, dataPerThread: "2048M"],
-            [threads: 4, dataPerThread: "1024M"],
-            [threads: 8, dataPerThread: "512M"]
+            [threads: 1, data_per_thread: "4096M"],
+            [threads: 2, data_per_thread: "2048M"],
+            [threads: 4, data_per_thread: "1024M"],
+            [threads: 8, data_per_thread: "512M"]
     ]
 
     @Autowired
@@ -71,12 +71,12 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
                     def iperfTests = []
                     if (node.host != currentHost) {
                         testMatrix.each { matrixItem ->
-                            //    log.info(">>>>> Run Iperf Server: ${node.host} - Client: ${currentHost} - Threads: ${matrixItem.threads} - Data per thread: ${matrixItem.dataPerThread}")
-                            def iperfResult = execute "\$HOME/.clustercheck/iperf -c ${node.host} -n ${matrixItem.dataPerThread} -P ${matrixItem.threads} -y C"
+                            //    log.info(">>>>> Run Iperf Server: ${node.host} - Client: ${currentHost} - Threads: ${matrixItem.threads} - Data per thread: ${matrixItem.data_per_thread}")
+                            def iperfResult = execute "\$HOME/.clustercheck/iperf -c ${node.host} -n ${matrixItem.data_per_thread} -P ${matrixItem.threads} -y C"
                             def iperfTokens = iperfResult.tokenize(',')
                             def dataCopiedInBytes = Long.valueOf(iperfTokens[-2])
                             def throughputInBitPerSecond = Long.valueOf(iperfTokens[-1])
-                            iperfTests << [dataPerThread: matrixItem.dataPerThread, threads: matrixItem.threads, dataCopiedInBytes: dataCopiedInBytes, throughputInBitsPerSecond: throughputInBitPerSecond]
+                            iperfTests << [dataPerThread: matrixItem.data_per_thread as Long, threads: matrixItem.threads as Long, dataCopiedInBytes: dataCopiedInBytes as Long, throughputInBitsPerSecond: throughputInBitPerSecond as Long]
                             sleep(1000)
                         }
                         result << [serverHost: node.host, clientHost: currentHost, tests: iperfTests]

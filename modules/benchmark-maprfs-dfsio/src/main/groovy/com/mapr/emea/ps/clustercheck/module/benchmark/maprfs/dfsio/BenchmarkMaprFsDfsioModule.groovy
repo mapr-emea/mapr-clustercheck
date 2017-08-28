@@ -30,7 +30,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", "dfsioFilesPerDisk": 1, "dfsioFileSizeInMB": 8196, "topology": "/data", replication: 1]
+        return [role: "clusterjob-execution", "dfsioFilesPerDisk": 1, "dfsioFileSizeInMB": 8196, "topology": "/data", replication: 1, compression: "on"]
     }
 
     @Override
@@ -59,6 +59,12 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
         def textReport = ""
         for (def result : results) {
             textReport += """Executed on host: ${result.executedOnHost}
+>>> Settings:
+>>>    File size: ${result.fileSizeInMB} MB
+>>>    Number of files: ${result.numberOfFiles},
+>>>    Files per fisk: ${result.filesPerDisk},
+>>>    Total disks: ${result.totalDisks},
+>>>    Compression: ${result.compression},
 >>> DFSIO write:
 >>>    Number of files: ${result.write.numberOfFiles}
 >>>    Total processed: ${result.write.totalProcessedInMB} MB
@@ -82,6 +88,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
         log.info(">>>>> Creating /benchmark volume.")
         def topology = moduleconfig.getOrDefault("topology", "/data")
         def replication = moduleconfig.getOrDefault("replication", 1)
+        def compression = moduleconfig.getOrDefault("compression", "on")
 
         ssh.runInOrder {
             settings {
@@ -91,6 +98,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 def topologyStr = topology != "/data" ? "-topology ${topology}" : ""
                 executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume create -name benchmarks -path /benchmarks -replication ${replication} ${topologyStr}'"
                 executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -chmod 777 /benchmarks'"
+                executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /${volumeName}'"
             }
         }
         sleep(2000)
@@ -115,6 +123,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     def runDfsioBenchmark(Map<String, ?> moduleconfig, role) {
         def filesPerDisk = moduleconfig.getOrDefault("dfsioFilesPerDisk", 1)
         def fileSizeInMB = moduleconfig.getOrDefault("dfsioFileSizeInMB", 8196)
+        def compression = moduleconfig.getOrDefault("compression", "on")
         def jsonSlurper = new JsonSlurper()
         log.info(">>>>> Run DFSIO tests... this can take some time.")
         def result = []
@@ -126,7 +135,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
                 def hadoopPath = execute "ls -d /opt/mapr/hadoop/hadoop-2*"
                 def testJar = execute "ls ${hadoopPath}/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-*-tests.jar"
-                def dashboardJson = executeSudo "maprcli dashboard info -json"
+                def dashboardJson = executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli dashboard info -json'"
 //                new File("/Users/chufe/Documents/workspaces/mapr-clustercheck/playground/dashboard.json").text = dashboardJson
                 def dashboardConfig = jsonSlurper.parseText(dashboardJson)
                 def totalDisks = dashboardConfig.data[0].yarn.total_disks
@@ -156,6 +165,11 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 def readTokens = dfsioReadResult.tokenize('\n')
                 result << [
                         executedOnHost: remote.host,
+                        fileSizeInMB: fileSizeInMB,
+                        numberOfFiles: numberOfFiles,
+                        filesPerDisk: filesPerDisk,
+                        totalDisks: totalDisks,
+                        compression: compression,
                         write         : [
                                 numberOfFiles             : getDoubleValueFromTokens(writeTokens, "Number of files"),
                                 totalProcessedInMB        : getDoubleValueFromTokens(writeTokens, "Total MBytes processed"),
