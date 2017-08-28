@@ -30,7 +30,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", "chunk_size_in_mb": 256, "rows": 10000000000, "row_comment": "one row has 100 byte", reduce_tasks_per_node: 2, "topology": "/data", replication: 3, compression: "on"]
+        return [role: "clusterjob-execution", "chunk_size_in_mb": 256, "rows": 10000000000, "rows_comment": "one row has 100 byte", reduce_tasks_per_node: 2, "topology": "/data", replication: 3, compression: "on"]
     }
 
     @Override
