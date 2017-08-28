@@ -31,11 +31,12 @@ modules:
   benchmark-maprfs-dfsio:
     enabled: true
     role: clusterjob-execution
-    dfsio_files_per_disk: 1
-    dfsio_file_size_in_mb: 8196
-    topology: /data
-    replication: 1
-    compression: 'on'
+    tests:
+    - dfsio_files_per_disk: 1
+      dfsio_file_size_in_mb: 8196
+      topology: /data
+      replication: 1
+      compression: 'on'
   benchmark-maprfs-rwtest:
     enabled: true
     tests:
@@ -60,21 +61,23 @@ modules:
   benchmark-yarn-terasort-mr:
     enabled: true
     role: clusterjob-execution
-    chunk_size_in_mb: 256
-    rows: 10000000000
-    rows_comment: one row has 100 byte
-    reduce_tasks_per_node: 2
-    topology: /data
-    replication: 3
-    compression: 'on'
+    tests:
+    - chunk_size_in_mb: 256
+      rows: 10000000000
+      rows_comment: one row has 100 byte
+      reduce_tasks_per_node: 2
+      topology: /data
+      replication: 3
+      compression: 'on'
   benchmark-yarn-terasort-spark:
     enabled: true
     role: clusterjob-execution
-    chunk_size_in_mb: 256
-    data_size: 1T
-    num_executors: 10
-    executor_cores: 2
-    executor_memory: 4G
-    topology: /data
-    replication: 3
-    compression: 'on'
+    tests:
+    - chunk_size_in_mb: 256
+      data_size: 1T
+      num_executors: 10
+      executor_cores: 2
+      executor_memory: 4G
+      topology: /data
+      replication: 3
+      compression: 'on'

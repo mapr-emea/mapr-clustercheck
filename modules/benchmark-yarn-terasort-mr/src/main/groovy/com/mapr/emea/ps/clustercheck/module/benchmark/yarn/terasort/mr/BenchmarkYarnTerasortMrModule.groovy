@@ -14,7 +14,6 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
-// TODO provide prossibility to run multiple test cases
 @ClusterCheckModule(name = "benchmark-yarn-terasort-mr", version = "1.0")
 class BenchmarkYarnTerasortMrModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkYarnTerasortMrModule.class);
@@ -31,7 +30,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", "chunk_size_in_mb": 256, "rows": 10000000000, "rows_comment": "one row has 100 byte", reduce_tasks_per_node: 2, "topology": "/data", replication: 3, compression: "on"]
+        return [role: "clusterjob-execution", tests: [["chunk_size_in_mb": 256, "rows": 10000000000, "rows_comment": "one row has 100 byte", reduce_tasks_per_node: 2, "topology": "/data", replication: 3, compression: "on"]]]
     }
 
     @Override
@@ -50,11 +49,16 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
         def moduleconfig = globalYamlConfig.modules['benchmark-yarn-terasort-mr'] as Map<String, ?>
         def role = moduleconfig.getOrDefault("role", "all")
         deleteBenchmarkVolume(moduleconfig, role)
-        setupBenchmarkVolume(moduleconfig, role)
-        def teraGenResult = generateTerasortBenchmark(moduleconfig, role)
-        def teraSortResult = runTerasortBenchmark(moduleconfig, role)
-        deleteBenchmarkVolume(moduleconfig, role)
-        return new ClusterCheckResult(reportJson: [teraGen: teraGenResult, teraSort: teraSortResult], reportText: "not yet implemented", recommendations: [])
+        def tests = moduleconfig.tests
+        def result = []
+        for (def test  : tests) {
+            setupBenchmarkVolume(test, role)
+            def teraGenResult = generateTerasortBenchmark(test, role)
+            def teraSortResult = runTerasortBenchmark(test, role)
+            result << [teraGen: teraGenResult, teraSort: teraSortResult]
+            deleteBenchmarkVolume(test, role)
+        }
+        return new ClusterCheckResult(reportJson: result, reportText: "not yet implemented", recommendations: [])
     }
 
 

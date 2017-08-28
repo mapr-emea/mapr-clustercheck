@@ -14,7 +14,6 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
-// TODO provide prossibility to run multiple test cases
 @ClusterCheckModule(name = "benchmark-maprfs-dfsio", version = "1.0")
 class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkMaprFsDfsioModule.class);
@@ -31,7 +30,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", "dfsio_files_per_disk": 1, "dfsio_file_size_in_mb": 8196, "topology": "/data", replication: 1, compression: "on"]
+        return [role: "clusterjob-execution", tests: [["dfsio_files_per_disk": 1, "dfsio_file_size_in_mb": 8196, "topology": "/data", replication: 1, compression: "on"]]]
     }
 
     @Override
@@ -50,37 +49,49 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
         def moduleconfig = globalYamlConfig.modules['benchmark-maprfs-dfsio'] as Map<String, ?>
         def role = moduleconfig.getOrDefault("role", "all")
         deleteBenchmarkVolume(moduleconfig, role)
-        setupBenchmarkVolume(moduleconfig, role)
-        def result = runDfsioBenchmark(moduleconfig, role)
-        deleteBenchmarkVolume(moduleconfig, role)
-        return new ClusterCheckResult(reportJson: result, reportText: generateTextReport(result), recommendations: [])
+
+        def results = []
+        def tests = moduleconfig.tests
+        for (def test : tests) {
+            setupBenchmarkVolume(test, role)
+            results << runDfsioBenchmark(test, role)
+            deleteBenchmarkVolume(test, role)
+        }
+        return new ClusterCheckResult(reportJson: results, reportText: generateTextReport(results), recommendations: [])
     }
 
     def generateTextReport(results) {
         def textReport = ""
         for (def result : results) {
             textReport += """Executed on host: ${result.executedOnHost}
->>> Settings:
->>>    File size: ${result.fileSizeInMB} MB
->>>    Number of files: ${result.numberOfFiles},
->>>    Files per fisk: ${result.filesPerDisk},
->>>    Total disks: ${result.totalDisks},
->>>    Compression: ${result.compression},
+> Test settings:
+>    File size: ${result.fileSizeInMB} MB
+>    Files per fisk: ${result.filesPerDisk},
+>    Compression: ${result.compression},
+>    Topology: ${result.topology},
+>    Replication: ${result.replication}"""
+            for (def test  : result.results) {
+                textReport += """>>> Host settings:         
+>>>    Executed on: ${test.executedOnHost},
+>>>    Total disks: ${test.totalDisks},
+>>>    Number of files: ${test.numberOfFiles},     
 >>> DFSIO write:
->>>    Number of files: ${result.write.numberOfFiles}
->>>    Total processed: ${result.write.totalProcessedInMB} MB
->>>    Throughput: ${result.write.throughputInMBperSecond} MB/second
->>>    Average IO rate: ${result.write.averageIORateInMBperSecond} MB/second
->>>    IO rate std deviation: ${result.write.ioRateStdDeviation}
->>>    Execution time: ${result.write.testExecTimeInSeconds} seconds
+>>>    Number of files: ${test.write.numberOfFiles}
+>>>    Total processed: ${test.write.totalProcessedInMB} MB
+>>>    Throughput: ${test.write.throughputInMBperSecond} MB/second
+>>>    Average IO rate: ${test.write.averageIORateInMBperSecond} MB/second
+>>>    IO rate std deviation: ${test.write.ioRateStdDeviation}
+>>>    Execution time: ${test.write.testExecTimeInSeconds} seconds
 >>> DFSIO read:
->>>    Number of files: ${result.read.numberOfFiles}
->>>    Total processed: ${result.read.totalProcessedInMB} MB
->>>    Throughput: ${result.read.throughputInMBperSecond} MB/second
->>>    Average IO rate: ${result.read.averageIORateInMBperSecond} MB/second
->>>    IO rate std deviation: ${result.read.ioRateStdDeviation}
->>>    Execution time: ${result.read.testExecTimeInSeconds} seconds
+>>>    Number of files: ${test.read.numberOfFiles}
+>>>    Total processed: ${test.read.totalProcessedInMB} MB
+>>>    Throughput: ${test.read.throughputInMBperSecond} MB/second
+>>>    Average IO rate: ${test.read.averageIORateInMBperSecond} MB/second
+>>>    IO rate std deviation: ${test.read.ioRateStdDeviation}
+>>>    Execution time: ${test.read.testExecTimeInSeconds} seconds
 """
+            }
+
         }
         return textReport
     }
@@ -125,8 +136,11 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
         def filesPerDisk = moduleconfig.getOrDefault("dfsio_files_per_disk", 1)
         def fileSizeInMB = moduleconfig.getOrDefault("dfsio_file_size_in_mb", 8196)
         def compression = moduleconfig.getOrDefault("compression", "on")
+        def topology = moduleconfig.getOrDefault("topology", "/data")
+        def replication = moduleconfig.getOrDefault("replication", 1)
         def jsonSlurper = new JsonSlurper()
-        log.info(">>>>> Run DFSIO tests... this can take some time.")
+        log.info(">>>>> Run DFSIO tests - Files per disk: ${filesPerDisk} - File size ${fileSizeInMB} MB - Compression: ${compression} - Topology: ${topology} - Replication: ${replication}")
+        log.info(">>>>> ... this can take some time.")
         def result = []
         ssh.runInOrder {
             settings {
@@ -142,6 +156,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 def totalDisks = dashboardConfig.data[0].yarn.total_disks
                 def mapDisk = 1 / filesPerDisk
                 def numberOfFiles = totalDisks * filesPerDisk
+                def startWrite = System.currentTimeMillis()
                 def dfsioWriteResult = executeSudo """su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
       -Dmapreduce.job.name=mapr-clustercheck-DFSIO-write \\
       -Dmapreduce.map.cpu.vcores=0 \\
@@ -152,6 +167,8 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
       -write -nrFiles ${numberOfFiles} \\
       -fileSize ${fileSizeInMB}  -bufferSize 65536'
 """
+                def endWrite = System.currentTimeMillis()
+                def startRead = System.currentTimeMillis()
                 def dfsioReadResult = executeSudo """su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
       -Dmapreduce.job.name=mapr-clustercheck-DFSIO-read \\
       -Dmapreduce.map.cpu.vcores=0 \\
@@ -162,22 +179,22 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
       -read -nrFiles ${numberOfFiles} \\
       -fileSize ${fileSizeInMB}  -bufferSize 65536'
 """
+                def endRead = System.currentTimeMillis()
+
                 def writeTokens = dfsioWriteResult.tokenize('\n')
                 def readTokens = dfsioReadResult.tokenize('\n')
                 result << [
                         executedOnHost: remote.host,
-                        fileSizeInMB: fileSizeInMB,
-                        numberOfFiles: numberOfFiles,
-                        filesPerDisk: filesPerDisk,
-                        totalDisks: totalDisks,
-                        compression: compression,
+                        numberOfFiles : numberOfFiles,
+                        totalDisks    : totalDisks,
                         write         : [
                                 numberOfFiles             : getDoubleValueFromTokens(writeTokens, "Number of files"),
                                 totalProcessedInMB        : getDoubleValueFromTokens(writeTokens, "Total MBytes processed"),
                                 throughputInMBperSecond   : getDoubleValueFromTokens(writeTokens, "Throughput mb/sec"),
                                 averageIORateInMBperSecond: getDoubleValueFromTokens(writeTokens, "Average IO rate mb/sec"),
                                 ioRateStdDeviation        : getDoubleValueFromTokens(writeTokens, "IO rate std deviation"),
-                                testExecTimeInSeconds     : getDoubleValueFromTokens(writeTokens, "Test exec time sec")
+                                testExecTimeInSeconds     : getDoubleValueFromTokens(writeTokens, "Test exec time sec"),
+                                durationInMs              : endWrite - startWrite
                         ],
                         read          : [
                                 numberOfFiles             : getDoubleValueFromTokens(readTokens, "Number of files"),
@@ -185,11 +202,18 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                                 throughputInMBperSecond   : getDoubleValueFromTokens(readTokens, "Throughput mb/sec"),
                                 averageIORateInMBperSecond: getDoubleValueFromTokens(readTokens, "Average IO rate mb/sec"),
                                 ioRateStdDeviation        : getDoubleValueFromTokens(readTokens, "IO rate std deviation"),
-                                testExecTimeInSeconds     : getDoubleValueFromTokens(readTokens, "Test exec time sec")
+                                testExecTimeInSeconds     : getDoubleValueFromTokens(readTokens, "Test exec time sec"),
+                                durationInMs              : endRead - startRead
                         ]
                 ]
             }
         }
+        return [fileSizeInMB: fileSizeInMB,
+                filesPerDisk: filesPerDisk,
+                compression : compression,
+                topology    : topology,
+                replication : replication,
+                results     : result]
     }
 
 

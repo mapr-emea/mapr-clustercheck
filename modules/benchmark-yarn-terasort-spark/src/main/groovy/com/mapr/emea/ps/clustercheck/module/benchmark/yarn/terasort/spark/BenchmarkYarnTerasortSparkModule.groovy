@@ -14,7 +14,6 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
-// TODO provide prossibility to run multiple test cases
 @ClusterCheckModule(name = "benchmark-yarn-terasort-spark", version = "1.0")
 class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkYarnTerasortSparkModule.class);
@@ -31,7 +30,7 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", "chunk_size_in_mb": 256, data_size: "1T", num_executors: 10, executor_cores: 2, executor_memory: "4G", "topology": "/data", replication: 3, compression: "on"]
+        return [role: "clusterjob-execution", tests: [["chunk_size_in_mb": 256, data_size: "1T", num_executors: 10, executor_cores: 2, executor_memory: "4G", "topology": "/data", replication: 3, compression: "on"]]]
     }
 
     @Override
@@ -51,12 +50,17 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
         def moduleconfig = globalYamlConfig.modules['benchmark-yarn-terasort-spark'] as Map<String, ?>
         def role = moduleconfig.getOrDefault("role", "all")
         deleteBenchmarkVolume(moduleconfig, role)
-        setupBenchmarkVolume(moduleconfig, role)
+        def result = []
         def sparkTeraJar = copySparkTeraSortToRemoteHost(role)
-        def teraGenResult = generateTerasortBenchmark(moduleconfig, role, sparkTeraJar)
-        def teraSortResult = runTerasortBenchmark(moduleconfig, role, sparkTeraJar)
-        deleteBenchmarkVolume(moduleconfig, role)
-        return new ClusterCheckResult(reportJson: [teraGen: teraGenResult, teraSort: teraSortResult], reportText: "not yet implemented", recommendations: [])
+        def tests = moduleconfig.tests
+        for (def test  : tests) {
+            setupBenchmarkVolume(test, role)
+            def teraGenResult = generateTerasortBenchmark(test, role, sparkTeraJar)
+            def teraSortResult = runTerasortBenchmark(test, role, sparkTeraJar)
+            result << [teraGen: teraGenResult, teraSort: teraSortResult]
+            deleteBenchmarkVolume(test, role)
+        }
+        return new ClusterCheckResult(reportJson: result, reportText: "not yet implemented", recommendations: [])
     }
 
 
