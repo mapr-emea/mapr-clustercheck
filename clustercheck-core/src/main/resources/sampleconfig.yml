@@ -32,6 +32,8 @@ modules:
       data_per_thread: 4096M
   benchmark-maprfs-dfsio:
     enabled: true
+    dfsio_files_per_disk: 1
+    dfsio_file_size_in_mb: 8196
     role: clusterjob-execution
   benchmark-maprfs-rwtest:
     enabled: true

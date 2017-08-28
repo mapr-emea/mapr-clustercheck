@@ -30,7 +30,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", "dfsioFilesPerDisk": 1, "dfsioFileSizeInMB": 8196, "topology": "/data", replication: 1, compression: "on"]
+        return [role: "clusterjob-execution", "dfsio_files_per_disk": 1, "dfsio_file_size_in_mb": 8196, "topology": "/data", replication: 1, compression: "on"]
     }
 
     @Override
@@ -121,8 +121,8 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     }
 
     def runDfsioBenchmark(Map<String, ?> moduleconfig, role) {
-        def filesPerDisk = moduleconfig.getOrDefault("dfsioFilesPerDisk", 1)
-        def fileSizeInMB = moduleconfig.getOrDefault("dfsioFileSizeInMB", 8196)
+        def filesPerDisk = moduleconfig.getOrDefault("dfsio_files_per_disk", 1)
+        def fileSizeInMB = moduleconfig.getOrDefault("dfsio_file_size_in_mb", 8196)
         def compression = moduleconfig.getOrDefault("compression", "on")
         def jsonSlurper = new JsonSlurper()
         log.info(">>>>> Run DFSIO tests... this can take some time.")
