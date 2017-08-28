@@ -129,7 +129,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
                 ]
             }
         }
-        log.info(">>>>> ... TeraSort finished")
+        log.info(">>>>> ... TeraGen finished")
         return result
     }
 
