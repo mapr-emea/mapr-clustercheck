@@ -38,7 +38,7 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [tests:defaultTestMatrix]
+        return [tests: defaultTestMatrix]
     }
 
     @Override
@@ -63,14 +63,16 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
 
         def result = []
         // only one command executed with runInOrder
-        log.info(">>>>> Run Iperf Tests ... this can take some time.")
-        ssh.runInOrder {
-            session(ssh.remotes.role(role)) {
-                def currentHost = remote.host
-                globalYamlConfig.nodes.each { node ->
-                    def iperfTests = []
-                    if (node.host != currentHost) {
-                        testMatrix.each { matrixItem ->
+        testMatrix.each { matrixItem ->
+            log.info(">>>>> Running iperf tests - Threads: ${matrixItem.threads} - Data per thread: ${matrixItem.data_per_thread}")
+            log.info(">>>>> ... this can take some time.")
+            globalYamlConfig.nodes.each { node ->
+                log.info(">>>>> ..... executing for node ${node.host}.")
+                ssh.runInOrder {
+                    session(ssh.remotes.role(role)) {
+                        def currentHost = remote.host
+                        def iperfTests = []
+                        if (node.host != currentHost) {
                             //    log.info(">>>>> Run Iperf Server: ${node.host} - Client: ${currentHost} - Threads: ${matrixItem.threads} - Data per thread: ${matrixItem.data_per_thread}")
                             def iperfResult = execute "\$HOME/.clustercheck/iperf -c ${node.host} -n ${matrixItem.data_per_thread} -P ${matrixItem.threads} -y C"
                             def iperfTokens = iperfResult.tokenize(',')
@@ -124,7 +126,7 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
     }
 
     def copyIperfToRemoteHost(role) {
-        log.info(">>>>> Copy iperf to remote host")
+        log.info(">>>>> Copy iperf to remote hosts")
         ssh.run {
             session(ssh.remotes.role(role)) {
                 def homePath = execute 'echo $HOME'
