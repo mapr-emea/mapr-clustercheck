@@ -4,6 +4,8 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckModule
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 
@@ -31,6 +33,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 
 @ClusterCheckModule(name = "clusteraudit", version = "1.0")
 class ClusterAuditModule implements ExecuteModule {
+    static final Logger log = LoggerFactory.getLogger(ClusterAuditModule.class);
+
     @Autowired
     @Qualifier("ssh")
     def ssh
@@ -53,7 +57,7 @@ class ClusterAuditModule implements ExecuteModule {
         def clusteraudit = globalYamlConfig.modules.clusteraudit as Map<String, ?>
         def role = clusteraudit.getOrDefault("role", "all")
         def result = Collections.synchronizedList([])
-
+        log.info(">>>>> Running cluster-audit")
         ssh.run {
             settings {
                 pty = true
@@ -139,6 +143,7 @@ Settings for eth0:
                 result.add(node)
             }
         }
+        log.info(">>>>> ... cluster-audit finished")
         return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
     }
 

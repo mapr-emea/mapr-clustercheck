@@ -31,8 +31,8 @@ modules:
   benchmark-maprfs-dfsio:
     enabled: true
     role: clusterjob-execution
-    dfsioFilesPerDisk: 1
-    dfsioFileSizeInMB: 8196
+    dfsio_files_per_disk: 1
+    dfsio_file_size_in_mb: 8196
     topology: /data
     replication: 1
     compression: 'on'
@@ -62,7 +62,7 @@ modules:
     role: clusterjob-execution
     chunk_size_in_mb: 256
     rows: 10000000000
-    row_comment: one row has 100 byte
+    rows_comment: one row has 100 byte
     reduce_tasks_per_node: 2
     topology: /data
     replication: 3

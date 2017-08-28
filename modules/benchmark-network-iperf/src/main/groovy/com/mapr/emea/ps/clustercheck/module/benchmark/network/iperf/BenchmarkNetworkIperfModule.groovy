@@ -76,7 +76,7 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
                             def iperfTokens = iperfResult.tokenize(',')
                             def dataCopiedInBytes = Long.valueOf(iperfTokens[-2])
                             def throughputInBitPerSecond = Long.valueOf(iperfTokens[-1])
-                            iperfTests << [dataPerThread: matrixItem.data_per_thread as Long, threads: matrixItem.threads as Long, dataCopiedInBytes: dataCopiedInBytes as Long, throughputInBitsPerSecond: throughputInBitPerSecond as Long]
+                            iperfTests << [dataPerThread: matrixItem.data_per_thread, threads: matrixItem.threads, dataCopiedInBytes: dataCopiedInBytes as Long, throughputInBitsPerSecond: throughputInBitPerSecond as Long]
                             sleep(1000)
                         }
                         result << [serverHost: node.host, clientHost: currentHost, tests: iperfTests]
