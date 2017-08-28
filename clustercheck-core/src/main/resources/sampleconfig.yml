@@ -40,15 +40,17 @@ modules:
       compression: 'off'
       topology: /data
       size_in_mb: 256
+      threads: 3
       replication: 3
-    - volume_type: standard
-      compression: 'on'
-      topology: /data
-      size_in_mb: 256
-      replication: 3
-    - volume_type: local
-      compression: 'off'
-      size_in_mb: 256
-    - volume_type: local
-      compression: 'on'
-      size_in_mb: 256
+#    - volume_type: standard
+#      compression: 'on'
+#      topology: /data
+#      size_in_mb: 256
+#      threads: 3
+#      replication: 3
+#    - volume_type: local
+#      compression: 'off'
+#      size_in_mb: 256
+#    - volume_type: local
+#      compression: 'on'
+#      size_in_mb: 256

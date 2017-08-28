@@ -89,8 +89,6 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -chmod 777 /${volumeName}'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /${volumeName}'"
                     // Run Write test
-                    //def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest ${sizeInMB} maprfs:///'"
-//                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c 'for i in \$(seq 1 ${numberOfDisks}); do (hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest ${dataSizePerThread} maprfs:/// &); done'; wait; sleep 3"
                     def homePath = executeSudo "su ${globalYamlConfig.mapr_user} -c 'echo \$HOME'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'mkdir -p ${homePath}/.clustercheck'"
                     def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
@@ -102,10 +100,10 @@ wait
 sleep 3 
 """.getBytes())
 
-                    put from: writeBashScript, into: "/tmp/rwtestwrite"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestwrite ${homePath}/rwtestwrite'"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestwrite'"
-                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/rwtestwrite'"
+                    put from: writeBashScript, into: "/tmp/rwtestread_local_write"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_local_write ${homePath}/rwtestread_local_write'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestread_local_write'"
+                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/rwtestread_local_write'"
 
 
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'mkdir -p ${homePath}/.clustercheck'"
@@ -118,10 +116,10 @@ wait
 sleep 3 
 """.getBytes())
 
-                    put from: readBashScript, into: "/tmp/rwtestread"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread ${homePath}/rwtestread'"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestread'"
-                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}//rwtestread'"
+                    put from: readBashScript, into: "/tmp/rwtestread_local_read"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_local_read ${homePath}/rwtestread_local_read'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestread_local_read'"
+                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}//rwtestread_local_read'"
 
                     // Delete volume
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name ${volumeName} | xargs echo'"// xargs echo removes return code
@@ -141,7 +139,6 @@ sleep 3
                             sumWriteRateInMBperSecond: writeRates.sum(),
                             sumReadRateInMBperSecond: readRates.sum()
                     ]
-
                 }
             }
         }
@@ -164,7 +161,7 @@ sleep 3
             def compression = standardConfig.getOrDefault("compression", "off")
             def sizeInMB = standardConfig.getOrDefault("size_in_mb", 8192)
             def threads = standardConfig.getOrDefault("threads", 1)
-            // TODO implement multiple threads
+            def dataSizePerThread = (sizeInMB / threads) as Integer
             log.info(">>>>> Run test on standard volume - size: ${sizeInMB} MB - threads: ${threads} - topology: ${topology} - replication: ${replication} - compression: ${compression}" )
 
             ssh.runInOrder {
@@ -181,17 +178,51 @@ sleep 3
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume create -name benchmarks -path /benchmarks -replication ${replication} ${topologyStr}'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -chmod 777 /benchmarks'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /benchmarks'"
-                    // TODO implement multiple threads, copy from local volume
                     // Run Write test
-                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${sizeInMB} maprfs:///'"
+                //    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${sizeInMB} maprfs:///'"
                     // Run Read test, read is enabled by negative value....
-                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${sizeInMB * -1} maprfs:///'"
+                //    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${sizeInMB * -1} maprfs:///'"
                     //println getDoubleMegaBytesValueFromTokens(readResult)
 
+                    // Run Write test
+                    def homePath = executeSudo "su ${globalYamlConfig.mapr_user} -c 'echo \$HOME'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'mkdir -p ${homePath}/.clustercheck'"
+                    def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
+
+for i in \$(seq 1 ${threads}); do 
+    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${dataSizePerThread} maprfs:/// & 
+done 
+wait 
+sleep 3 
+""".getBytes())
+
+                    put from: writeBashScript, into: "/tmp/rwtestwrite_standard_write"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestwrite_standard_write ${homePath}/rwtestwrite_standard_write'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestwrite_standard_write'"
+                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/rwtestwrite_standard_write'"
+
+
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'mkdir -p ${homePath}/.clustercheck'"
+                    def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
+
+for i in \$(seq 1 ${threads}); do 
+    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /benchmark/RWTestSingleTest ${dataSizePerThread * -1} maprfs:/// & 
+done 
+wait 
+sleep 3 
+""".getBytes())
+
+                    put from: readBashScript, into: "/tmp/rwtestread_standard_read"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_standard_read ${homePath}/rwtestread_standard_read'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestread_standard_read'"
+                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}//rwtestread_standard_read'"
                     // Delete volume
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name benchmarks | xargs echo'"// xargs echo removes return code
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name benchmarks | xargs echo'"
                     sleep(2000)
+                    def writeRates = writeResult.tokenize('\n').findAll{ it.startsWith("Write rate")}.collect{ Double.valueOf(it.tokenize(' ')[-2]) }
+                    def readRates = readResult.tokenize('\n').findAll{ it.startsWith("Read rate")}.collect{ Double.valueOf(it.tokenize(' ')[-2]) }
+
                     result << [
                             host: remote.host,
                             volumeType: "standard",
@@ -200,8 +231,10 @@ sleep 3
                             compression: compression,
                             dataSizeInMB: sizeInMB,
                             threads: threads,
-                            writeRateInMBperSecond: getDoubleMegaBytesValueFromTokens(writeResult),
-                            readRateInMBperSecond: getDoubleMegaBytesValueFromTokens(readResult),
+                            writeRatesInMBperSecond: writeRates,
+                            readRatesInMBperSecond: readRates,
+                            sumWriteRateInMBperSecond: writeRates.sum(),
+                            sumReadRateInMBperSecond: readRates.sum()
                     ]
                 }
             }
@@ -209,8 +242,4 @@ sleep 3
         return result
     }
 
-    def getDoubleMegaBytesValueFromTokens(content) {
-        def tokens = content.tokenize(' ')
-        return Double.valueOf(tokens[-2])
-    }
 }
