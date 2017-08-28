@@ -122,9 +122,9 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
 """
                 def tokens = teraGenOutout.tokenize('\n')
                 result = [
-                        bytesWritten:tokens.find{ it.contains("Bytes Written") }.tokenize('=')[1],
-                        gcTimeElapsedInMs:tokens.find{ it.contains("GC time elapsed") }.tokenize('=')[1],
-                        cpuTimeSpentInMs:tokens.find{ it.contains("CPU time spent") }.tokenize('=')[1],
+                        bytesWritten:tokens.find{ it.contains("Bytes Written") }.tokenize('=')[1] as Long,
+                        gcTimeElapsedInMs:tokens.find{ it.contains("GC time elapsed") }.tokenize('=')[1] as Long,
+                        cpuTimeSpentInMs:tokens.find{ it.contains("CPU time spent") }.tokenize('=')[1] as Long,
                         jobDurationInMs: (System.currentTimeMillis() - start)
                 ]
             }

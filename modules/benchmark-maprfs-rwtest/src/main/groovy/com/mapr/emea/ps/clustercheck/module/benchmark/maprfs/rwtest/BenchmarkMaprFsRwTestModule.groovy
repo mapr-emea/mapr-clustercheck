@@ -231,8 +231,8 @@ sleep 3
                             compression: compression,
                             dataSizeInMB: sizeInMB as Long,
                             threads: threads as Long,
-                            writeRatesInMBperSecond: writeRates as Long,
-                            readRatesInMBperSecond: readRates as Long,
+                            writeRatesInMBperSecond: writeRates,
+                            readRatesInMBperSecond: readRates,
                             sumWriteRateInMBperSecond: writeRates.sum(),
                             sumReadRateInMBperSecond: readRates.sum()
                     ]

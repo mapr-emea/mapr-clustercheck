@@ -85,7 +85,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     }
 
     def setupBenchmarkVolume(Map<String, ?> moduleconfig, role) {
-        log.info(">>>>> Creating /benchmark volume.")
+        log.info(">>>>> Creating /benchmarks volume.")
         def topology = moduleconfig.getOrDefault("topology", "/data")
         def replication = moduleconfig.getOrDefault("replication", 1)
         def compression = moduleconfig.getOrDefault("compression", "on")
@@ -98,14 +98,14 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 def topologyStr = topology != "/data" ? "-topology ${topology}" : ""
                 executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume create -name benchmarks -path /benchmarks -replication ${replication} ${topologyStr}'"
                 executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -chmod 777 /benchmarks'"
-                executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /${volumeName}'"
+                executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /benchmarks'"
             }
         }
         sleep(2000)
     }
 
     def deleteBenchmarkVolume(Map<String, ?> moduleconfig, role) {
-        log.info(">>>>> Deleting /benchmark volume.")
+        log.info(">>>>> Deleting /benchmarks volume.")
         ssh.runInOrder {
             settings {
                 pty = true
