@@ -14,6 +14,7 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
+// TODO provide prossibility to run multiple test cases
 @ClusterCheckModule(name = "benchmark-maprfs-dfsio", version = "1.0")
 class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkMaprFsDfsioModule.class);

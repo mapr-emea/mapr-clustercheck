@@ -14,6 +14,7 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
+// TODO provide prossibility to run multiple test cases
 @ClusterCheckModule(name = "benchmark-yarn-terasort-mr", version = "1.0")
 class BenchmarkYarnTerasortMrModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkYarnTerasortMrModule.class);
@@ -58,7 +59,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
 
 
     def setupBenchmarkVolume(Map<String, ?> moduleconfig, role) {
-        log.info(">>>>> Creating /benchmark volume.")
+        log.info(">>>>> Creating /benchmarks volume.")
         def topology = moduleconfig.getOrDefault("topology", "/data")
         def replication = moduleconfig.getOrDefault("replication", 1)
         def compression = moduleconfig.getOrDefault("compression", "on")
@@ -81,7 +82,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
     }
 
     def deleteBenchmarkVolume(Map<String, ?> moduleconfig, role) {
-        log.info(">>>>> Deleting /benchmark volume.")
+        log.info(">>>>> Deleting /benchmarks volume.")
         ssh.runInOrder {
             settings {
                 pty = true

@@ -100,13 +100,13 @@ wait
 sleep 3 
 """.getBytes())
 
-                    put from: writeBashScript, into: "/tmp/rwtestread_local_write"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_local_write ${homePath}/rwtestread_local_write'"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestread_local_write'"
-                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/rwtestread_local_write'"
-
-
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'mkdir -p ${homePath}/.clustercheck'"
+                    put from: writeBashScript, into: "/tmp/rwtestread_local_write"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_local_write ${homePath}/.clustercheck/rwtestread_local_write'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/.clustercheck/rwtestread_local_write'"
+                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_local_write'"
+
+
                     def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${numberOfDisks}); do 
@@ -117,9 +117,9 @@ sleep 3
 """.getBytes())
 
                     put from: readBashScript, into: "/tmp/rwtestread_local_read"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_local_read ${homePath}/rwtestread_local_read'"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestread_local_read'"
-                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}//rwtestread_local_read'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_local_read ${homePath}/.clustercheck/rwtestread_local_read'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/.clustercheck/rwtestread_local_read'"
+                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_local_read'"
 
                     // Delete volume
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name ${volumeName} | xargs echo'"// xargs echo removes return code
@@ -196,13 +196,13 @@ wait
 sleep 3 
 """.getBytes())
 
-                    put from: writeBashScript, into: "/tmp/rwtestwrite_standard_write"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestwrite_standard_write ${homePath}/rwtestwrite_standard_write'"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestwrite_standard_write'"
-                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/rwtestwrite_standard_write'"
-
-
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'mkdir -p ${homePath}/.clustercheck'"
+                    put from: writeBashScript, into: "/tmp/rwtestwrite_standard_write"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestwrite_standard_write ${homePath}/.clustercheck/rwtestwrite_standard_write'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/.clustercheck/rwtestwrite_standard_write'"
+                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestwrite_standard_write'"
+
+
                     def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${threads}); do 
@@ -213,9 +213,9 @@ sleep 3
 """.getBytes())
 
                     put from: readBashScript, into: "/tmp/rwtestread_standard_read"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_standard_read ${homePath}/rwtestread_standard_read'"
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/rwtestread_standard_read'"
-                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}//rwtestread_standard_read'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_standard_read ${homePath}/.clustercheck/rwtestread_standard_read'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/.clustercheck/rwtestread_standard_read'"
+                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_standard_read'"
                     // Delete volume
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name benchmarks | xargs echo'"// xargs echo removes return code
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name benchmarks | xargs echo'"

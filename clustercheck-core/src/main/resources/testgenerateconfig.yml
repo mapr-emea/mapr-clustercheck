@@ -67,3 +67,14 @@ modules:
     topology: /data
     replication: 3
     compression: 'on'
+  benchmark-yarn-terasort-spark:
+    enabled: true
+    role: clusterjob-execution
+    chunk_size_in_mb: 256
+    data_size: 1T
+    num_executors: 10
+    executor_cores: 2
+    executor_memory: 4G
+    topology: /data
+    replication: 3
+    compression: 'on'
