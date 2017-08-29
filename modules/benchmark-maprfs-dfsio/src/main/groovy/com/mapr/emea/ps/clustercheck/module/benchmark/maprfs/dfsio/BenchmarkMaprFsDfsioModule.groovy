@@ -157,7 +157,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 def mapDisk = 1 / filesPerDisk
                 def numberOfFiles = totalDisks * filesPerDisk
                 def startWrite = System.currentTimeMillis()
-                def dfsioWriteResult = executeSudo """su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
+                def dfsioWriteResult = executeSudo """su - ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
       -Dmapreduce.job.name=mapr-clustercheck-DFSIO-write \\
       -Dmapreduce.map.cpu.vcores=0 \\
       -Dmapreduce.map.memory.mb=768 \\
@@ -169,7 +169,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 """
                 def endWrite = System.currentTimeMillis()
                 def startRead = System.currentTimeMillis()
-                def dfsioReadResult = executeSudo """su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
+                def dfsioReadResult = executeSudo """su - ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
       -Dmapreduce.job.name=mapr-clustercheck-DFSIO-read \\
       -Dmapreduce.map.cpu.vcores=0 \\
       -Dmapreduce.map.memory.mb=768 \\
