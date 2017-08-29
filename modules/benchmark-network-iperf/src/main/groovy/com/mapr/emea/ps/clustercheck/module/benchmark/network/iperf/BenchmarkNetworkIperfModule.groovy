@@ -68,7 +68,7 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
             log.info(">>>>> Running iperf tests - Threads: ${matrixItem.threads} - Data per thread: ${matrixItem.data_per_thread}")
             log.info(">>>>> ... this can take some time.")
             globalYamlConfig.nodes.each { node ->
-                log.info(">>>>> ..... executing client on node ${node.host}.")
+                log.info(">>>>> ..... executing clients against server node ${node.host}.")
                 ssh.runInOrder {
                     session(ssh.remotes.role(role)) {
                         def currentHost = remote.host
