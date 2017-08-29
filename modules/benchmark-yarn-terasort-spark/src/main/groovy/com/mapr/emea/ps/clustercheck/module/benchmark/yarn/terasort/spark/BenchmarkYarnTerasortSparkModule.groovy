@@ -137,7 +137,7 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
 
                 def sparkPath = execute "ls -d /opt/mapr/spark/spark-2*"
 
-                executeSudo """su ${globalYamlConfig.mapr_user} -c '${sparkPath}/bin/spark-submit --master yarn --deploy-mode client \\
+                executeSudo """su - ${globalYamlConfig.mapr_user} -c '${sparkPath}/bin/spark-submit --master yarn --deploy-mode client \\
   --name "Spark TeraGen" \\
   --class com.github.ehiggs.spark.terasort.TeraGen \\
   --num-executors ${numExecutors} \\
@@ -175,7 +175,7 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
 
                 def sparkPath = execute "ls -d /opt/mapr/spark/spark-2*"
 
-                executeSudo """su ${globalYamlConfig.mapr_user} -c '${sparkPath}/bin/spark-submit --master yarn --deploy-mode client \\
+                executeSudo """su - ${globalYamlConfig.mapr_user} -c '${sparkPath}/bin/spark-submit --master yarn --deploy-mode client \\
   --name "Spark TeraSort" \\
   --class com.github.ehiggs.spark.terasort.TeraSort \\
   --num-executors ${numExecutors} \\

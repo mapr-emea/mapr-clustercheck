@@ -73,6 +73,7 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
                 session(ssh.remotes.role(role)) {
                     def diagnosticsJar =  execute "ls /opt/mapr/lib/maprfs-diagnostic-tools-*.jar"
                     def hostname =  execute "hostname"
+                    def hostnameFull =  execute "hostname -f"
                     def volumeName = "local1_clustercheck_${hostname}"
                     def storagePoolOutput = executeSudo "su ${globalYamlConfig.mapr_user} -c '/opt/mapr/server/mrconfig sp list'"
                     def storagePoolFree = getTotalFreeInMB(storagePoolOutput)
@@ -85,7 +86,7 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name ${volumeName} | xargs echo'"// xargs echo removes return code
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name ${volumeName} | xargs echo'"
                     // Create volume
-                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume create -name ${volumeName} -path /${volumeName} -replication 1 -localvolumehost ${hostname}'"
+                    executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume create -name ${volumeName} -path /${volumeName} -replication 1 -localvolumehost ${hostnameFull}'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -chmod 777 /${volumeName}'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /${volumeName}'"
                     // Run Write test
@@ -104,7 +105,7 @@ sleep 3
                     put from: writeBashScript, into: "/tmp/rwtestread_local_write"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_local_write ${homePath}/.clustercheck/rwtestread_local_write'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/.clustercheck/rwtestread_local_write'"
-                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_local_write'"
+                    def writeResult = executeSudo "su - ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_local_write'"
 
 
                     def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
@@ -119,7 +120,7 @@ sleep 3
                     put from: readBashScript, into: "/tmp/rwtestread_local_read"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_local_read ${homePath}/.clustercheck/rwtestread_local_read'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/.clustercheck/rwtestread_local_read'"
-                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_local_read'"
+                    def readResult = executeSudo "su - ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_local_read'"
 
                     // Delete volume
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name ${volumeName} | xargs echo'"// xargs echo removes return code
@@ -176,6 +177,7 @@ sleep 3
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name benchmarks | xargs echo'"
                     // Create volume
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume create -name benchmarks -path /benchmarks -replication ${replication} ${topologyStr}'"
+                    sleep(3000)
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -chmod 777 /benchmarks'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /benchmarks'"
                     // Run Write test
@@ -200,7 +202,7 @@ sleep 3
                     put from: writeBashScript, into: "/tmp/rwtestwrite_standard_write"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestwrite_standard_write ${homePath}/.clustercheck/rwtestwrite_standard_write'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/.clustercheck/rwtestwrite_standard_write'"
-                    def writeResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestwrite_standard_write'"
+                    def writeResult = executeSudo "su - ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestwrite_standard_write'"
 
 
                     def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
@@ -215,7 +217,7 @@ sleep 3
                     put from: readBashScript, into: "/tmp/rwtestread_standard_read"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'cp /tmp/rwtestread_standard_read ${homePath}/.clustercheck/rwtestread_standard_read'"
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'chmod +x ${homePath}/.clustercheck/rwtestread_standard_read'"
-                    def readResult = executeSudo "su ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_standard_read'"
+                    def readResult = executeSudo "su - ${globalYamlConfig.mapr_user} -c '${homePath}/.clustercheck/rwtestread_standard_read'"
                     // Delete volume
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name benchmarks | xargs echo'"// xargs echo removes return code
                     executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name benchmarks | xargs echo'"

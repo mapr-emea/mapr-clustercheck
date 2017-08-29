@@ -117,7 +117,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
                 def hadoopExamplesJar = execute "ls ${hadoopPath}/share/hadoop/mapreduce/hadoop-mapreduce-examples*.jar"
 
 
-                def teraGenOutout = executeSudo """su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${hadoopExamplesJar} teragen \\
+                def teraGenOutout = executeSudo """su - ${globalYamlConfig.mapr_user} -c 'hadoop jar ${hadoopExamplesJar} teragen \\
       -Dmapreduce.map.cpu.vcores=0 \\
       -Dmapreduce.map.disk=0 \\
       -Dmapreduce.map.speculative=false \\
@@ -159,7 +159,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
                 def numberOfNodes = dashboardConfig.data.collect{ it.service.contains("nodemanager") }.size()
                 def reduceTasks = reduceTasksPerNode * numberOfNodes
        //         executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -rm -r /benchmarks/tera/out' | xargs echo"
-                def teraSortOutout = executeSudo """su ${globalYamlConfig.mapr_user} -c 'hadoop jar ${hadoopExamplesJar} terasort \\
+                def teraSortOutout = executeSudo """su - ${globalYamlConfig.mapr_user} -c 'hadoop jar ${hadoopExamplesJar} terasort \\
       -Dmapreduce.map.disk=0 \\
       -Dmapreduce.map.cpu.vcores=0 \\
       -Dmapreduce.map.output.compress=false \\

@@ -4,18 +4,18 @@ output_dir: /Users/chufe/clustercheck
 mapr_user: mapr
 
 nodes:
-  - host: 10.0.0.24
+  - host: 10.0.0.113
     ssh_user: ec2-user
     ssh_identity: '/Users/chufe/.ssh/id_rsa'
     roles:
        - datacenter1
        - clusterjob-execution
-  - host: 10.0.0.167
+  - host: 10.0.0.138
     ssh_user: ec2-user
     ssh_identity: '/Users/chufe/.ssh/id_rsa'
     roles:
       - datacenter1
-  - host: 10.0.0.239
+  - host: 10.0.0.247
     ssh_user: ec2-user
     ssh_identity: '/Users/chufe/.ssh/id_rsa'
     roles:
@@ -29,7 +29,7 @@ modules:
     enabled: true
     tests:
     - threads: 1
-      data_per_thread: 512M
+      data_per_thread: 64M
   benchmark-maprfs-dfsio:
     enabled: true
     role: clusterjob-execution
@@ -40,20 +40,11 @@ modules:
     enabled: true
     tests:
     - volume_type: standard
-      compression: 'off'
-      topology: /data
-      size_in_mb: 256
-      threads: 3
-      replication: 3
-    - volume_type: standard
       compression: 'on'
       topology: /data
       size_in_mb: 256
       threads: 3
       replication: 3
-    - volume_type: local
-      compression: 'off'
-      size_in_mb: 256
     - volume_type: local
       compression: 'on'
       size_in_mb: 256
