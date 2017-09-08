@@ -1,6 +1,9 @@
 apply plugin: 'groovy'
 apply plugin: 'org.springframework.boot'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 bootRepackage {
 	mainClass = 'com.mapr.emea.ps.clustercheck.core.MaprClusterCheckApplication'
 	executable = true
