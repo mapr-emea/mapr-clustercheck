@@ -30,7 +30,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", tests: [["dfsio_files_per_disk": 1, "dfsio_file_size_in_mb": 8196, "topology": "/data", replication: 1, compression: "on"]]]
+        return [role: "clusterjob-execution", tests: [["dfsio_files": 1024, "dfsio_file_size_in_mb": 8196, "topology": "/data", replication: 1, compression: "on"]]]
     }
 
     @Override
@@ -133,13 +133,13 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     }
 
     def runDfsioBenchmark(Map<String, ?> moduleconfig, role) {
-        def filesPerDisk = moduleconfig.getOrDefault("dfsio_files_per_disk", 1)
+        def numberOfFiles = moduleconfig.getOrDefault("dfsio_files", 1024)
         def fileSizeInMB = moduleconfig.getOrDefault("dfsio_file_size_in_mb", 8196)
         def compression = moduleconfig.getOrDefault("compression", "on")
         def topology = moduleconfig.getOrDefault("topology", "/data")
         def replication = moduleconfig.getOrDefault("replication", 1)
-        def jsonSlurper = new JsonSlurper()
-        log.info(">>>>> Run DFSIO tests - Files per disk: ${filesPerDisk} - File size ${fileSizeInMB} MB - Compression: ${compression} - Topology: ${topology} - Replication: ${replication}")
+//        def jsonSlurper = new JsonSlurper()
+        log.info(">>>>> Run DFSIO tests - Files: ${numberOfFiles} - File size ${fileSizeInMB} MB - Compression: ${compression} - Topology: ${topology} - Replication: ${replication}")
         log.info(">>>>> ... this can take some time.")
         def result = []
         ssh.runInOrder {
@@ -150,12 +150,12 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
                 def hadoopPath = execute "ls -d /opt/mapr/hadoop/hadoop-2*"
                 def testJar = execute "ls ${hadoopPath}/share/hadoop/mapreduce/hadoop-mapreduce-client-jobclient-*-tests.jar"
-                def dashboardJson = executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli dashboard info -json'"
-//                new File("/Users/chufe/Documents/workspaces/mapr-clustercheck/playground/dashboard.json").text = dashboardJson
-                def dashboardConfig = jsonSlurper.parseText(dashboardJson)
-                def totalDisks = dashboardConfig.data[0].yarn.total_disks
-                def mapDisk = 1 / filesPerDisk
-                def numberOfFiles = totalDisks * filesPerDisk
+//                def dashboardJson = executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli dashboard info -json'"
+//                def dashboardConfig = jsonSlurper.parseText(dashboardJson)
+//                def totalDisks = dashboardConfig.data[0].yarn.total_disks
+//                def mapDisk = 1 / filesPerDisk
+                def mapDisk = 1 / numberOfFiles
+//                def numberOfFiles = totalDisks * filesPerDisk
                 def startWrite = System.currentTimeMillis()
                 def dfsioWriteResult = executeSudo """su - ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
       -Dmapreduce.job.name=mapr-clustercheck-DFSIO-write \\
@@ -209,7 +209,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
             }
         }
         return [fileSizeInMB: fileSizeInMB,
-                filesPerDisk: filesPerDisk,
+                numberOfFiles: numberOfFiles,
                 compression : compression,
                 topology    : topology,
                 replication : replication,
