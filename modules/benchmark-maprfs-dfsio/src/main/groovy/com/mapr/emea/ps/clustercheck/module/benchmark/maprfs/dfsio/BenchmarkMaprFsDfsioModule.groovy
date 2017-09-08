@@ -30,7 +30,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", tests: [["dfsio_files": 1024, "dfsio_file_size_in_mb": 8196, "topology": "/data", replication: 1, compression: "on"]]]
+        return [role: "clusterjob-execution", tests: [["dfsio_number_of_files": 1024, "dfsio_file_size_in_mb": 8196, "topology": "/data", replication: 1, compression: "on"]]]
     }
 
     @Override
@@ -66,7 +66,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
             textReport += """Executed on host: ${result.executedOnHost}
 > Test settings:
 >    File size: ${result.fileSizeInMB} MB
->    Files per fisk: ${result.filesPerDisk},
+>    Files per fisk: ${result.numberOfFiles},
 >    Compression: ${result.compression},
 >    Topology: ${result.topology},
 >    Replication: ${result.replication}"""
@@ -133,7 +133,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     }
 
     def runDfsioBenchmark(Map<String, ?> moduleconfig, role) {
-        def numberOfFiles = moduleconfig.getOrDefault("dfsio_files", 1024)
+        def numberOfFiles = moduleconfig.getOrDefault("dfsio_number_of_files", 1024)
         def fileSizeInMB = moduleconfig.getOrDefault("dfsio_file_size_in_mb", 8196)
         def compression = moduleconfig.getOrDefault("compression", "on")
         def topology = moduleconfig.getOrDefault("topology", "/data")
