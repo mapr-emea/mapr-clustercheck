@@ -1,0 +1,75 @@
+cluster_name: demo.mapr.com
+customer_name: Custom Test Environment
+output_dir: /Users/chufe/audit
+mapr_user: mapr
+
+modules:
+  clusteraudit:
+    enabled: true
+  benchmark-network-iperf:
+    enabled: true
+    tests:
+    - threads: 1
+      data_per_thread: 8192M
+    - threads: 4
+      data_per_thread: 2048M
+  benchmark-maprfs-dfsio:
+    enabled: true
+    role: clusterjob-execution
+    tests:
+    - dfsio_number_of_files: 5
+      dfsio_file_size_in_mb: 1024
+      topology: /data
+      replication: 3
+      compression: 'off'
+    - dfsio_number_of_files: 5
+      dfsio_file_size_in_mb: 1024
+      topology: /data
+      replication: 1
+      compression: 'off'
+  benchmark-maprfs-rwtest:
+    enabled: false
+    tests:
+    - volume_type: local
+      compression: 'off'
+      size_in_mb: 524288
+    - volume_type: local
+      compression: 'on'
+      size_in_mb: 524288
+  benchmark-yarn-terasort-mr:
+    enabled: true
+    role: clusterjob-execution
+    tests:
+    - chunk_size_in_mb: 256
+      rows: 1000000
+#      rows: 10000000000
+      rows_comment: one row has 100 byte
+      reduce_tasks_per_node: 2
+      topology: /data
+      replication: 3
+      compression: 'on'
+  benchmark-yarn-terasort-spark:
+    enabled: false
+    role: clusterjob-execution
+    tests:
+    - chunk_size_in_mb: 256
+      data_size: 1T
+      num_executors: 70
+      executor_cores: 2
+      executor_memory: 4G
+      topology: /data/fast
+      replication: 3
+      compression: 'on'
+
+nodes:
+- host: 10.0.0.34
+  ssh_user: ec2-user
+  ssh_identity: /Users/chufe/.ssh/id_rsa
+  roles:
+  - clusterjob-execution
+- host: 10.0.0.41
+  ssh_user: ec2-user
+  ssh_identity: //Users/chufe/.ssh/id_rsa
+- host: 10.0.0.106
+  ssh_user: ec2-user
+  ssh_identity: /Users/chufe/.ssh/id_rsa

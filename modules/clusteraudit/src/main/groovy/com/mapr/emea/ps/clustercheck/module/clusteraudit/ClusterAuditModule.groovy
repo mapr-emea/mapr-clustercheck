@@ -102,16 +102,18 @@ class ClusterAuditModule implements ExecuteModule {
                 node['memory']['swap_free'] = getColonProperty(memory, "SwapFree")
                 node['memory']['hugepage_total'] = getColonProperty(memory, "HugePages_Total")
                 node['memory']['hugepage_free'] = getColonProperty(memory, "HugePages_Free")
-                node['memory']['dimm_slots'] = execute('sudo dmidecode -t memory |grep -c \'^[[:space:]]*Locator:\'')
-                node['memory']['dimm_count'] = execute('sudo dmidecode -t memory | grep -c \'^[[:space:]]Size: [0-9][0-9]*\'')
-                node['memory']['dimm_info'] = execute('sudo dmidecode -t memory | awk \'/Memory Device$/,/^$/ {print}\'')
+                // broken
+                //   node['memory']['dimm_slots'] = execute('sudo dmidecode -t memory |grep -c \'^[[:space:]]*Locator:\'')
+                // node['memory']['dimm_count'] = execute('sudo dmidecode -t memory | grep -c \'^[[:space:]]Size: [0-9][0-9]*\'')
+                // node['memory']['dimm_info'] = execute('sudo dmidecode -t memory | awk \'/Memory Device$/,/^$/ {print}\'')
 
                 // NIC / Ethernet
+           /*
                 def lspci = dropEverythingBeforeString(executeSudo('lspci'), ' ')
                 def ifconfig = executeSudo('ifconfig -a')
                 node['ethernet'] = [:]
                 node['ethernet']['controller'] = getColonProperty(lspci, "Ethernet controller")
-                node['ethernet']['interfaces'] = []
+                node['ethernet']['interfaces'] = [] */
                 // TODO add NIC stuff
                 // TODO add missing stuff from cluster audit
                 // TODO grep RPM packages

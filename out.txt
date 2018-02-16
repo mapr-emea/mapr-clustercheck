@@ -1,0 +1,69 @@
+/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/bin/java -XX:TieredStopAtLevel=1 -noverify -Dspring.output.ansi.enabled=always -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=62480 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.liveBeansView.mbeanDomain -Dspring.application.admin.enabled=true "-javaagent:/Applications/IntelliJ IDEA.app/Contents/lib/idea_rt.jar=62481:/Applications/IntelliJ IDEA.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/lib/tools.jar:/Users/chufe/Documents/workspaces/mapr-clustercheck/out/production/clustercheck-core:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter/1.5.6.RELEASE/58c72d105fdf41f605c15c243b72300fa78cccd1/spring-boot-starter-1.5.6.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.codehaus.groovy/groovy-all/2.4.12/760afc568cbd94c09d78f801ce51aed1326710af/groovy-all-2.4.12.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.yaml/snakeyaml/1.18/e4a441249ade301985cb8d009d4e4a72b85bf68e/snakeyaml-1.18.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.hidetake/groovy-ssh/2.9.0/4a8b83d6721cd53b12749a6a88d7be3b84c42641/groovy-ssh-2.9.0.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot/1.5.6.RELEASE/a6e13da038c6eb8b8793795b3189d5ff3f39caa0/spring-boot-1.5.6.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-autoconfigure/1.5.6.RELEASE/436d14480a4ebeaca7cd223ab97790d515f46ad2/spring-boot-autoconfigure-1.5.6.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-logging/1.5.6.RELEASE/74a50fb623c47d76c71402d8c6cc4ac4ba71d39e/spring-boot-starter-logging-1.5.6.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework/spring-core/4.3.10.RELEASE/db1462df62dbedad7244da30ec471390660271c0/spring-core-4.3.10.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.25/da76ca59f6a57ee3102f8f9bd9cee742973efa8a/slf4j-api-1.7.25.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/com.jcraft/jsch/0.1.53/658b682d5c817b27ae795637dfec047c63d29935/jsch-0.1.53.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/com.jcraft/jsch.agentproxy.connector-factory/0.0.9/ef48f016e1d4a06404fa769e7d316f6e07ad09d1/jsch.agentproxy.connector-factory-0.0.9.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/com.jcraft/jsch.agentproxy.jsch/0.0.9/26f5c718216f1668f674816e580aa7c92f2660ad/jsch.agentproxy.jsch-0.0.9.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework/spring-context/4.3.10.RELEASE/645ce6fdba38448d183a1374506fc24036009869/spring-context-4.3.10.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-classic/1.1.11/ccedfbacef4a6515d2983e3f89ed753d5d4fb665/logback-classic-1.1.11.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.slf4j/jcl-over-slf4j/1.7.25/f8c32b13ff142a513eeb5b6330b1588dcb2c0461/jcl-over-slf4j-1.7.25.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.slf4j/jul-to-slf4j/1.7.25/af5364cd6679bfffb114f0dec8a157aaa283b76/jul-to-slf4j-1.7.25.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.slf4j/log4j-over-slf4j/1.7.25/a87bb47468f47ee7aabbd54f93e133d4215769c3/log4j-over-slf4j-1.7.25.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/com.jcraft/jsch.agentproxy.core/0.0.9/1af3741c3a83a71e29b8aa7637979791e50e538b/jsch.agentproxy.core-0.0.9.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/com.jcraft/jsch.agentproxy.usocket-jna/0.0.9/100522438a57b4c0d15db112fc8a08d17f48080a/jsch.agentproxy.usocket-jna-0.0.9.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/com.jcraft/jsch.agentproxy.usocket-nc/0.0.9/926fd2eb5586c779b8d7827036ea8e06fe7744ba/jsch.agentproxy.usocket-nc-0.0.9.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/com.jcraft/jsch.agentproxy.sshagent/0.0.9/2ecca436463287682d16c3fa628bd7cca426cf6f/jsch.agentproxy.sshagent-0.0.9.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/com.jcraft/jsch.agentproxy.pageant/0.0.9/7651361429af009ff18a6ea5c4e5d38ecff7f959/jsch.agentproxy.pageant-0.0.9.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework/spring-aop/4.3.10.RELEASE/3a8c23246045e5e1dbd7d91354741b165e997a88/spring-aop-4.3.10.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework/spring-beans/4.3.10.RELEASE/9d89b786f755f9b1da344f10f6f045f927679a72/spring-beans-4.3.10.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.springframework/spring-expression/4.3.10.RELEASE/4975ab542028945ab98fefba772472a40495d7ca/spring-expression-4.3.10.RELEASE.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-core/1.1.11/88b8df40340eed549fb07e2613879bf6b006704d/logback-core-1.1.11.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna/4.2.2/5012450aee579c3118ff09461d5ce210e0cdc2a9/jna-4.2.2.jar:/Users/chufe/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna-platform/4.1.0/23457ad1cf75c2c16763330de5565a0e67b4bc0a/jna-platform-4.1.0.jar:/Users/chufe/Documents/workspaces/mapr-clustercheck/out/production/clusteraudit:/Users/chufe/.gradle/caches/modules-2/files-2.1/org.yaml/snakeyaml/1.17/7a27ea250c5130b2922b86dea63cbb1cc10a660c/snakeyaml-1.17.jar:/Users/chufe/Documents/workspaces/mapr-clustercheck/out/production/benchmark-network-iperf:/Users/chufe/Documents/workspaces/mapr-clustercheck/out/production/benchmark-maprfs-dfsio:/Users/chufe/Documents/workspaces/mapr-clustercheck/out/production/benchmark-maprfs-rwtest:/Users/chufe/Documents/workspaces/mapr-clustercheck/out/production/benchmark-yarn-terasort-mr:/Users/chufe/Documents/workspaces/mapr-clustercheck/out/production/benchmark-yarn-terasort-spark com.mapr.emea.ps.clustercheck.core.MaprClusterCheckApplication run /Users/chufe/Documents/workspaces/mapr-clustercheck/test.yml
+objc[82801]: Class JavaLaunchHelper is implemented in both /Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/bin/java (0x10f6804c0) and /Library/Java/JavaVirtualMachines/jdk1.8.0_77.jdk/Contents/Home/jre/lib/libinstrument.dylib (0x10f70c4e0). One of the two will be used. Which one is undefined.
+  __  __             _____    _______        _                 _             _
+ |  \/  |           |  __ \  |__   __|      | |               | |           (_)
+ | \  / | __ _ _ __ | |__) |    | | ___  ___| |__  _ __   ___ | | ___   __ _ _  ___  ___
+ | |\/| |/ _` | '_ \|  _  /     | |/ _ \/ __| '_ \| '_ \ / _ \| |/ _ \ / _` | |/ _ \/ __|
+ | |  | | (_| | |_) | | \ \     | |  __/ (__| | | | | | | (_) | | (_) | (_| | |  __/\__ \
+ |_|  |_|\__,_| .__/|_|  \_\    |_|\___|\___|_| |_|_| |_|\___/|_|\___/ \__, |_|\___||___/
+              | |                                                       __/ |
+              |_|                                                      |___/
+2018-Feb-16 12:41:39 - INFO Number of modules found: 6
+2018-Feb-16 12:41:39 - INFO ====== Starting validation ======
+2018-Feb-16 12:41:39 - INFO Validating clusteraudit - 1.0
+2018-Feb-16 12:41:39 - INFO Validating benchmark-network-iperf - 1.0
+2018-Feb-16 12:41:39 - INFO Validating benchmark-maprfs-dfsio - 1.0
+2018-Feb-16 12:41:39 - INFO >>> Skipping module benchmark-maprfs-rwtest, because it is disabled.
+2018-Feb-16 12:41:39 - INFO Validating benchmark-yarn-terasort-mr - 1.0
+2018-Feb-16 12:41:39 - INFO >>> Skipping module benchmark-yarn-terasort-spark, because it is disabled.
+2018-Feb-16 12:41:39 - INFO ====== Validation finished ======
+2018-Feb-16 12:41:39 - INFO ... Creating output directory /Users/chufe/audit/2018-02-16-12-41-39
+2018-Feb-16 12:41:39 - INFO ====== Starting execution =======
+2018-Feb-16 12:41:39 - INFO Executing clusteraudit - 1.0
+2018-Feb-16 12:41:39 - INFO >>>>> Running cluster-audit
+2018-Feb-16 12:41:43 - INFO >>>>> ... cluster-audit finished
+2018-Feb-16 12:41:43 - INFO Executing benchmark-network-iperf - 1.0
+2018-Feb-16 12:41:43 - INFO >>>>> Check for running iperf instances
+2018-Feb-16 12:41:47 - INFO >>>>> Copy iperf to remote hosts
+2018-Feb-16 12:41:51 - INFO >>>>> Starting iperf server on all nodes
+2018-Feb-16 12:41:53 - INFO >>>>> Wait for 5 seconds
+2018-Feb-16 12:41:58 - INFO >>>>> Running iperf tests - Threads: 1 - Data per thread: 8192M
+2018-Feb-16 12:41:58 - INFO >>>>> ... this can take some time.
+2018-Feb-16 12:41:58 - INFO >>>>> ..... executing clients against server node 10.0.0.34.
+2018-Feb-16 12:42:20 - INFO >>>>> ..... executing clients against server node 10.0.0.41.
+2018-Feb-16 12:42:42 - INFO >>>>> ..... executing clients against server node 10.0.0.106.
+2018-Feb-16 12:43:04 - INFO >>>>> Running iperf tests - Threads: 4 - Data per thread: 2048M
+2018-Feb-16 12:43:04 - INFO >>>>> ... this can take some time.
+2018-Feb-16 12:43:04 - INFO >>>>> ..... executing clients against server node 10.0.0.34.
+2018-Feb-16 12:43:26 - INFO >>>>> ..... executing clients against server node 10.0.0.41.
+2018-Feb-16 12:43:47 - INFO >>>>> ..... executing clients against server node 10.0.0.106.
+2018-Feb-16 12:44:08 - INFO >>>>> Stopping iperf server on all nodes
+2018-Feb-16 12:44:10 - INFO >>>>> Wait for 5 seconds
+2018-Feb-16 12:44:15 - INFO Executing benchmark-maprfs-dfsio - 1.0
+2018-Feb-16 12:44:15 - INFO >>>>> Deleting /benchmarks volume.
+2018-Feb-16 12:44:24 - INFO >>>>> Creating /benchmarks volume.
+2018-Feb-16 12:44:35 - INFO >>>>> Run DFSIO tests - Files: 5 - File size 1024 MB - Compression: off - Topology: /data - Replication: 3
+2018-Feb-16 12:44:35 - INFO >>>>> ... this can take some time.
+2018-Feb-16 12:45:53 - INFO >>>>> Deleting /benchmarks volume.
+2018-Feb-16 12:46:04 - INFO >>>>> Creating /benchmarks volume.
+2018-Feb-16 12:46:14 - INFO >>>>> Run DFSIO tests - Files: 5 - File size 1024 MB - Compression: off - Topology: /data - Replication: 1
+2018-Feb-16 12:46:14 - INFO >>>>> ... this can take some time.
+2018-Feb-16 12:47:09 - INFO >>>>> Deleting /benchmarks volume.
+2018-Feb-16 12:47:21 - INFO >>> Skipping module benchmark-maprfs-rwtest, because it is disabled.
+2018-Feb-16 12:47:21 - INFO Executing benchmark-yarn-terasort-mr - 1.0
+2018-Feb-16 12:47:21 - INFO >>>>> Deleting /benchmarks volume.
+2018-Feb-16 12:47:30 - INFO >>>>> Creating /benchmarks volume.
+2018-Feb-16 12:47:42 - INFO >>>>> Generate Data for TeraSort: Rows: 1000000 - Data 0.1 GB
+2018-Feb-16 12:47:42 - INFO >>>>> ... be patient
+2018-Feb-16 12:48:01 - INFO >>>>> ... TeraGen finished
+2018-Feb-16 12:48:01 - INFO >>>>> Running TeraSort: Rows: 1000000 - Data 0.1 GB
+2018-Feb-16 12:48:01 - INFO >>>>> ... be patient
+2018-Feb-16 12:49:17 - INFO >>>>> ... TeraSort finished
+2018-Feb-16 12:49:17 - INFO >>>>> Deleting /benchmarks volume.
+2018-Feb-16 12:49:29 - INFO >>> Skipping module benchmark-yarn-terasort-spark, because it is disabled.
+2018-Feb-16 12:49:29 - INFO ====== Execution finished ======
+2018-Feb-16 12:49:29 - INFO ... Writing summary JSON result: /Users/chufe/audit/2018-02-16-12-41-39/result.json
+2018-Feb-16 12:49:29 - INFO ... Writing summary TEXT report: /Users/chufe/audit/2018-02-16-12-41-39/report.txt
+2018-Feb-16 12:49:29 - INFO ... Execution completed
+
+Process finished with exit code 0

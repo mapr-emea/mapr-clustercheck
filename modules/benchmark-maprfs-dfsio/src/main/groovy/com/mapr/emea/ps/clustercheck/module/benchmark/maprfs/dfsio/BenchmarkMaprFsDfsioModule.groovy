@@ -35,11 +35,11 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     @Override
     void validate() throws ModuleValidationException {
-        def moduleconfig = globalYamlConfig.modules['benchmark-maprfs-dfsio'] as Map<String, ?>
-        def role = moduleconfig.getOrDefault("role", "all")
-        if (role == "all") {
-            throw new ModuleValidationException("Please specify a role for 'benchmark-maprfs'-module which is not 'all'. Usually it should run only on one node.")
-        }
+ //       def moduleconfig = globalYamlConfig.modules['benchmark-maprfs-dfsio'] as Map<String, ?>
+ //       def role = moduleconfig.getOrDefault("role", "all")
+ //       if (role == "all") {
+ //           throw new ModuleValidationException("Please specify a role for 'benchmark-maprfs-dfsio'-module which is not 'all'. Usually it should run only on one node.")
+ //       }
         // TODO check for valid ticket, if secure cluster
         // TODO check that role has only one node inside
     }
@@ -73,7 +73,6 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
             for (def test : result.results) {
                 textReport += """>>> Host settings:         
 >>>    Executed on: ${test.executedOnHost},
->>>    Total disks: ${test.totalDisks},
 >>>    Number of files: ${test.numberOfFiles},     
 >>> DFSIO write:
 >>>    Number of files: ${test.write.numberOfFiles}
@@ -186,7 +185,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 result << [
                         executedOnHost: remote.host,
                         numberOfFiles : numberOfFiles,
-                        totalDisks    : totalDisks,
+               //         totalDisks    : totalDisks,
                         write         : [
                                 numberOfFiles             : getDoubleValueFromTokens(writeTokens, "Number of files"),
                                 totalProcessedInMB        : getDoubleValueFromTokens(writeTokens, "Total MBytes processed"),
