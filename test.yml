@@ -6,6 +6,8 @@ mapr_user: mapr
 modules:
   cluster-audit:
     enabled: true
+  cluster-config-audit:
+    enabled: true
   benchmark-memory:
     enabled: true
   benchmark-network-iperf:
