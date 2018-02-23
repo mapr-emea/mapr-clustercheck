@@ -14,9 +14,9 @@ interface ExecuteModule {
      * Executes the validation and checks for given preconditions for the module.
      * If this fails, no test will run. This blocks all modules.
      *
-     * @throws ModuleValidationException
+     * @throws ModuleValidationException blocks further execution
      */
-    void validate() throws ModuleValidationException
+    List<String> validate() throws ModuleValidationException
     /**
      * Executes the cluster check for the module.
      *

@@ -34,7 +34,8 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     }
 
     @Override
-    void validate() throws ModuleValidationException {
+    List<String> validate() throws ModuleValidationException {
+        return []
  //       def moduleconfig = globalYamlConfig.modules['benchmark-maprfs-dfsio'] as Map<String, ?>
  //       def role = moduleconfig.getOrDefault("role", "all")
  //       if (role == "all") {

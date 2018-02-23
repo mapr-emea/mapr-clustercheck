@@ -42,7 +42,8 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
     }
 
     @Override
-    void validate() throws ModuleValidationException {
+    List<String> validate() throws ModuleValidationException {
+        return []
     }
 
     @Override

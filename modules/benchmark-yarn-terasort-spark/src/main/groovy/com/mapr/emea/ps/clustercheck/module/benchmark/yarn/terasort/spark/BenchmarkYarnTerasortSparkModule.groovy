@@ -34,12 +34,13 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
     }
 
     @Override
-    void validate() throws ModuleValidationException {
+    List<String> validate() throws ModuleValidationException {
         def moduleconfig = globalYamlConfig.modules['benchmark-yarn-terasort-spark'] as Map<String, ?>
         def role = moduleconfig.getOrDefault("role", "all")
         if (role == "all") {
             throw new ModuleValidationException("Please specify a role for 'benchmark-maprfs'-module which is not 'all'. Usually it should run only on one node.")
         }
+        return [:]
         // TODO validate spark version 2.1
         // TODO check for valid ticket, if secure cluster
         // TODO check that role has only one node inside

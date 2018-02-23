@@ -16,19 +16,9 @@ import org.springframework.beans.factory.annotation.Qualifier
 // TODO implement diffs and give recommendations
 
 // custom module?
-// TODO grab yarn config
-// TODO grab env.sh
-// TODO grab hadoop config
-// TODO grab mfs config
-// TODO grab zooconf config
-// TODO grab storage pools
-// TODO grab disks
-// TODO grab clusters.conf
-// TODO grab check truststores with clusters conf
 // TODO grab pam conf
 // TODO grab sssd conf
 // TODO grab nscd conf
-// TODO grab ecosystem components
 
 
 @ClusterCheckModule(name = "clusteraudit", version = "1.0")
@@ -44,23 +34,51 @@ class ClusterAuditModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [:]
+        return ['mapruser': 'mapr']
     }
 
     @Override
-    void validate() throws ModuleValidationException {
-        // TODO implement check with hostname
+    List<String> validate() throws ModuleValidationException {
+        def clusteraudit = globalYamlConfig.modules.clusteraudit as Map<String, ?>
+        def role = clusteraudit.getOrDefault("role", "all")
+        def warnings = []
+        ssh.run {
+            settings {
+                pty = true
+                ignoreError = true
+            }
+            session(ssh.remotes.role(role)) {
+                def distribution = execute("[ -f /etc/system-release ] && cat /etc/system-release || cat /etc/os-release | uniq")
+                if (distribution.toLowerCase().contains("ubuntu")) {
+                    def result = execute("dpkg -l pciutils dmidecode net-tools ethtool bind9utils > /dev/null || true").trim()
+                    if(result) {
+                        warnings << ("Please install following tools: " + result)
+                    }
+
+                } else {
+                    def result = execute("rpm -q pciutils dmidecode net-tools ethtool bind-utils | grep 'is not installed' || true").trim()
+                    if(result) {
+                        warnings << ("Please install following tools: " + result)
+                    }
+                }
+                // TODO implement check with hostname
+            }
+        }
+        return warnings
+
     }
 
     @Override
     ClusterCheckResult execute() {
         def clusteraudit = globalYamlConfig.modules.clusteraudit as Map<String, ?>
         def role = clusteraudit.getOrDefault("role", "all")
+        def mapruser = clusteraudit.getOrDefault("role", "mapr")
         def result = Collections.synchronizedList([])
         log.info(">>>>> Running cluster-audit")
         ssh.run {
             settings {
                 pty = true
+                ignoreError = true
             }
             session(ssh.remotes.role(role)) {
                 def node = [:]
@@ -102,46 +120,101 @@ class ClusterAuditModule implements ExecuteModule {
                 node['memory']['swap_free'] = getColonProperty(memory, "SwapFree")
                 node['memory']['hugepage_total'] = getColonProperty(memory, "HugePages_Total")
                 node['memory']['hugepage_free'] = getColonProperty(memory, "HugePages_Free")
-                // broken
-                //   node['memory']['dimm_slots'] = execute('sudo dmidecode -t memory |grep -c \'^[[:space:]]*Locator:\'')
-                // node['memory']['dimm_count'] = execute('sudo dmidecode -t memory | grep -c \'^[[:space:]]Size: [0-9][0-9]*\'')
-                // node['memory']['dimm_info'] = execute('sudo dmidecode -t memory | awk \'/Memory Device$/,/^$/ {print}\'')
+                node['memory']['dimm_slots'] = execute('sudo dmidecode -t memory |grep -c \'^[[:space:]]*Locator:\'')
+                node['memory']['dimm_count'] = execute('sudo dmidecode -t memory | grep -c \'^[[:space:]]Size: [0-9][0-9]*\'')
+                node['memory']['dimm_info'] = execute('sudo dmidecode -t memory | awk \'/Memory Device$/,/^$/ {print}\'')
 
                 // NIC / Ethernet
-           /*
-                def lspci = dropEverythingBeforeString(executeSudo('lspci'), ' ')
+
+                def executeSudo = { arg -> executeSudo(arg) }
+                def ethernetControllers = findLine(executeSudo('lspci'), 'Ethernet controller:')
                 def ifconfig = executeSudo('ifconfig -a')
+                def ifconfigMap = parseInterfaceToMap(ifconfig, executeSudo)
+                def distribution = execute("[ -f /etc/system-release ] && cat /etc/system-release || cat /etc/os-release | uniq")
+                def systemd = execute("[ -f /etc/systemd/system.conf ] && echo true || echo false")
                 node['ethernet'] = [:]
-                node['ethernet']['controller'] = getColonProperty(lspci, "Ethernet controller")
-                node['ethernet']['interfaces'] = [] */
-                // TODO add NIC stuff
-                // TODO add missing stuff from cluster audit
-                // TODO grep RPM packages
-                // mtu size
-                // dropped packets, errors
-                // ip + mask
-//sudo /sbin/ethtool eth0
+                node['ethernet']['controller'] = getColonProperty(ethernetControllers, "Ethernet controller:")
+                node['ethernet']['interfaces'] = ifconfigMap
+                node['storage'] = [:]
+                node['storage']['controller'] = executeSudo("lspci | grep -i -e ide -e raid -e storage -e lsi")
+                node['storage']['scsi_raid'] = executeSudo("dmesg | grep -i raid | grep -i -o 'scsi.*\$' | uniq")
+                node['storage']['disks'] = executeSudo("fdisk -l | grep '^Disk /.*:' |sort")
+                node['storage']['udev_rules'] = executeSudo("ls /etc/udev/rules.d")
+                node['os'] = [:]
+                node['os']['distribution'] = distribution
+                node['os']['kernel'] = execute("uname -srvmo | fmt")
+                node['os']['time'] = execute("date")
+                node['os']['services'] = [:]
+                node['os']['packages'] = [:]
+                if (distribution.toLowerCase().contains("ubuntu")) {
+                    node['os']['services']['ntpd'] = executeSudo("service ntpd status || true")
+                    node['os']['services']['apparmor'] = executeSudo("apparmor_status | sed 's/([0-9]*)//' || true")
+                    node['os']['services']['selinux'] = execute("([ -d /etc/selinux -a -f /etc/selinux/config ] && grep ^SELINUX= /etc/selinux/config) || echo 'Disabled'")
+                    node['os']['services']['firewall'] = executeSudo("service ufw status | head -10 || true")
+                    node['os']['services']['iptables'] = executeSudo("iptables -L | head -10 || true")
+                    node['os']['packages']['nfs'] = execute("dpkg -l '*nfs*' | grep ^i")
+                } else {
+                    if (distribution.toLowerCase().contains("sles")) {
+                        node['os']['repositories'] = execute("zypper repos | grep -i mapr")
+                        node['os']['selinux'] = execute("rpm -q selinux-tools selinux-policy")
+                        node['os']['firewall'] = executeSudo("service SuSEfirewall2_init status")
+                    } else {
+                        node['os']['repositories'] = executeSudo("yum --noplugins repolist | grep -i mapr ")
+                        node['os']['selinux'] = executeSudo("getenforce")
 
-/*
-Settings for eth0:
-        Supported ports: [ ]
-        Supported link modes:   10000baseT/Full
-        Supported pause frame use: No
-        Supports auto-negotiation: No
-        Advertised link modes:  Not reported
-        Advertised pause frame use: No
-        Advertised auto-negotiation: No
-        Speed: 10000Mb/s
-        Duplex: Full
-        Port: Other
-        PHYAD: 0
-        Transceiver: Unknown!
-        Auto-negotiation: off
-        Current message level: 0x00000007 (7)
-                               drv probe link
-        Link detected: yes
- */
+                    }
+                    node['os']['packages']['nfs'] = execute("rpm -qa | grep -i nfs | sort")
+                    node['os']['packages']['required'] = execute("rpm -q dmidecode bind-utils irqbalance syslinux hdparm sdparm rpcbind nfs-utils redhat-lsb-core ntp | grep 'is not installed' || true")
+                    node['os']['packages']['optional'] = execute("rpm -q patch nc dstat xml2 jq git tmux zsh vim nmap mysql mysql-server tuned smartmontools pciutils lsof lvm2 iftop ntop iotop atop ftop htop ntpdate tree net-tools ethtool | grep 'is not installed' || true")
+                }
 
+                if (systemd == "true") {
+                    node['os']['services']['ntpd'] = executeSudo("systemctl status ntpd || true")
+                    node['os']['services']['sssd'] = executeSudo("systemctl status sssd || true")
+                    node['os']['services']['firewall'] = executeSudo("systemctl status firewalld || true")
+                    node['os']['services']['iptables'] = executeSudo("systemctl status iptables || true")
+                    node['os']['services']['cpuspeed'] = executeSudo("systemctl status cpuspeed || true")
+
+                } else {
+                    node['os']['services']['ntpd'] = executeSudo("service ntpd status || true")
+                    node['os']['services']['sssd'] = executeSudo("service sssd status || true")
+                    node['os']['services']['iptables'] = executeSudo("service iptables status | head -10 || true")
+                    node['os']['services']['cpuspeed'] = executeSudo("chkconfig --list cpuspeed || true")
+                }
+
+                node['os']['kernel_params'] = [:]
+                node['os']['kernel_params']['vm.swappiness'] = getColonValue(executeSudo("sysctl vm.swappiness"), '=')
+                node['os']['kernel_params']['net.ipv4.tcp_retries2'] = getColonValue(executeSudo("sysctl net.ipv4.tcp_retries2"), '=')
+                node['os']['kernel_params']['vm.overcommit_memory'] = getColonValue(executeSudo("sysctl vm.overcommit_memory"), '=')
+                node['os']['thp'] = executeSudo("cat /sys/kernel/mm/transparent_hugepage/enabled")
+                node['storage']['luks'] = executeSudo("grep -v -e ^# -e ^\$ /etc/crypttab | uniq -c -f2 || true")
+                node['storage']['controller_max_transfer_size'] = executeSudo("files=\$(ls /sys/block/{sd,xvd,vd}*/queue/max_hw_sectors_kb 2>/dev/null); for each in \$files; do printf \"%s: %s\\n\" \$each \$(cat \$each); done |uniq -c -f1")
+                node['storage']['controller_configured_transfer_size'] = executeSudo("files=\$(ls /sys/block/{sd,xvd,vd}*/queue/max_sectors_kb 2>/dev/null); for each in \$files; do printf \"%s: %s\\n\" \$each \$(cat \$each); done |uniq -c -f1")
+                if (systemd == "true") {
+                    node['storage']['mounted_fs'] = executeSudo("df -h --output=fstype,size,pcent,target -x tmpfs -x devtmpfs")
+                } else {
+                    node['storage']['mounted_fs'] = executeSudo("df -hT | cut -c22-28,39- | grep -e '  *' | grep -v -e /dev")
+                }
+                node['storage']['mount_permissions'] = executeSudo("mount | grep -e noexec -e nosuid | grep -v tmpfs |grep -v 'type cgroup'").tokenize('\n')
+                node['storage']['tmp_dir_permission'] = executeSudo("stat -c %a /tmp")
+                def java_version_output = execute("java -version")
+                node['java'] = [:]
+                node['java']['openjdk'] = java_version_output.toLowerCase().contains("openjdk")
+                node['java']['version'] = getColonValueFromLines(java_version_output, "version").replace('"', '')
+                node['java']['version_output'] = java_version_output
+
+                if (distribution.toLowerCase().contains("sles")) {
+                    node['ip'] = execute('hostname -i')
+                } else {
+                    node['ip'] = execute('hostname -I')
+                }
+                node['ulimit'] = [:]
+                node['ulimit']['mapr_processes'] = executeSudo("su - ${mapruser} -c 'ulimit -u'")
+                node['ulimit']['mapr_files'] = executeSudo("su - ${mapruser} -c 'ulimit -n'")
+                node['ulimit']['limits_conf'] = executeSudo("grep -e nproc -e nofile /etc/security/limits.conf |grep -v ':#'")
+                node['ulimit']['limits_d_conf'] = executeSudo("[ -d /etc/security/limits.d ] && (grep -e nproc -e nofile /etc/security/limits.d/*.conf |grep -v ':#')")
+
+                node['locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG'"), "LANG=")
                 result.add(node)
             }
         }
@@ -149,9 +222,43 @@ Settings for eth0:
         return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
     }
 
-    def getColonProperty(String memoryString, String memoryProperty) {
+    def parseInterfaceToMap(ifconfig, executeSudo) {
+        def result = [:]
+        def tokens = ifconfig.tokenize('\n')
+        def ifName = ""
+        def ifText = ""
+        for (def token : tokens) {
+            if (token.trim()) {
+                if (!token.startsWith(" ")) {
+                    if (ifName) {
+                        result[ifName] = getEthtool(ifName, executeSudo)
+                        result[ifName]['ifconfig'] = ifText
+                    }
+                    ifName = token.substring(0, token.indexOf(':')).trim()
+                    ifText = token.substring(token.indexOf(':') + 1).trim()
+                } else {
+                    ifText += '\n' + token.trim()
+                }
+            }
+        }
+        if (ifName) {
+            result[ifName] = getEthtool(ifName, executeSudo)
+            result[ifName]['ifconfig'] = ifText
+        }
+        return result
+    }
+
+    def getEthtool(ifName, executeSudo) {
+        def result = [:]
+        def ethtool = executeSudo('/sbin/ethtool ' + ifName)
+        result['speed'] = getColonValueFromLines(ethtool, "Speed:")
+        result['duplex'] = getColonValueFromLines(ethtool, "Duplex:")
+        return result
+    }
+
+    def getColonProperty(String memoryString, String property) {
         def tokens = memoryString.tokenize('\n')
-        def result = tokens.find { it.trim().startsWith(memoryProperty) }
+        def result = tokens.find { it.trim().startsWith(property) }
         return result ? getColonValue(result) : "Not found"
     }
 
@@ -159,12 +266,22 @@ Settings for eth0:
         return line.substring(line.indexOf(':') + 1).trim()
     }
 
-    def dropEverythingBeforeString(String allLines, String sep) {
-        def tokens = allLines.tokenize('\n')
-        def removed = tokens.collect {
-            it.substring(it.indexOf(sep) + 1).trim()
+    def getColonValue(String line, String property) {
+        return line.substring(line.indexOf(property) + property.length()).trim()
+    }
+
+    def getColonValueFromLines(String allLines, String property) {
+        def line = findLine(allLines, property)
+        if (!line) {
+            return ""
         }
-        return removed.join('\n')
+        return getColonValue(line, property)
+    }
+
+    def findLine(String allLines, String property) {
+        def tokens = allLines.tokenize('\n')
+        def result = tokens.find { it.trim().contains(property) }
+        return result
     }
 
 }

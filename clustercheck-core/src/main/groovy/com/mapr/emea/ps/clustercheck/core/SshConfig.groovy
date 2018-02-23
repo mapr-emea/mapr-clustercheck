@@ -32,8 +32,9 @@ class SshConfig {
                 for (String roleName  : node.roles) {
                     role(roleName)
                 }
-                host = node.host
+                host = node.get('host', 'localhost')
                 user = node.ssh_user
+                port = node.get('ssh_port', 22)
                 identity = new File(node.ssh_identity)
             })
         }

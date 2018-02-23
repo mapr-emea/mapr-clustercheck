@@ -62,14 +62,9 @@ modules:
       compression: 'on'
 
 nodes:
-- host: 10.0.0.34
-  ssh_user: ec2-user
+- host: localhost
+  ssh_port: 2222
+  ssh_user: root
   ssh_identity: /Users/chufe/.ssh/id_rsa
   roles:
   - clusterjob-execution
-- host: 10.0.0.41
-  ssh_user: ec2-user
-  ssh_identity: //Users/chufe/.ssh/id_rsa
-- host: 10.0.0.106
-  ssh_user: ec2-user
-  ssh_identity: /Users/chufe/.ssh/id_rsa

@@ -108,17 +108,23 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     }
 
     void executeCommandValidate(Map<String, Object> modules) {
-        int countErrors = runValidation(modules)
-        if (countErrors > 0) {
-            log.error(">>> Number of errors total: " + countErrors)
+        def validation = runValidation(modules)
+        if (validation['errors'] > 0) {
+            log.error(">>> Number of errors total: " + validation['errors'])
+        } else if (validation['warnings'] > 0) {
+            log.warn(">>> Number of warnings total: " + validation['warnings'])
         } else {
             log.info(">>> Everything is good. You can start cluster checks")
         }
     }
 
     void executeCommandRun(Map<String, Object> modules) {
-        int countErrors = runValidation(modules)
-        if (countErrors > 0) {
+        def validation = runValidation(modules)
+        if (validation['warnings'] > 0) {
+            log.warn(">>> Validation warnings occured, please fix them and re-run.")
+            return
+        }
+        if (validation['errors'] > 0) {
             log.error(">>> Validation errors occured, please fix them and re-run.")
             return
         }
@@ -170,9 +176,10 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         return moduleResults
     }
 
-    int runValidation(Map<String, Object> modules) {
+    def runValidation(Map<String, Object> modules) {
         log.info("====== Starting validation ======")
         int countErrors = 0
+        int countWarnings = 0
         for (Object module : modules.values()) {
             if (module instanceof ExecuteModule) {
                 ExecuteModule m = (ExecuteModule) module
@@ -184,10 +191,12 @@ class MaprClusterCheckApplication implements CommandLineRunner {
                 } else {
                     log.info("Validating " + annotation.name() + " - " + annotation.version())
                     try {
-                        module.validate()
+                        def warnings = module.validate()
+                        warnings.forEach{ log.warn(it) }
+                        countWarnings += warnings.size()
                     }
                     catch (ModuleValidationException ex) {
-                        log.error(">>> " + ex.getMessage())
+                        log.fatal(">>> " + ex.getMessage())
                         countErrors++;
                     }
                 }
@@ -197,7 +206,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
 
         }
         log.info("====== Validation finished ======")
-        return countErrors
+        return ['errors': countErrors, 'warnings': countWarnings]
     }
 
     def writeModuleJsonOutput(File outputDir, ModuleInternalResult result) {

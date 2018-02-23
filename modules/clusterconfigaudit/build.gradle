@@ -1,0 +1,12 @@
+apply plugin: 'groovy'
+apply plugin: 'org.springframework.boot'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+bootRepackage {
+    enabled = false
+}
+dependencies {
+	compile project(':clustercheck-core')
+}
