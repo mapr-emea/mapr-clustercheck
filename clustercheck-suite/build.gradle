@@ -12,6 +12,7 @@ bootRepackage {
 dependencies {
 	compile project(':clustercheck-core')
 	compile project(':modules:clusteraudit')
+	compile project(':modules:benchmark-memory')
 	compile project(':modules:benchmark-network-iperf')
 	compile project(':modules:benchmark-maprfs-dfsio')
 	compile project(':modules:benchmark-maprfs-rwtest')

@@ -15,13 +15,12 @@ import org.springframework.beans.factory.annotation.Qualifier
 // TODO implement TEXT report
 // TODO implement diffs and give recommendations
 
-// custom module?
 // TODO grab pam conf
 // TODO grab sssd conf
 // TODO grab nscd conf
 
 
-@ClusterCheckModule(name = "clusteraudit", version = "1.0")
+@ClusterCheckModule(name = "cluster-audit", version = "1.0")
 class ClusterAuditModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(ClusterAuditModule.class);
 
@@ -39,7 +38,7 @@ class ClusterAuditModule implements ExecuteModule {
 
     @Override
     List<String> validate() throws ModuleValidationException {
-        def clusteraudit = globalYamlConfig.modules.clusteraudit as Map<String, ?>
+        def clusteraudit = globalYamlConfig.modules['cluster-audit'] as Map<String, ?>
         def role = clusteraudit.getOrDefault("role", "all")
         def warnings = []
         ssh.run {
@@ -58,10 +57,9 @@ class ClusterAuditModule implements ExecuteModule {
                 } else {
                     def result = execute("rpm -q pciutils dmidecode net-tools ethtool bind-utils | grep 'is not installed' || true").trim()
                     if(result) {
-                        warnings << ("Please install following tools: " + result)
+                        warnings << ("Please install following tools: \n " + result)
                     }
                 }
-                // TODO implement check with hostname
             }
         }
         return warnings
@@ -215,6 +213,11 @@ class ClusterAuditModule implements ExecuteModule {
                 node['ulimit']['limits_d_conf'] = executeSudo("[ -d /etc/security/limits.d ] && (grep -e nproc -e nofile /etc/security/limits.d/*.conf |grep -v ':#')")
 
                 node['locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG'"), "LANG=")
+
+                node['dns'] = [:]
+                node['dns']['lookup'] = execute("host " + node['hostname'])
+                node['dns']['reverse'] = execute("host " + node['ip'])
+
                 result.add(node)
             }
         }

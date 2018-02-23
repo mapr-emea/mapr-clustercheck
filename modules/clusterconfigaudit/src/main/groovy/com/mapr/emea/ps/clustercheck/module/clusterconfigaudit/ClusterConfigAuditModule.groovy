@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 // TODO grab ecosystem components
 
 
-@ClusterCheckModule(name = "clusterconfigaudit", version = "1.0")
+@ClusterCheckModule(name = "cluster-config-audit", version = "1.0")
 class ClusterConfigAuditModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(ClusterConfigAuditModule.class);
 
@@ -51,7 +51,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
 
     @Override
     ClusterCheckResult execute() {
-        def clusterconfigaudit = globalYamlConfig.modules.clusterconfigaudit as Map<String, ?>
+        def clusterconfigaudit = globalYamlConfig.modules['cluster-config-audit'] as Map<String, ?>
         def role = clusterconfigaudit.getOrDefault("role", "all")
         def result = Collections.synchronizedList([])
         log.info(">>>>> Running cluster-config-audit")

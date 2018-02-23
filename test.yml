@@ -4,7 +4,9 @@ output_dir: /Users/chufe/audit
 mapr_user: mapr
 
 modules:
-  clusteraudit:
+  cluster-audit:
+    enabled: true
+  benchmark-memory:
     enabled: true
   benchmark-network-iperf:
     enabled: true
@@ -62,9 +64,21 @@ modules:
       compression: 'on'
 
 nodes:
-- host: localhost
-  ssh_port: 2222
-  ssh_user: root
+- host: 10.0.0.133
+  ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
   roles:
   - clusterjob-execution
+- host: 10.0.0.228
+  ssh_user: ec2-user
+  ssh_identity: //Users/chufe/.ssh/id_rsa
+- host: 10.0.0.246
+  ssh_user: ec2-user
+  ssh_identity: /Users/chufe/.ssh/id_rsa
+
+#- host: localhost
+#  ssh_port: 2222
+#  ssh_user: root
+#  ssh_identity: /Users/chufe/.ssh/id_rsa
+#  roles:
+#  - clusterjob-execution
