@@ -68,7 +68,7 @@ class ClusterAuditModule implements ExecuteModule {
 
     @Override
     ClusterCheckResult execute() {
-        def clusteraudit = globalYamlConfig.modules.clusteraudit as Map<String, ?>
+        def clusteraudit = globalYamlConfig.modules['cluster-audit'] as Map<String, ?>
         def role = clusteraudit.getOrDefault("role", "all")
         def mapruser = clusteraudit.getOrDefault("role", "mapr")
         def result = Collections.synchronizedList([])

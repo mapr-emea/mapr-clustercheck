@@ -17,13 +17,6 @@ import org.springframework.core.io.ResourceLoader
 class BenchmarkMemoryModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkMemoryModule.class);
 
-    def defaultTestMatrix = [
-            [threads: 1, data_per_thread: "4096M"],
-            [threads: 2, data_per_thread: "2048M"],
-            [threads: 4, data_per_thread: "1024M"],
-            [threads: 8, data_per_thread: "512M"]
-    ]
-
     @Autowired
     @Qualifier("ssh")
     def ssh
@@ -36,7 +29,7 @@ class BenchmarkMemoryModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [tests: defaultTestMatrix]
+        return []
     }
 
     @Override

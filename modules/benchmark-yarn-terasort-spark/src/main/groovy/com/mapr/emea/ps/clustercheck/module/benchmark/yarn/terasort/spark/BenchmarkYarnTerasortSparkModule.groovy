@@ -14,6 +14,9 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
+// TODO option reuse volume
+// TODO option reuse data
+// TODO option custom volumename
 @ClusterCheckModule(name = "benchmark-yarn-terasort-spark", version = "1.0")
 class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkYarnTerasortSparkModule.class);
@@ -40,7 +43,7 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
         if (role == "all") {
             throw new ModuleValidationException("Please specify a role for 'benchmark-maprfs'-module which is not 'all'. Usually it should run only on one node.")
         }
-        return [:]
+        return []
         // TODO validate spark version 2.1
         // TODO check for valid ticket, if secure cluster
         // TODO check that role has only one node inside
