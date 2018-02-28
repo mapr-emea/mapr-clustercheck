@@ -15,6 +15,7 @@ import org.springframework.core.io.ResourceLoader
  */
 // TODO check the NIC speed and add to report
 // TODO Give recommendation about speed
+// TODO option for simple split, testing every node with every node requires a lot of time.
 @ClusterCheckModule(name = "benchmark-network-iperf", version = "1.0")
 class BenchmarkNetworkIperfModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkNetworkIperfModule.class);

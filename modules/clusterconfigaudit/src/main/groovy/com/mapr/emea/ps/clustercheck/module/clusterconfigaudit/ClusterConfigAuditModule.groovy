@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 // TODO grab disks
 // TODO grab clusters.conf
 // TODO grab check truststores with clusters conf
+// TODO recommendation nm-local-dir
 
 
 @ClusterCheckModule(name = "cluster-config-audit", version = "1.0")

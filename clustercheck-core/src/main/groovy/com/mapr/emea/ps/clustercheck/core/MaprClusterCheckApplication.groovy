@@ -122,7 +122,6 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         def validation = runValidation(modules)
         if (validation['warnings'] > 0) {
             log.warn(">>> Validation warnings occured, please fix them and re-run.")
-            return
         }
         if (validation['errors'] > 0) {
             log.error(">>> Validation errors occured, please fix them and re-run.")
@@ -137,16 +136,16 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         }
         log.info("... Creating output directory " + outputDir.getAbsolutePath())
         outputDir.mkdir()
-        def startTime = System.currentTimeMillis()
-        def moduleResults = runModuleExecution(modules, outputDir)
-        def durationInMs = System.currentTimeMillis() - startTime
-        writeGlobalJsonOutput(outputDir, moduleResults, startTime, durationInMs)
-        writeGlobalReportOutput(outputDir, moduleResults, startTime, durationInMs)
+        runModuleExecution(modules, outputDir)
+    //    def durationInMs = System.currentTimeMillis() - startTime
+    //    writeGlobalJsonOutput(outputDir, moduleResults, startTime, durationInMs)
+    //    writeGlobalReportOutput(outputDir, moduleResults, startTime, durationInMs)
         log.info("... Execution completed")
     }
 
-    List<ModuleInternalResult> runModuleExecution(Map<String, Object> modules, File outputDir) {
-        def moduleResults = []
+   // List<ModuleInternalResult> runModuleExecution(Map<String, Object> modules, File outputDir) {
+    def runModuleExecution(Map<String, Object> modules, File outputDir) {
+    //    def moduleResults = []
         log.info("====== Starting execution =======")
         for (Object module : modules.values()) {
             if (module instanceof ExecuteModule) {
@@ -165,7 +164,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
                     def internalResult = new ModuleInternalResult(result: result, module: annotation, moduleDurationInMs: moduleDurationInMs, executedAt: sdf.format(new Date()))
                     writeModuleJsonOutput(outputDir, internalResult)
                     writeModuleReportOutput(outputDir, internalResult)
-                    moduleResults << internalResult
+                //    moduleResults << internalResult
                 }
             } else {
                 log.warn("Cannot execute module")
@@ -173,7 +172,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
 
         }
         log.info("====== Execution finished ======")
-        return moduleResults
+    //    return moduleResults
     }
 
     def runValidation(Map<String, Object> modules) {
@@ -210,12 +209,14 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     }
 
     def writeModuleJsonOutput(File outputDir, ModuleInternalResult result) {
-        def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: result.executedAt, executionDurationInMs: result.moduleDurationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleName: result.module.name(), moduleVersion: result.module.version(), moduleResult: result.result.reportJson, moduleRecommendations: result.result.recommendations, configuration: globalYamlConfig]
+        def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: result.executedAt, executionDurationInMs: result.moduleDurationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleName: result.module.name(), moduleVersion: result.module.version(), moduleResult: result.result.reportJson, moduleRecommendations: result.result.recommendations, moduleConfig: globalYamlConfig['modules'][result.module.name()]]
         def json = JsonOutput.toJson(globalJson)
-        def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + result.module.name())
+    //    def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + result.module.name())
+        def outputModuleDir = new File(outputDir.getAbsolutePath())
         outputModuleDir.mkdirs()
-        def outputFile = new File(outputModuleDir.getAbsolutePath() + "/result.json")
+        def outputFile = new File(outputModuleDir.getAbsolutePath() + "/" + result.module.name() + ".json")
         outputFile.text = JsonOutput.prettyPrint(json)
+        log.info("... Writing summary JSON result: ${outputFile.absolutePath}")
     }
 
     def writeModuleReportOutput(File outputDir, ModuleInternalResult result) {
@@ -249,10 +250,12 @@ Module version: ${result.module.version()}
 ========================= CONFIGURATION ==================================
 """
         outputText += (configFile as File).text
-        def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + result.module.name())
+    //    def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + result.module.name())
+        def outputModuleDir = new File(outputDir.getAbsolutePath())
         outputModuleDir.mkdirs()
-        def outputFile = new File(outputModuleDir.getAbsolutePath() + "/report.txt")
+        def outputFile = new File(outputModuleDir.getAbsolutePath() + "/" + result.module.name() + ".txt")
         outputFile.text = outputText
+        log.info("... Writing summary TEXT report: ${outputFile.absolutePath} ")
     }
 
     def writeGlobalJsonOutput(File outputDir, List<ModuleInternalResult> moduleInternalResults, long startTime, long durationInMs) {
