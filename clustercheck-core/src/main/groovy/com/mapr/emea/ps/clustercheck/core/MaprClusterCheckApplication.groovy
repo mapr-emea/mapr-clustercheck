@@ -239,8 +239,8 @@ Module version: ${result.module.version()}
         int i = 1
         if (result.result.recommendations) {
             for (String recommendation : result.result.recommendations) {
-                outputText += ">>>>> Recommendation ${i} <<<<<\n"
-                outputText += recommendation + "\n"
+            //    outputText += ">>>>> Recommendation ${i} <<<<<\n"
+                outputText += i + ".\t" + recommendation + "\n"
                 i++
             }
         } else {

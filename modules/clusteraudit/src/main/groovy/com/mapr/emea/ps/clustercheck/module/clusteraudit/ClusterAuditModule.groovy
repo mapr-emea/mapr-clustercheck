@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 /**
  * Created by chufe on 22.08.17.
  */
-// TODO implement TEXT report
-// TODO implement diffs and give recommendations
 
 // TODO grab pam conf
 // TODO grab sssd conf
@@ -99,7 +97,7 @@ class ClusterAuditModule implements ExecuteModule {
                 node['cpu.architecture'] = getColonProperty(cpu, 'Architecture')
                 node['cpu.virtualization'] = getColonProperty(cpu, 'Virtualization type')
                 node['cpu.bogo_mips'] = getColonProperty(cpu, 'BogoMIPS')
-                node['cpu.cpus'] = getColonProperty(cpu, 'CPU(s)')
+                node['cpu.cores'] = getColonProperty(cpu, 'CPU(s)')
                 node['cpu.stepping'] = getColonProperty(cpu, 'Stepping')
                 node['cpu.byte_order'] = getColonProperty(cpu, 'Byte Order')
                 node['cpu.cpu_mhz'] = getColonProperty(cpu, 'CPU MHz')
@@ -127,10 +125,10 @@ class ClusterAuditModule implements ExecuteModule {
                 def distribution = execute("[ -f /etc/system-release ] && cat /etc/system-release || cat /etc/os-release | uniq")
                 def systemd = execute("[ -f /etc/systemd/system.conf ] && echo true || echo false")
                 node['ethernet.controller'] = getColonProperty(ethernetControllers, "Ethernet controller:")
-                node['ethernet.interfaces'] = ifconfigMap
+                node << ifconfigMap
                 node['storage.controller'] = executeSudo("lspci | grep -i -e ide -e raid -e storage -e lsi")
                 node['storage.scsi_raid'] = executeSudo("dmesg | grep -i raid | grep -i -o 'scsi.*\$' | uniq")
-                node['storage.disks'] = executeSudo("fdisk -l | grep '^Disk /.*:' |sort")
+                node['storage.disks'] = executeSudo("fdisk -l | grep '^Disk /.*:' |sort").tokenize('\n')
                 node['storage.udev_rules'] = executeSudo("ls /etc/udev/rules.d")
                 node['os.distribution'] = distribution
                 node['os.kernel'] = execute("uname -srvmo | fmt")
@@ -139,39 +137,39 @@ class ClusterAuditModule implements ExecuteModule {
                 node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG'"), "LANG=")
 
                 if (distribution.toLowerCase().contains("ubuntu")) {
-                    node['os.services.ntpd'] = executeSudo("service ntpd status || true")
+                    node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
                     node['os.services.apparmor'] = executeSudo("apparmor_status | sed 's/([0-9]*)//' || true")
                     node['os.services.selinux'] = execute("([ -d /etc/selinux -a -f /etc/selinux/config ] && grep ^SELINUX= /etc/selinux/config) || echo 'Disabled'")
-                    node['os.services.firewall'] = executeSudo("service ufw status | head -10 || true")
-                    node['os.services.iptables'] = executeSudo("iptables -L | head -10 || true")
-                    node['os.packages.nfs'] = execute("dpkg -l '*nfs*' | grep ^i")
+                    node['os.services.firewall'] = executeSudo("service ufw status | head -10 || true").tokenize('\n')
+                    node['os.services.iptables'] = executeSudo("iptables -L | head -10 || true").tokenize('\n')
+                    node['os.packages.nfs'] = execute("dpkg -l '*nfs*' | grep ^i").tokenize('\n')
                 } else {
                     if (distribution.toLowerCase().contains("sles")) {
-                        node['os.repositories'] = execute("zypper repos | grep -i mapr")
+                        node['os.repositories'] = execute("zypper repos | grep -i mapr").tokenize('\n')
                         node['os.selinux'] = execute("rpm -q selinux-tools selinux-policy")
-                        node['os.firewall'] = executeSudo("service SuSEfirewall2_init status")
+                        node['os.firewall'] = executeSudo("service SuSEfirewall2_init status").tokenize('\n')
                     } else {
-                        node['os.repositories'] = executeSudo("yum --noplugins repolist | grep -i mapr ")
+                        node['os.repositories'] = executeSudo("yum --noplugins repolist | grep -i mapr ").tokenize('\n')
                         node['os.selinux'] = executeSudo("getenforce")
 
                     }
-                    node['os.packages.nfs'] = execute("rpm -qa | grep -i nfs | sort")
-                    node['os.packages.required'] = execute("rpm -q dmidecode bind-utils irqbalance syslinux hdparm sdparm rpcbind nfs-utils redhat-lsb-core ntp | grep 'is not installed' || true")
-                    node['os.packages.optional'] = execute("rpm -q patch nc dstat xml2 jq git tmux zsh vim nmap mysql mysql-server tuned smartmontools pciutils lsof lvm2 iftop ntop iotop atop ftop htop ntpdate tree net-tools ethtool | grep 'is not installed' || true")
+                    node['os.packages.nfs'] = execute("rpm -qa | grep -i nfs | sort").tokenize('\n')
+                    node['os.packages.required'] = execute("rpm -q dmidecode bind-utils irqbalance syslinux hdparm sdparm rpcbind nfs-utils redhat-lsb-core ntp | grep 'is not installed' || true").tokenize('\n')
+                    node['os.packages.optional'] = execute("rpm -q patch nc dstat xml2 jq git tmux zsh vim nmap mysql mysql-server tuned smartmontools pciutils lsof lvm2 iftop ntop iotop atop ftop htop ntpdate tree net-tools ethtool | grep 'is not installed' || true").tokenize('\n')
                 }
 
                 if (systemd == "true") {
-                    node['os.services.ntpd'] = executeSudo("systemctl status ntpd || true")
-                    node['os.services.sssd'] = executeSudo("systemctl status sssd || true")
-                    node['os.services.firewall'] = executeSudo("systemctl status firewalld || true")
-                    node['os.services.iptables'] = executeSudo("systemctl status iptables || true")
-                    node['os.services.cpuspeed'] = executeSudo("systemctl status cpuspeed || true")
+                    node['os.services.ntpd'] = executeSudo("systemctl status ntpd || true").tokenize('\n')
+                    node['os.services.sssd'] = executeSudo("systemctl status sssd || true").tokenize('\n')
+                    node['os.services.firewall'] = executeSudo("systemctl status firewalld || true").tokenize('\n')
+                    node['os.services.iptables'] = executeSudo("systemctl status iptables || true").tokenize('\n')
+                    node['os.services.cpuspeed'] = executeSudo("systemctl status cpuspeed || true").tokenize('\n')
 
                 } else {
-                    node['os.services.ntpd'] = executeSudo("service ntpd status || true")
-                    node['os.services.sssd'] = executeSudo("service sssd status || true")
-                    node['os.services.iptables'] = executeSudo("service iptables status | head -10 || true")
-                    node['os.services.cpuspeed'] = executeSudo("chkconfig --list cpuspeed || true")
+                    node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
+                    node['os.services.sssd'] = executeSudo("service sssd status || true").tokenize('\n')
+                    node['os.services.iptables'] = executeSudo("service iptables status | head -10 || true").tokenize('\n')
+                    node['os.services.cpuspeed'] = executeSudo("chkconfig --list cpuspeed || true").tokenize('\n')
                 }
 
                 node['os.kernel_params.vm.swappiness'] = getColonValue(executeSudo("sysctl vm.swappiness"), '=')
@@ -182,16 +180,16 @@ class ClusterAuditModule implements ExecuteModule {
                 node['storage.controller_max_transfer_size'] = executeSudo("files=\$(ls /sys/block/{sd,xvd,vd}*/queue/max_hw_sectors_kb 2>/dev/null); for each in \$files; do printf \"%s: %s\\n\" \$each \$(cat \$each); done |uniq -c -f1")
                 node['storage.controller_configured_transfer_size'] = executeSudo("files=\$(ls /sys/block/{sd,xvd,vd}*/queue/max_sectors_kb 2>/dev/null); for each in \$files; do printf \"%s: %s\\n\" \$each \$(cat \$each); done |uniq -c -f1")
                 if (systemd == "true") {
-                    node['storage.mounted_fs'] = executeSudo("df -h --output=fstype,size,pcent,target -x tmpfs -x devtmpfs")
+                    node['storage.mounted_fs'] = executeSudo("df -h --output=fstype,size,pcent,target -x tmpfs -x devtmpfs").tokenize('\n')
                 } else {
-                    node['storage.mounted_fs'] = executeSudo("df -hT | cut -c22-28,39- | grep -e '  *' | grep -v -e /dev")
+                    node['storage.mounted_fs'] = executeSudo("df -hT | cut -c22-28,39- | grep -e '  *' | grep -v -e /dev").tokenize('\n')
                 }
                 node['storage.mount_permissions'] = executeSudo("mount | grep -e noexec -e nosuid | grep -v tmpfs |grep -v 'type cgroup'").tokenize('\n')
                 node['storage.tmp_dir_permission'] = executeSudo("stat -c %a /tmp")
                 def java_version_output = execute("java -version")
                 node['java.openjdk'] = java_version_output.toLowerCase().contains("openjdk")
                 node['java.version'] = getColonValueFromLines(java_version_output, "version").replace('"', '')
-                node['java.version_output'] = java_version_output
+                node['java.version_output'] = java_version_output.tokenize('\n')
 
                 if (distribution.toLowerCase().contains("sles")) {
                     node['ip'] = execute('hostname -i')
@@ -211,20 +209,107 @@ class ClusterAuditModule implements ExecuteModule {
             }
         }
         def result = groupSameValuesWithHosts(nodes)
-        // TODO apply recommendations here
-        // TODO generic one for different values
-        // TODO recommendation ulimit
-        // TODO recommendation THP
-        // TODO recommendation kernel params
-        // TODO recommendation os required packages
-        // TODO recommendation umask
-        // TODO recommendation locale
-        // TODO recommendation dns, check for "has address"
-        // TODO recommendation reverse dns, check for "domain name pointer"
 
+
+        def recommendations = []
+        recommendations += calculateRecommendationsForDiffValues(result)
+        recommendations += ifBuildMessage(result, "os.thp", { it.contains("[always]") }, "Disable Transparent Huge Pages.")
+        recommendations += ifBuildMessage(result, "ulimit.mapr_processes", { (it as int) < 64000 }, "Set MapR system user process limit to a minimum of 64000.")
+        recommendations += ifBuildMessage(result, "ulimit.mapr_files", { (it as int) < 64000 }, "Set MapR system user files limit to a minimum of 64000.")
+        recommendations += ifBuildMessage(result, "os.kernel_params.vm.swappiness", { it != "10"}, "Set kernel parameter vm.swappiness=10")
+        recommendations += ifBuildMessage(result, "os.kernel_params.net.ipv4.tcp_retries2", { it != "5"}, "Set kernel parameter net.ipv4.tcp_retries2=5")
+        recommendations += ifBuildMessage(result, "os.kernel_params.vm.overcommit_memory", { it != "0"}, "Set kernel parameter os.kernel_params.vm.overcommit_memory=0")
+        recommendations += ifBuildMessage(result, "os.packages.required", { it }, "Please install all OS required packages.")
+        recommendations += ifBuildMessage(result, "os.packages.nfs", { it }, "Please install all NFS required packages.")
+        recommendations += ifBuildMessage(result, "os.umask", { it != "0022" }, "Default umask must be '0022'")
+        recommendations += ifBuildMessage(result, "os.selinux", { it != "Disabled" }, "SE Linux should be disabled.")
+        recommendations += ifBuildMessage(result, "os.locale", { it != "en_US.UTF-8" }, "OS locale should be 'en_US.UTF-8'.")
+        recommendations += ifBuildMessage(result, "dns.lookup", { !it.contains("has address") }, "DNS lookup for host does not work.")
+        recommendations += ifBuildMessage(result, "dns.reverse", { !it.contains("domain name pointer") }, "Reverse DNS lookup for host does not work.")
+
+        def textReport = buildTextReport(result)
 
         log.info(">>>>> ... cluster-audit finished")
-        return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
+        return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: recommendations)
+    }
+
+    def buildTextReport(def result) {
+        def text = ""
+        for(def res in result) {
+            for(def vals in res.value) {
+                text += "> Hosts: ${vals['hosts']}\n"
+                if(vals['value'] instanceof Collection) {
+                    text += ">>> ${res.key} = \n"
+                    for(def line in vals['value']) {
+                        text += ">>>>> ${line}\n"
+                    }
+                }
+                else {
+                    text += ">>> ${res.key} = ${vals['value']}\n"
+                }
+            }
+            text += "-----------------------------------------------------------------------\n"
+        }
+        text
+    }
+
+    def ifBuildMessage(def result, String key, Closure<Boolean> condition, String message) {
+        def hosts =  result[key].findAll { condition(it['value']) }['hosts'].flatten()
+        return hosts.collect{ "${it}: ${message}" }
+    }
+
+    def calculateRecommendationsForDiffValues(def result) {
+        def propsWithSameValue = [
+                "sysinfo.manufacturer",
+                "sysinfo.product_name",
+                "bios.vendor",
+                "bios.version",
+                "bios.release_date",
+                "cpu.model",
+                "cpu.architecture",
+                "cpu.virtualization",
+                "cpu.bogo_mips",
+                "cpu.cores",
+                "cpu.stepping",
+                "cpu.byte_order",
+                "cpu.cpu_mhz",
+                "cpu.threads_per_core",
+                "memory.total",
+                "memory.swap_total",
+                "memory.hugepage_total",
+                "memory.dimm_slots",
+                "memory.dimm_count",
+                "memory.dimm_info",
+                "ethernet.controller",
+                "storage.controller",
+                "storage.scsi_raid",
+                "storage.udev_rules",
+                "os.distribution",
+                "os.kernel",
+                "os.time",
+                "os.umask",
+                "os.repositories",
+                "os.selinux",
+                "os.locale",
+                "os.packages.required",
+                "os.kernel_params.vm.swappiness",
+                "os.kernel_params.net.ipv4.tcp_retries2",
+                "os.kernel_params.vm.overcommit_memory",
+                "os.thp",
+                "storage.controller_max_transfer_size",
+                "storage.controller_configured_transfer_size",
+                "storage.tmp_dir_permission",
+                "java.openjdk",
+                "java.version",
+                "java.version_output",
+                "ulimit.mapr_processes",
+                "ulimit.mapr_files",
+                "ulimit.limits_conf",
+                "ulimit.limits_d_conf"
+        ]
+        return propsWithSameValue.findAll{ it -> result[it].size() != 1 }.collect { it ->
+                return "'${it}' should have the same values for all nodes."
+        }
     }
 
     private static def groupSameValuesWithHosts(def nodes) {
@@ -263,8 +348,8 @@ class ClusterAuditModule implements ExecuteModule {
             if (token.trim()) {
                 if (!token.startsWith(" ")) {
                     if (ifName) {
-                        result[ifName] = getEthtool(ifName, executeSudo)
-                        result[ifName]['ifconfig'] = ifText
+                        result << getEthtool(ifName, executeSudo)
+                        result['ethernet.interfaces.' + ifName + '.ifconfig'] = ifText.tokenize('\n')
                     }
                     ifName = token.substring(0, token.indexOf(':')).trim()
                     ifText = token.substring(token.indexOf(':') + 1).trim()
@@ -274,8 +359,8 @@ class ClusterAuditModule implements ExecuteModule {
             }
         }
         if (ifName) {
-            result[ifName] = getEthtool(ifName, executeSudo)
-            result[ifName]['ifconfig'] = ifText
+            result << getEthtool(ifName, executeSudo)
+            result['ethernet.interfaces.' + ifName + '.ifconfig'] = ifText.tokenize('\n')
         }
         return result
     }
@@ -283,8 +368,8 @@ class ClusterAuditModule implements ExecuteModule {
     def getEthtool(ifName, executeSudo) {
         def result = [:]
         def ethtool = executeSudo('/sbin/ethtool ' + ifName)
-        result['speed'] = getColonValueFromLines(ethtool, "Speed:")
-        result['duplex'] = getColonValueFromLines(ethtool, "Duplex:")
+        result['ethernet.interfaces.' + ifName + '.speed'] = getColonValueFromLines(ethtool, "Speed:")
+        result['ethernet.interfaces.' + ifName + '.duplex'] = getColonValueFromLines(ethtool, "Duplex:")
         return result
     }
 
