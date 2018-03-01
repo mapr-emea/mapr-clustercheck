@@ -236,17 +236,22 @@ class ClusterAuditModule implements ExecuteModule {
     def buildTextReport(def result) {
         def text = ""
         for(def res in result) {
+            def firstRun = true
             for(def vals in res.value) {
-                text += "> Hosts: ${vals['hosts']}\n"
+                if(!firstRun) {
+                    text += "---\n"
+                }
+                text += "Hosts: ${vals['hosts']}\n"
                 if(vals['value'] instanceof Collection) {
-                    text += ">>> ${res.key} = \n"
+                    text += "${res.key} = \n"
                     for(def line in vals['value']) {
-                        text += ">>>>> ${line}\n"
+                        text += "> ${line}\n"
                     }
                 }
                 else {
-                    text += ">>> ${res.key} = ${vals['value']}\n"
+                    text += "${res.key} = ${vals['value']}\n"
                 }
+                firstRun = false
             }
             text += "-----------------------------------------------------------------------\n"
         }
