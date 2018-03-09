@@ -28,6 +28,7 @@ class SshConfig {
         def nodes = globalYamlConfig.get("nodes")
         for (Map<String, Object> node  : nodes) {
             ssh.remotes.create(node.host, {
+                role(node.host)
                 role('all')
                 for (String roleName  : node.roles) {
                     role(roleName)

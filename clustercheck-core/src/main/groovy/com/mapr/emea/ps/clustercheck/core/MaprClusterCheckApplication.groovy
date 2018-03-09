@@ -146,6 +146,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
    // List<ModuleInternalResult> runModuleExecution(Map<String, Object> modules, File outputDir) {
     def runModuleExecution(Map<String, Object> modules, File outputDir) {
     //    def moduleResults = []
+        def runId = UUID.randomUUID().toString()
         log.info("====== Starting execution =======")
         for (Object module : modules.values()) {
             if (module instanceof ExecuteModule) {
@@ -161,7 +162,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
                     def result = m.execute()
                     long moduleDurationInMs = System.currentTimeMillis() - moduleStart
                     def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                    def internalResult = new ModuleInternalResult(result: result, module: annotation, moduleDurationInMs: moduleDurationInMs, executedAt: sdf.format(new Date()))
+                    def internalResult = new ModuleInternalResult(result: result, module: annotation, moduleDurationInMs: moduleDurationInMs, executedAt: sdf.format(new Date()), runId: runId)
                     writeModuleJsonOutput(outputDir, internalResult)
                     writeModuleReportOutput(outputDir, internalResult)
                 //    moduleResults << internalResult
@@ -195,7 +196,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
                         countWarnings += warnings.size()
                     }
                     catch (ModuleValidationException ex) {
-                        log.fatal(">>> " + ex.getMessage())
+                        log.error(">>> " + ex.getMessage())
                         countErrors++;
                     }
                 }
@@ -209,7 +210,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     }
 
     def writeModuleJsonOutput(File outputDir, ModuleInternalResult result) {
-        def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, executedAt: result.executedAt, executionDurationInMs: result.moduleDurationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleName: result.module.name(), moduleVersion: result.module.version(), moduleResult: result.result.reportJson, moduleRecommendations: result.result.recommendations, moduleConfig: globalYamlConfig['modules'][result.module.name()]]
+        def globalJson = [clusterName: globalYamlConfig.cluster_name, customerName: globalYamlConfig.customer_name, runId: result.runId, executedAt: result.executedAt, executionDurationInMs: result.moduleDurationInMs, executionHost: InetAddress.getLocalHost().getCanonicalHostName(), moduleName: result.module.name(), moduleVersion: result.module.version(), moduleResult: result.result.reportJson, moduleRecommendations: result.result.recommendations, moduleConfig: globalYamlConfig['modules'][result.module.name()]]
         def json = JsonOutput.toJson(globalJson)
     //    def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + result.module.name())
         def outputModuleDir = new File(outputDir.getAbsolutePath())

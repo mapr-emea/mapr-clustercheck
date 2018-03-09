@@ -14,11 +14,13 @@ modules:
     enabled: true
     tests:
     - threads: 1
-      data_per_thread: 8192M
+      data_per_thread: 4G
+      mode: all
     - threads: 4
-      data_per_thread: 2048M
+      data_per_thread: 4G
+      mode: all
   benchmark-maprfs-dfsio:
-    enabled: true
+    enabled: false
     role: clusterjob-execution
     tests:
     - dfsio_number_of_files: 5
@@ -41,7 +43,7 @@ modules:
       compression: 'on'
       size_in_mb: 524288
   benchmark-yarn-terasort-mr:
-    enabled: true
+    enabled: false
     role: clusterjob-execution
     tests:
     - chunk_size_in_mb: 256
@@ -71,12 +73,18 @@ nodes:
   ssh_identity: /Users/chufe/.ssh/id_rsa
   roles:
   - clusterjob-execution
+  - benchmark_network_iperf_client
 - host: 10.0.0.228
   ssh_user: ec2-user
   ssh_identity: //Users/chufe/.ssh/id_rsa
+  roles:
+  - benchmark_network_iperf_client
+  - benchmark_network_iperf_server
 - host: 10.0.0.246
   ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
+  roles:
+  - benchmark_network_iperf_server
 
 #- host: localhost
 #  ssh_port: 2222

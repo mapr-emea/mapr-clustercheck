@@ -8,4 +8,5 @@ class ModuleInternalResult {
     ClusterCheckModule module
     long moduleDurationInMs
     String executedAt
+    String runId
 }
