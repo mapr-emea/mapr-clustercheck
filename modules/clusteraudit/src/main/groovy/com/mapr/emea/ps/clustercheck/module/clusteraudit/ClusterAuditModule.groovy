@@ -42,7 +42,6 @@ class ClusterAuditModule implements ExecuteModule {
         ssh.run {
             settings {
                 pty = true
-                ignoreError = true
             }
             session(ssh.remotes.role(role)) {
                 def distribution = execute("[ -f /etc/system-release ] && cat /etc/system-release || cat /etc/os-release | uniq")
@@ -74,7 +73,6 @@ class ClusterAuditModule implements ExecuteModule {
         ssh.run {
             settings {
                 pty = true
-                ignoreError = true
             }
             session(ssh.remotes.role(role)) {
                 def node = [:]

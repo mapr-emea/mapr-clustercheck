@@ -23,6 +23,7 @@ class SshConfig {
 
         ssh.settings {
             knownHosts = allowAnyHosts
+            ignoreError = true
 //    dryRun = true
         }
         def nodes = globalYamlConfig.get("nodes")

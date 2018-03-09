@@ -16,7 +16,7 @@ import org.springframework.core.io.ResourceLoader
  */
 // TODO option reuse volume
 // TODO option reuse data
-// TODO option custom volumename
+// TODO option custom volumename /dynamic
 @ClusterCheckModule(name = "benchmark-yarn-terasort-spark", version = "1.0")
 class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkYarnTerasortSparkModule.class);
