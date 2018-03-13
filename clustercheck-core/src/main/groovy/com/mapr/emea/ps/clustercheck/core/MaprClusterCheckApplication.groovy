@@ -22,12 +22,17 @@ import java.text.SimpleDateFormat
 class MaprClusterCheckApplication implements CommandLineRunner {
     static final Logger log = LoggerFactory.getLogger(MaprClusterCheckApplication.class);
     public static final String CMD_RUN = "run"
+    public static final String CMD_TEST_SSH = "testssh"
     public static final String CMD_VALIDATE = "validate"
     public static final String CMD_GENERATETEMPLATE = "generatetemplate"
 
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
+
+    @Autowired
+    @Qualifier("ssh")
+    def ssh
 
     @Autowired
     ResourceLoader resourceLoader;
@@ -45,6 +50,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         command = args[0]
         configFile = args[1]
         if (CMD_RUN.equalsIgnoreCase(command)
+                || CMD_TEST_SSH.equalsIgnoreCase(command)
                 || CMD_VALIDATE.equalsIgnoreCase(command)
                 || CMD_GENERATETEMPLATE.equalsIgnoreCase(command)) {
             def app = new SpringApplication(MaprClusterCheckApplication)
@@ -58,6 +64,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     private static void printHelpAndExit() {
         println "USAGE: "
         println "  Run checks:                      ./maprclustercheck run /path/to/myconfig.yaml"
+        println "  Tests SSH connections:           ./maprclustercheck testssh /path/to/myconfig.yaml"
         println "  Validate configuration file:     ./maprclustercheck validate /path/to/myconfig.yaml"
         println "  Create configuration template:   ./maprclustercheck generatetemplate /path/to/myconfig.yaml"
         println ""
@@ -77,8 +84,14 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     void run(String... args) throws Exception {
         def modules = ctx.getBeansWithAnnotation(ClusterCheckModule)
         log.info("Number of modules found: " + modules.size())
+        if(!executeCommandTestSsh(modules)) {
+            return
+        }
         if (CMD_RUN.equals(command)) {
             executeCommandRun(modules)
+        } else if (CMD_TEST_SSH.equals(command)) {
+            // nothing to do, ssh test happens always.
+            log.info("Connection to all nodes is working properly.")
         } else if (CMD_VALIDATE.equals(command)) {
             executeCommandValidate(modules)
         } else if (CMD_GENERATETEMPLATE.equals(command)) {
@@ -105,6 +118,32 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         def configFile = new File(configFile)
         configFile.text = output
         log.info(">>> Configuration template written to ${configFile.absolutePath}")
+    }
+
+    def executeCommandTestSsh(Map<String, Object> modules) {
+        def workingNodes = []
+        try {
+            ssh.run {
+                settings {
+                    pty = false
+                    ignoreError = true
+                }
+                session(ssh.remotes.role('all')) {
+                    execute 'hostname'
+                    workingNodes << remote.host
+                }
+            }
+        }
+        catch (Exception ex) {
+            // suppress exception
+        }
+        def allNodes = globalYamlConfig.nodes.collect { it.host } as Set
+        allNodes.removeAll(workingNodes)
+        if(allNodes.size() > 0) {
+            log.error("Unable to connect to following hosts: " + allNodes)
+            return false
+        }
+        return true
     }
 
     void executeCommandValidate(Map<String, Object> modules) {
