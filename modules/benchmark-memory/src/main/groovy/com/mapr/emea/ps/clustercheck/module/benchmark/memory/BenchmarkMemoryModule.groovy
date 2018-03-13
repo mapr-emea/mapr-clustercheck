@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.io.ResourceLoader
 
+import java.math.RoundingMode
+
 /**
  * Created by chufe on 22.08.17.
  */
@@ -44,7 +46,53 @@ class BenchmarkMemoryModule implements ExecuteModule {
         copyToolToRemoteHost(role, "lat_mem_rd")
         copyToolToRemoteHost(role, "stream59")
         def result = runMemoryTests(role)
-        return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
+        def textReport = buildTextReport(result)
+        return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: getRecommendations())
+    }
+
+    def buildTextReport(result) {
+        def maxHostnameLength = getMaxLength(result, "hostname")
+
+        def text = "Server info\n"
+        text += "-----------\n"
+        text += "Host".padRight(maxHostnameLength," ") + "\tSockets\tCores\tThreads\n"
+
+        for(def node in result) {
+            text += "${node['hostname']}\t${node['sockets']}\t${node['cores']}\t${node['threads']}\n"
+        }
+
+        text += buildResultBlock(maxHostnameLength, result, "triad", "TRIAD")
+        text += buildResultBlock(maxHostnameLength, result, "copy", "COPY")
+        text += buildResultBlock(maxHostnameLength, result, "scale", "SCALE")
+        text += buildResultBlock(maxHostnameLength, result, "add", "ADD")
+        text
+
+    }
+
+    def buildResultBlock(int maxHostnameLength, result, key, description) {
+        def text = "\nMemory Test: ${description}\n"
+        text += "------------------\n"
+        def header = "Host".padRight(maxHostnameLength, " ") + "\t" + "Rate".padRight(15, " ") + "\t\tAvg Time\tMin Time\tMax Time\n"
+        text += header
+        text += "".padRight(header.size() + 30, "-") + "\n"
+        for (def node in result) {
+            text += node['hostname'] + '\t' + node['memoryTest'][key]['rateInMBperSecond'] + ' MB/s\t\t' + node['memoryTest'][key]['avgTime'].padRight(8, " ") + '\t' + node['memoryTest'][key]['minTime'].padRight(8, " ") + '\t' + node['memoryTest'][key]['maxTime'].padRight(8, " ") + '\n'
+        }
+        text
+    }
+
+    def getMaxLength(result, field) {
+        def maxLength = 0
+        for(def node in result) {
+            if(maxLength < node[field].size()) {
+                maxLength = node[field].size()
+            }
+        }
+        return maxLength
+    }
+
+    def getRecommendations() {
+        return ["Go to http://ark.intel.com, select the CPU and compare the memory throughput."]
     }
 
     def runMemoryTests(role) {
