@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat
 class MaprClusterCheckApplication implements CommandLineRunner {
     static final Logger log = LoggerFactory.getLogger(MaprClusterCheckApplication.class);
     public static final String CMD_RUN = "run"
+    public static final String CMD_INFO = "info"
     public static final String CMD_TEST_SSH = "testssh"
     public static final String CMD_VALIDATE = "validate"
     public static final String CMD_GENERATETEMPLATE = "generatetemplate"
@@ -44,14 +45,15 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     ApplicationContext ctx;
 
     static void main(String[] args) {
-        if (args.length != 2) {
+        if ((args.length == 1 && !CMD_INFO.equalsIgnoreCase(args[0])) && args.length != 2) {
             printHelpAndExit()
         }
         command = args[0]
-        configFile = args[1]
+        configFile = args.length == 2 ? args[1] : ""
         if (CMD_RUN.equalsIgnoreCase(command)
                 || CMD_TEST_SSH.equalsIgnoreCase(command)
                 || CMD_VALIDATE.equalsIgnoreCase(command)
+                || CMD_INFO.equalsIgnoreCase(command)
                 || CMD_GENERATETEMPLATE.equalsIgnoreCase(command)) {
             def app = new SpringApplication(MaprClusterCheckApplication)
             app.setLogStartupInfo(false)
@@ -63,17 +65,18 @@ class MaprClusterCheckApplication implements CommandLineRunner {
 
     private static void printHelpAndExit() {
         println "USAGE: "
-        println "  Run checks:                      ./maprclustercheck run /path/to/myconfig.yaml"
-        println "  Tests SSH connections:           ./maprclustercheck testssh /path/to/myconfig.yaml"
-        println "  Validate configuration file:     ./maprclustercheck validate /path/to/myconfig.yaml"
-        println "  Create configuration template:   ./maprclustercheck generatetemplate /path/to/myconfig.yaml"
+        println "  Show included modules and versions:      ./maprclustercheck info"
+        println "  Run checks:                              ./maprclustercheck run /path/to/myconfig.yaml"
+        println "  Tests SSH connections:                   ./maprclustercheck testssh /path/to/myconfig.yaml"
+        println "  Validate configuration file:             ./maprclustercheck validate /path/to/myconfig.yaml"
+        println "  Create configuration template:           ./maprclustercheck generatetemplate /path/to/myconfig.yaml"
         println ""
         System.exit(1)
     }
 
     @Bean("globalYamlConfig")
     static Map<String, ?> globalYamlConfig() {
-        if (CMD_GENERATETEMPLATE.equals(command)) {
+        if (CMD_GENERATETEMPLATE.equals(command) || CMD_INFO.equals(command)) {
             return [:]
         }
         Yaml parser = new Yaml()
@@ -83,6 +86,14 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     @Override
     void run(String... args) throws Exception {
         def modules = ctx.getBeansWithAnnotation(ClusterCheckModule)
+        if (CMD_INFO.equals(command)) {
+            log.info("Included modules: ")
+            modules.values().forEach{
+                ClusterCheckModule m = it.getClass().getAnnotation(ClusterCheckModule)
+                log.info("> " + m.name() + " -> " + m.version())
+            }
+            return
+        }
         log.info("Number of modules found: " + modules.size())
         if(!executeCommandTestSsh(modules)) {
             return
