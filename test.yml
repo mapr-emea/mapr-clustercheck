@@ -34,14 +34,14 @@ modules:
       replication: 1
       compression: 'off'
   benchmark-maprfs-rwtest:
-    enabled: false
+    enabled: true
     tests:
     - volume_type: local
       compression: 'off'
-      size_in_mb: 524288
-    - volume_type: local
-      compression: 'on'
-      size_in_mb: 524288
+      size_in_mb: 32
+    - volume_type: standard
+      compression: 'off'
+      size_in_mb: 32
   benchmark-yarn-terasort-mr:
     enabled: false
     role: clusterjob-execution
@@ -68,19 +68,19 @@ modules:
       compression: 'on'
 
 nodes:
-- host: 10.0.0.133
+- host: 10.0.0.89
   ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
   roles:
   - clusterjob-execution
   - benchmark_network_iperf_client
-- host: 10.0.0.228
+- host: 10.0.0.149
   ssh_user: ec2-user
   ssh_identity: //Users/chufe/.ssh/id_rsa
   roles:
   - benchmark_network_iperf_client
   - benchmark_network_iperf_server
-- host: 10.0.0.246
+- host: 10.0.0.174
   ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
   roles:
