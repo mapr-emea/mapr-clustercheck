@@ -55,10 +55,10 @@ class BenchmarkMemoryModule implements ExecuteModule {
 
         def text = "Server info\n"
         text += "-----------\n"
-        text += "Host".padRight(maxHostnameLength," ") + "\tSockets\tCores\tThreads\n"
+        text += "Host".padRight(maxHostnameLength," ") + "\tSockets\tCores\tThreads\tModel\n"
 
         for(def node in result) {
-            text += "${node['hostname']}\t${node['sockets']}\t${node['cores']}\t${node['threads']}\n"
+            text += "${node['hostname']}\t${node['sockets']}\t${node['cores']}\t${node['threads']}\t${node['model']}\n"
         }
 
         text += buildResultBlock(maxHostnameLength, result, "triad", "TRIAD")
@@ -112,6 +112,7 @@ class BenchmarkMemoryModule implements ExecuteModule {
                 node['sockets'] = execute("grep '^physical' /proc/cpuinfo | sort -u | grep -c ^") as Integer
                 node['cores'] = execute("grep '^cpu cores' /proc/cpuinfo | sort -u | awk '{print \$NF}'") as Integer
                 node['threads'] = execute("grep '^siblings' /proc/cpuinfo | sort -u | awk '{print \$NF}'") as Integer
+                node['model'] = execute("grep '^model name' /proc/cpuinfo | sort -u | awk -F'[:]' '{print \$NF}'").trim()
                 def stream59Result = ""
                 if (node['cores'] == node['threads']) {
                     stream59Result = execute("\$HOME/.clustercheck/stream59")
