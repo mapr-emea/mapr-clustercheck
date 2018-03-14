@@ -12,6 +12,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
 	compile('org.codehaus.groovy:groovy-all')
 	compile('org.yaml:snakeyaml:1.18')
+	compile('commons-lang:commons-lang:2.4')
 	compile('org.hidetake:groovy-ssh:2.9.0') {
 	    exclude group: 'org.codehaus.groovy', module: 'groovy-all'
 	}

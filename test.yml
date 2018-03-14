@@ -20,16 +20,16 @@ modules:
       data_per_thread: 4G
       mode: all
   benchmark-maprfs-dfsio:
-    enabled: false
+    enabled: true
     role: clusterjob-execution
     tests:
     - dfsio_number_of_files: 5
-      dfsio_file_size_in_mb: 1024
+      dfsio_file_size_in_mb: 256
       topology: /data
       replication: 3
       compression: 'off'
     - dfsio_number_of_files: 5
-      dfsio_file_size_in_mb: 1024
+      dfsio_file_size_in_mb: 256
       topology: /data
       replication: 1
       compression: 'off'

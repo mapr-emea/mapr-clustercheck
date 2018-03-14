@@ -5,6 +5,7 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
 import groovy.json.JsonSlurper
+import org.apache.commons.lang.RandomStringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -35,28 +36,27 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     @Override
     List<String> validate() throws ModuleValidationException {
+        def moduleconfig = globalYamlConfig.modules['benchmark-maprfs-dfsio'] as Map<String, ?>
+        def role = moduleconfig.getOrDefault("role", "all")
+        def numberOfNodes = globalYamlConfig.nodes.findAll { it.roles != null && it.roles.contains(role) }.size()
+        if (numberOfNodes > 1) {
+            throw new ModuleValidationException("Please specify a role for 'benchmark-maprfs-dfsio'-module which exactly contains one node. Currently, there are ${numberOfNodes} nodes defined for role '${role}'.")
+        }
         return []
- //       def moduleconfig = globalYamlConfig.modules['benchmark-maprfs-dfsio'] as Map<String, ?>
- //       def role = moduleconfig.getOrDefault("role", "all")
- //       if (role == "all") {
- //           throw new ModuleValidationException("Please specify a role for 'benchmark-maprfs-dfsio'-module which is not 'all'. Usually it should run only on one node.")
- //       }
-        // TODO check for valid ticket, if secure cluster
-        // TODO check that role has only one node inside
     }
 
     @Override
     ClusterCheckResult execute() {
         def moduleconfig = globalYamlConfig.modules['benchmark-maprfs-dfsio'] as Map<String, ?>
         def role = moduleconfig.getOrDefault("role", "all")
-        deleteBenchmarkVolume(moduleconfig, role)
-
         def results = []
         def tests = moduleconfig.tests
         for (def test : tests) {
-            setupBenchmarkVolume(test, role)
-            results << runDfsioBenchmark(test, role)
-            deleteBenchmarkVolume(test, role)
+            // Some times it happens that reuse of volume name is not possible immedialtely
+            def volumeName = "benchmarks_" + RandomStringUtils.random(8, true, true).toLowerCase()
+            setupBenchmarkVolume(test, role, volumeName)
+            results << runDfsioBenchmark(test, role, volumeName)
+            deleteBenchmarkVolume(test, role, volumeName)
         }
         return new ClusterCheckResult(reportJson: results, reportText: generateTextReport(results), recommendations: [])
     }
@@ -64,17 +64,18 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     def generateTextReport(results) {
         def textReport = ""
         for (def result : results) {
-            textReport += """Executed on host: ${result.executedOnHost}
+            textReport += """
 > Test settings:
 >    File size: ${result.fileSizeInMB} MB
 >    Files per fisk: ${result.numberOfFiles},
 >    Compression: ${result.compression},
 >    Topology: ${result.topology},
->    Replication: ${result.replication}"""
-            for (def test : result.results) {
+>    Replication: ${result.replication}
+"""
+            for (def test : result.tests) {
                 textReport += """>>> Host settings:         
->>>    Executed on: ${test.executedOnHost},
->>>    Number of files: ${test.numberOfFiles},     
+>>>    Executed on: ${test.executedOnHost}
+>>>    Number of files: ${test.numberOfFiles}
 >>> DFSIO write:
 >>>    Number of files: ${test.write.numberOfFiles}
 >>>    Total processed: ${test.write.totalProcessedInMB} MB
@@ -96,8 +97,8 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
         return textReport
     }
 
-    def setupBenchmarkVolume(Map<String, ?> moduleconfig, role) {
-        log.info(">>>>> Creating /benchmarks volume.")
+    def setupBenchmarkVolume(Map<String, ?> moduleconfig, role, volumeName) {
+        log.info(">>>>> Creating /${volumeName} volume.")
         def topology = moduleconfig.getOrDefault("topology", "/data")
         def replication = moduleconfig.getOrDefault("replication", 1)
         def compression = moduleconfig.getOrDefault("compression", "on")
@@ -108,31 +109,35 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
             }
             session(ssh.remotes.role(role)) {
                 def topologyStr = topology != "/data" ? "-topology ${topology}" : ""
-                executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume create -name benchmarks -path /benchmarks -replication ${replication} ${topologyStr}'"
-                executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop fs -chmod 777 /benchmarks'"
-                executeSudo "su ${globalYamlConfig.mapr_user} -c 'hadoop mfs -setcompression ${compression} /benchmarks'"
+                executeSudo suStr("maprcli volume create -name ${volumeName} -path /${volumeName} -replication ${replication} ${topologyStr}")
+                executeSudo suStr("hadoop fs -chmod 777 /${volumeName}")
+                executeSudo suStr("hadoop mfs -setcompression ${compression} /${volumeName}")
             }
         }
-        sleep(2000)
+        sleep(3000)
     }
 
-    def deleteBenchmarkVolume(Map<String, ?> moduleconfig, role) {
-        log.info(">>>>> Deleting /benchmarks volume.")
+    def deleteBenchmarkVolume(Map<String, ?> moduleconfig, role, volumeName) {
+        log.info(">>>>> Deleting /${volumeName} volume.")
         ssh.runInOrder {
             settings {
                 pty = true
             }
             session(ssh.remotes.role(role)) {
-                executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume unmount -name benchmarks | xargs echo'"
+                executeSudo(suStr("maprcli volume unmount -name ${volumeName} | xargs echo"))
                 // xargs echo removes return code
-                executeSudo "su ${globalYamlConfig.mapr_user} -c 'maprcli volume remove -name benchmarks | xargs echo'"
+                executeSudo(suStr("maprcli volume remove -name ${volumeName} | xargs echo"))
                 // xargs echo removes return code
-                sleep(3000)
+                sleep(1000)
             }
         }
     }
 
-    def runDfsioBenchmark(Map<String, ?> moduleconfig, role) {
+    def suStr(exec) {
+        return "su ${globalYamlConfig.mapr_user} -c 'export MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket;${exec}'"
+    }
+
+    def runDfsioBenchmark(Map<String, ?> moduleconfig, role, volumeName) {
         def numberOfFiles = moduleconfig.getOrDefault("dfsio_number_of_files", 1024)
         def fileSizeInMB = moduleconfig.getOrDefault("dfsio_file_size_in_mb", 8196)
         def compression = moduleconfig.getOrDefault("compression", "on")
@@ -157,28 +162,30 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
                 def mapDisk = 1 / numberOfFiles
 //                def numberOfFiles = totalDisks * filesPerDisk
                 def startWrite = System.currentTimeMillis()
-                def dfsioWriteResult = executeSudo """su - ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
+                def dfsioWriteResult = executeSudo suStr("""hadoop jar ${testJar} TestDFSIO \\
       -Dmapreduce.job.name=mapr-clustercheck-DFSIO-write \\
       -Dmapreduce.map.cpu.vcores=0 \\
       -Dmapreduce.map.memory.mb=768 \\
       -Dmapreduce.map.disk=${mapDisk} \\
       -Dmapreduce.map.speculative=false \\
       -Dmapreduce.reduce.speculative=false \\
+      -Dtest.build.data=/${volumeName}/TestDFSIO \\
       -write -nrFiles ${numberOfFiles} \\
-      -fileSize ${fileSizeInMB}  -bufferSize 65536'
-"""
+      -fileSize ${fileSizeInMB}  -bufferSize 65536
+""")
                 def endWrite = System.currentTimeMillis()
                 def startRead = System.currentTimeMillis()
-                def dfsioReadResult = executeSudo """su - ${globalYamlConfig.mapr_user} -c 'hadoop jar ${testJar} TestDFSIO \\
+                def dfsioReadResult = executeSudo suStr("""hadoop jar ${testJar} TestDFSIO \\
       -Dmapreduce.job.name=mapr-clustercheck-DFSIO-read \\
       -Dmapreduce.map.cpu.vcores=0 \\
       -Dmapreduce.map.memory.mb=768 \\
       -Dmapreduce.map.disk=${mapDisk} \\
       -Dmapreduce.map.speculative=false \\
       -Dmapreduce.reduce.speculative=false \\
+      -Dtest.build.data=/${volumeName}/TestDFSIO \\
       -read -nrFiles ${numberOfFiles} \\
-      -fileSize ${fileSizeInMB}  -bufferSize 65536'
-"""
+      -fileSize ${fileSizeInMB}  -bufferSize 65536
+""")
                 def endRead = System.currentTimeMillis()
 
                 def writeTokens = dfsioWriteResult.tokenize('\n')
