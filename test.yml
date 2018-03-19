@@ -17,8 +17,8 @@ modules:
       - /dev/nvme2n1
       - /dev/nvme3n1
     tests:
-    - mode: DESTROY
-      data_in_mb: 1000
+    - mode: READONLY
+      data_in_mb: 60
   benchmark-network-iperf:
     enabled: true
     tests:

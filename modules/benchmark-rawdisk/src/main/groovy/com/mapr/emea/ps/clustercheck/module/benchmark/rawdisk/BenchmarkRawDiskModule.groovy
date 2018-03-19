@@ -255,16 +255,25 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
                             return res
                         }
                         node['host'] = remote.host
-                        node['sumThroughputInMBperSecond'] = diskTests.sum{ it['throughputInMBperSecond'] }
+                        node['minThroughputInMBperSecond'] = diskTests.collect{ it['throughputInMBperSecond'] }.min() as int
+                        node['maxThroughputInMBperSecond'] = diskTests.collect{ it['throughputInMBperSecond'] }.max() as int
+                        node['sumThroughputInMBperSecond'] = diskTests.sum{ it['throughputInMBperSecond'] } as int
+                        node['meanThroughputInMBperSecond'] = (node['sumThroughputInMBperSecond'] / diskTests.size()) as int
                         node['diskTests'] = diskTests
 
                         tests.add(node)
                     }
                 }
             }
-            def sum = tests.sum{ it['sumThroughputInMBperSecond'] }
 
-            result.add([dataInMB: dataInMB, mode: "READONLY", sumThroughputInMBperSecond: sum, tests: tests])
+            def testHost = [dataInMB: dataInMB,
+                            mode: "READONLY",
+                            minThroughputInMBperSecond: tests.collect{ it['sumThroughputInMBperSecond'] }.min(),
+                            maxThroughputInMBperSecond: tests.collect{ it['sumThroughputInMBperSecond'] }.max(),
+                            sumThroughputInMBperSecond: tests.sum{ it['sumThroughputInMBperSecond'] },
+                            sumThroughputInMBperSecond: (tests.sum{ it['sumThroughputInMBperSecond'] } / tests.size()) as int,
+                            tests: tests]
+            result.add(testHost)
         }
         log.info(">>>>> READONLY disks tests finished")
         return result
