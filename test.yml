@@ -10,6 +10,15 @@ modules:
     enabled: true
   benchmark-memory:
     enabled: true
+  benchmark-rawdisk:
+    enabled: true
+    disks:
+      - /dev/nvme1n1
+      - /dev/nvme2n1
+      - /dev/nvme3n1
+    tests:
+    - mode: DESTROY
+      data_in_mb: 1000
   benchmark-network-iperf:
     enabled: true
     tests:
@@ -68,27 +77,26 @@ modules:
       compression: 'on'
 
 nodes:
-- host: 10.0.0.89
+- host: 10.0.0.171
   ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
   roles:
   - clusterjob-execution
-  - benchmark_network_iperf_client
-- host: 10.0.0.149
-  ssh_user: ec2-user
-  ssh_identity: //Users/chufe/.ssh/id_rsa
-  roles:
-  - benchmark_network_iperf_client
-  - benchmark_network_iperf_server
-- host: 10.0.0.174
-  ssh_user: ec2-user
-  ssh_identity: /Users/chufe/.ssh/id_rsa
-  roles:
-  - benchmark_network_iperf_server
 
-#- host: localhost
-#  ssh_port: 2222
-#  ssh_user: root
+#- host: 10.0.0.89
+#  ssh_user: ec2-user
 #  ssh_identity: /Users/chufe/.ssh/id_rsa
 #  roles:
 #  - clusterjob-execution
+#  - benchmark_network_iperf_client
+#- host: 10.0.0.149
+#  ssh_user: ec2-user
+#  ssh_identity: //Users/chufe/.ssh/id_rsa
+#  roles:
+#  - benchmark_network_iperf_client
+#  - benchmark_network_iperf_server
+#- host: 10.0.0.174
+#  ssh_user: ec2-user
+#  ssh_identity: /Users/chufe/.ssh/id_rsa
+#  roles:
+#  - benchmark_network_iperf_server

@@ -13,6 +13,7 @@ dependencies {
 	compile('org.codehaus.groovy:groovy-all')
 	compile('org.yaml:snakeyaml:1.18')
 	compile('commons-lang:commons-lang:2.4')
+	compile('commons-io:commons-io:2.6')
 	compile('org.hidetake:groovy-ssh:2.9.0') {
 	    exclude group: 'org.codehaus.groovy', module: 'groovy-all'
 	}

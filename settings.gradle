@@ -1,6 +1,7 @@
 include 'clustercheck-core'
 include 'modules:clusteraudit'
 include 'modules:clusterconfigaudit'
+include 'modules:benchmark-rawdisk'
 include 'modules:benchmark-memory'
 include 'modules:benchmark-network-iperf'
 include 'modules:benchmark-maprfs-dfsio'
