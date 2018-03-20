@@ -13,7 +13,7 @@ modules:
   benchmark-rawdisk:
     enabled: true
     tests:
-    - mode: READONLY
+    - mode: DESTROY
       data_in_mb: 20
   benchmark-network-iperf:
     enabled: true

@@ -52,11 +52,134 @@ class BenchmarkRawDiskModule implements ExecuteModule {
     ClusterCheckResult execute() {
         def moduleConfig = globalYamlConfig.modules['benchmark-rawdisk'] as Map<String, ?>
         def role = moduleConfig.getOrDefault("role", "all")
-        def result = runReadOnlyTests(role)
-        result += runDestroyTests(role)
+        def readOnlyTests = runReadOnlyTests(role)
+        def destroyTests = runDestroyTests(role)
+        def textReport = buildTextReportReadOnlyTests(readOnlyTests)
+        textReport += buildTextReportDestroyTests(destroyTests)
+        return new ClusterCheckResult(reportJson: readOnlyTests + destroyTests, reportText: textReport, recommendations: getRecommendations())
+    }
 
-        def textReport = "" // buildTextReport(result)
-        return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: getRecommendations())
+    def buildTextReportDestroyTests(tests) {
+        def text = ""
+        for (def test in tests) {
+            def header = "Disk test - DESTROY with ${test.dataInMB} MB\n"
+            text += header
+            text += "".padRight(header.size() + 40, "-") + "\n\n"
+            text += "Min host sequential write throughput: ${test.minNodeSeqWriteInKBperSecond} KB/s\n"
+            text += "Min host sequential read throughput: ${test.minNodeSeqReadInKBperSecond} KB/s\n"
+            text += "Min host random write throughput: ${test.minNodeRandomWriteInKBperSecond} KB/s\n"
+            text += "Min host random read throughput: ${test.minNodeRandomReadInKBperSecond} KB/s\n"
+            text += "Max host sequential write throughput: ${test.maxNodeSeqWriteInKBperSecond} KB/s\n"
+            text += "Max host sequential read throughput: ${test.maxNodeSeqReadInKBperSecond} KB/s\n"
+            text += "Max host random write throughput: ${test.maxNodeRandomWriteInKBperSecond} KB/s\n"
+            text += "Max host ramdom read throughput: ${test.maxNodeRandomReadInKBperSecond} KB/s\n"
+            text += "Mean host sequential write throughput: ${test.meanNodeSeqWriteInKBperSecond} KB/s\n"
+            text += "Mean host sequential read throughput: ${test.meanNodeSeqReadInKBperSecond} KB/s\n"
+            text += "Mean host random write throughput: ${test.meanNodeRandomWriteInKBperSecond} KB/s\n"
+            text += "Mean host ramdom read throughput: ${test.meanNodeRandomReadInKBperSecond} KB/s\n"
+            text += "Sum host sequential write throughput: ${test.sumNodeSeqWriteInKBperSecond} KB/s\n"
+            text += "Sum host sequential read throughput: ${test.sumNodeSeqReadInKBperSecond} KB/s\n"
+            text += "Sum host random write throughput: ${test.sumNodeRandomWriteInKBperSecond} KB/s\n"
+            text += "Sum host ramdom read throughput: ${test.sumNodeRandomReadInKBperSecond} KB/s\n"
+            text += buildDestroyTestNodeStats(test.hostTests)
+        }
+        text
+    }
+
+    def buildDestroyTestNodeStats(tests) {
+        def maxHostLength = getMaxLength(tests, 'host')
+        def text = ""
+        text += "\nSequential Write Throughput per Node\n"
+        text += "-------------------------------------\n"
+        text += "Host".padRight(maxHostLength, " ") + "\tMin        \tMax        \tMean       \tSum\n"
+        for (def test in tests) {
+            text += test['host'].padRight(maxHostLength, " ") + '\t'
+            text += test['minDiskSeqWriteInKBperSecond'] + ' KB/s\t' + test['maxDiskSeqWriteInKBperSecond'] + ' KB/s\t' + test['meanDiskSeqWriteInKBperSecond'] + ' KB/s\t' + test['sumDiskSeqWriteInKBperSecond'] + ' KB/s\n'
+        }
+
+        text += "\nSequential Read Throughput per Node\n"
+        text += "-------------------------------------\n"
+        text += "Host".padRight(maxHostLength, " ") + "\tMin        \tMax        \tMean       \tSum\n"
+        for (def test in tests) {
+            text += test['host'].padRight(maxHostLength, " ") + '\t'
+            text += test['minDiskSeqReadInKBperSecond'] + ' KB/s\t' + test['maxDiskSeqReadInKBperSecond'] + ' KB/s\t' + test['meanDiskSeqReadInKBperSecond'] + ' KB/s\t' + test['sumDiskSeqReadInKBperSecond'] + ' KB/s\n'
+        }
+
+        text += "\nRandom Write Throughput per Node\n"
+        text += "-------------------------------------\n"
+        text += "Host".padRight(maxHostLength, " ") + "\tMin        \tMax        \tMean       \tSum\n"
+        for (def test in tests) {
+            text += test['host'].padRight(maxHostLength, " ") + '\t'
+            text += test['minDiskRandomWriteInKBperSecond'] + ' KB/s\t' + test['maxDiskRandomWriteInKBperSecond'] + ' KB/s\t' + test['meanDiskRandomWriteInKBperSecond'] + ' KB/s\t' + test['sumDiskRandomWriteInKBperSecond'] + ' KB/s\n'
+        }
+
+
+        text += "\nRandom Read Throughput per Node\n"
+        text += "-------------------------------------\n"
+        text += "Host".padRight(maxHostLength, " ") + "\tMin        \tMax        \tMean       \tSum\n"
+        for (def test in tests) {
+            text += test['host'].padRight(maxHostLength, " ") + '\t'
+            text += test['minDiskRandomReadInKBperSecond'] + ' KB/s\t' + test['maxDiskRandomReadInKBperSecond'] + ' KB/s\t' + test['meanDiskRandomReadInKBperSecond'] + ' KB/s\t' + test['sumDiskRandomReadInKBperSecond'] + ' KB/s\n'
+        }
+
+        def maxDiskLength = tests.collect { it.diskTests.collect { it.disk.size() } }.flatten().max() as int
+        for (def test in tests) {
+            text += "\nPer disk throughput\n"
+            text += "----------------------------------\n"
+            text += "Host".padRight(maxHostLength, " ") + "\tDisk".padRight(maxDiskLength, " ") + "\tSeqWrite    \tSeqRead     \tRandomWrite \tRandomRead\n"
+            for (def diskTest in test.diskTests) {
+                text += test['host'].padRight(maxHostLength, " ") + '\t' + diskTest['disk'].padRight(maxDiskLength, " ") + ' \t' + diskTest['seqWriteInKBperSecond'] + ' KB/s\t' + diskTest['seqReadInKBperSecond'] + ' KB/s\t' + diskTest['randomWriteInKBperSecond'] + ' KB/s\t' + diskTest['randomReadInKBperSecond'] + ' KB/s\n'
+            }
+        }
+        return text
+    }
+
+
+    def buildTextReportReadOnlyTests(tests) {
+        def text = ""
+        for (def test in tests) {
+            def header = "Disk test - READONLY with ${test.dataInMB} MB\n"
+            text += header
+            text += "".padRight(header.size() + 40, "-") + "\n\n"
+            text += "Min host throughput: ${test.minHostThroughputInMBperSecond} MB/s\n"
+            text += "Max host throughput: ${test.maxHostThroughputInMBperSecond} MB/s\n"
+            text += "Sum host throughput: ${test.sumHostThroughputInMBperSecond} MB/s\n"
+            text += "Mean host throughput: ${test.meanHostThroughputInMBperSecond} MB/s\n"
+            text += buildReadOnlyTestNodeStats(test.hostTests)
+        //    text += buildReadOnlyTestDiskStats(test)
+        }
+        text
+    }
+
+    def buildReadOnlyTestNodeStats(tests) {
+        def maxHostLength = getMaxLength(tests, 'host')
+        def text = "\nCumulated disk throughput per node\n"
+        text += "----------------------------------\n"
+        text += "Host".padRight(maxHostLength, " ") + "\tMin       \tMax       \tSum       \tMean\n"
+        for (def test in tests) {
+            text += test['host'].padRight(maxHostLength, " ") + '\t' + test['minDiskThroughputInMBperSecond'] + ' MB/s\t' + test['maxDiskThroughputInMBperSecond'] + ' MB/s\t' + test['sumDiskThroughputInMBperSecond'] + ' MB/s\t' + test['meanDiskThroughputInMBperSecond'] + ' MB/s\n'
+        }
+
+        def maxDiskLength = tests.collect { it.diskTests.collect { it.disk.size() } }.flatten().max() as int
+        for (def test in tests) {
+            text += "\nPer disk throughput\n"
+            text += "----------------------------------\n"
+            text += "Host".padRight(maxHostLength, " ") + "\tDisk".padRight(maxDiskLength, " ") + "\tThroughput\n"
+            for (def diskTest in test.diskTests) {
+                text += test['host'].padRight(maxHostLength, " ") + '\t' + diskTest['disk'].padRight(maxDiskLength, " ") + ' \t' + diskTest['throughputInMBperSecond'] + ' MB/s\n'
+            }
+        }
+        return text + '\n'
+    }
+
+    def getMaxLength(result, field) {
+        def maxLength = 0
+        for(def node in result) {
+            if(maxLength < node[field].size()) {
+                maxLength = node[field].size()
+            }
+        }
+        return maxLength
     }
 
     def getRecommendations() {
@@ -168,11 +291,11 @@ wait
             def testResult = [
                     dataInMB: dataInMB,
                     mode: "DESTROY",
-                    sumNodeThroughputInMBperSecond: tests.sum{ it['sumDiskSeqWriteInKBperSecond'] },
+                    sumNodeSeqWriteInKBperSecond: tests.sum{ it['sumDiskSeqWriteInKBperSecond'] },
                     sumNodeSeqReadInKBperSecond: tests.sum{ it['sumDiskSeqReadInKBperSecond'] },
                     sumNodeRandomReadInKBperSecond: tests.sum{ it['sumDiskRandomReadInKBperSecond'] },
                     sumNodeRandomWriteInKBperSecond: tests.sum{ it['sumDiskRandomWriteInKBperSecond'] },
-                    meanNodeThroughputInMBperSecond: (tests.sum{ it['sumDiskSeqWriteInKBperSecond'] } / tests.size()) as int,
+                    meanNodeSeqWriteInKBperSecond: (tests.sum{ it['sumDiskSeqWriteInKBperSecond'] } / tests.size()) as int,
                     meanNodeSeqReadInKBperSecond: (tests.sum{ it['sumDiskSeqReadInKBperSecond'] } / tests.size()) as int ,
                     meanNodeRandomReadInKBperSecond: (tests.sum{ it['sumDiskRandomReadInKBperSecond'] } / tests.size()) as int ,
                     meanNodeRandomWriteInKBperSecond: (tests.sum{ it['sumDiskRandomWriteInKBperSecond'] } / tests.size()) as int ,
@@ -184,7 +307,7 @@ wait
                     maxNodeSeqReadInKBperSecond: tests.collect{ it['sumDiskSeqReadInKBperSecond'] }.max(),
                     maxNodeRandomReadInKBperSecond: tests.collect{ it['sumDiskRandomReadInKBperSecond'] }.max(),
                     maxNodeRandomWriteInKBperSecond: tests.collect{ it['sumDiskRandomWriteInKBperSecond'] }.max(),
-                    tests: tests]
+                    hostTests: tests]
             result.add(testResult)
         }
         log.info(">>>>> DESTROY disks tests finished")
@@ -269,7 +392,7 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
                             maxHostThroughputInMBperSecond: tests.collect{ it['maxDiskThroughputInMBperSecond'] }.max(),
                             sumHostThroughputInMBperSecond: tests.sum{ it['sumDiskThroughputInMBperSecond'] },
                             meanHostThroughputInMBperSecond: (tests.sum{ it['meanDiskThroughputInMBperSecond'] } / tests.size()),
-                            tests: tests]
+                            hostTests: tests]
             result.add(testHost)
         }
         log.info(">>>>> READONLY disks tests finished")
