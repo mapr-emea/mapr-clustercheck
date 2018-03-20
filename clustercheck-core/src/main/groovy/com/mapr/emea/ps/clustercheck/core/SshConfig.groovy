@@ -35,12 +35,11 @@ class SshConfig {
                     role(roleName)
                 }
                 host = node.get('host', 'localhost')
-                user = node.ssh_user
-                port = node.get('ssh_port', 22)
-                identity = new File(node.ssh_identity)
+                user = node.getOrDefault("ssh_user", globalYamlConfig['nodes-global-config'].getOrDefault('ssh_user', "root"))
+                port = node.getOrDefault("ssh_port", globalYamlConfig['nodes-global-config'].getOrDefault('ssh_port', 22))
+                identity = new File(node.getOrDefault("ssh_identity", globalYamlConfig['nodes-global-config'].getOrDefault('ssh_identity', '/please/provide/ssh_identity')))
             })
         }
         return ssh;
-
     }
 }

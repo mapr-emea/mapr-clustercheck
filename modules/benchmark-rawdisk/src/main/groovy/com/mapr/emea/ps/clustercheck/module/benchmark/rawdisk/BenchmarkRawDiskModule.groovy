@@ -65,7 +65,6 @@ class BenchmarkRawDiskModule implements ExecuteModule {
 
     def runDestroyTests(role) {
         def moduleConfig = globalYamlConfig.modules['benchmark-rawdisk'] as Map<String, ?>
-        def globalDisks = moduleConfig['disks']
 
         def destroyTests = moduleConfig.tests.findAll { it.mode == "DESTROY" }
         if(destroyTests.size() > 0) {
@@ -102,7 +101,7 @@ class BenchmarkRawDiskModule implements ExecuteModule {
                             tests.add(node)
                             return
                         }
-                        def disks = currentNode['disks'] ? currentNode['disks'] : globalDisks
+                        def disks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks'])
                         def bashScript = new ByteArrayInputStream("""#!/bin/bash
 disklist="${disks.join(' ')}"
 size=${dataInMB}
@@ -142,25 +141,25 @@ wait
                                     randomWriteInKBperSecond: tokens[7]
                             ]
                         }
-                        node['minSeqWriteInKBperSecond'] = diskTests.collect{ it['seqWriteInKBperSecond'] }.min()
-                        node['minSeqReadInKBperSecond'] = diskTests.collect{ it['seqReadInKBperSecond'] }.min()
-                        node['minRandomReadInKBperSecond'] = diskTests.collect{ it['randomReadInKBperSecond'] }.min()
-                        node['minRandomWriteInKBperSecond'] = diskTests.collect{ it['randomWriteInKBperSecond'] }.min()
+                        node['minDiskSeqWriteInKBperSecond'] = diskTests.collect{ it['seqWriteInKBperSecond'] }.min()
+                        node['minDiskSeqReadInKBperSecond'] = diskTests.collect{ it['seqReadInKBperSecond'] }.min()
+                        node['minDiskRandomReadInKBperSecond'] = diskTests.collect{ it['randomReadInKBperSecond'] }.min()
+                        node['minDiskRandomWriteInKBperSecond'] = diskTests.collect{ it['randomWriteInKBperSecond'] }.min()
 
-                        node['maxSeqWriteInKBperSecond'] = diskTests.collect{ it['seqWriteInKBperSecond'] }.max()
-                        node['maxSeqReadInKBperSecond'] = diskTests.collect{ it['seqReadInKBperSecond'] }.max()
-                        node['maxRandomReadInKBperSecond'] = diskTests.collect{ it['randomReadInKBperSecond'] }.max()
-                        node['maxRandomWriteInKBperSecond'] = diskTests.collect{ it['randomWriteInKBperSecond'] }.max()
+                        node['maxDiskSeqWriteInKBperSecond'] = diskTests.collect{ it['seqWriteInKBperSecond'] }.max()
+                        node['maxDiskSeqReadInKBperSecond'] = diskTests.collect{ it['seqReadInKBperSecond'] }.max()
+                        node['maxDiskRandomReadInKBperSecond'] = diskTests.collect{ it['randomReadInKBperSecond'] }.max()
+                        node['maxDiskRandomWriteInKBperSecond'] = diskTests.collect{ it['randomWriteInKBperSecond'] }.max()
 
-                        node['sumSeqWriteInKBperSecond'] = diskTests.sum{ it['seqWriteInKBperSecond'] }
-                        node['sumSeqReadInKBperSecond'] = diskTests.sum{ it['seqReadInKBperSecond'] }
-                        node['sumRandomReadInKBperSecond'] = diskTests.sum{ it['randomReadInKBperSecond'] }
-                        node['sumRandomWriteInKBperSecond'] = diskTests.sum{ it['randomWriteInKBperSecond'] }
+                        node['sumDiskSeqWriteInKBperSecond'] = diskTests.sum{ it['seqWriteInKBperSecond'] }
+                        node['sumDiskSeqReadInKBperSecond'] = diskTests.sum{ it['seqReadInKBperSecond'] }
+                        node['sumDiskRandomReadInKBperSecond'] = diskTests.sum{ it['randomReadInKBperSecond'] }
+                        node['sumDiskRandomWriteInKBperSecond'] = diskTests.sum{ it['randomWriteInKBperSecond'] }
 
-                        node['meanSeqWriteInKBperSecond'] = (node['sumSeqWriteInKBperSecond'] / diskTests.size()) as int
-                        node['meanSeqReadInKBperSecond'] = (node['sumSeqReadInKBperSecond'] / diskTests.size()) as int
-                        node['meanRandomReadInKBperSecond'] = (node['sumRandomReadInKBperSecond'] / diskTests.size()) as int
-                        node['meanRandomWriteInKBperSecond'] =  (node['sumRandomWriteInKBperSecond'] / diskTests.size()) as int
+                        node['meanDiskSeqWriteInKBperSecond'] = (node['sumDiskSeqWriteInKBperSecond'] / diskTests.size()) as int
+                        node['meanDiskSeqReadInKBperSecond'] = (node['sumDiskSeqReadInKBperSecond'] / diskTests.size()) as int
+                        node['meanDiskRandomReadInKBperSecond'] = (node['sumDiskRandomReadInKBperSecond'] / diskTests.size()) as int
+                        node['meanDiskRandomWriteInKBperSecond'] =  (node['sumDiskRandomWriteInKBperSecond'] / diskTests.size()) as int
                         node['diskTests'] = diskTests
                         tests.add(node)
                     }
@@ -169,22 +168,22 @@ wait
             def testResult = [
                     dataInMB: dataInMB,
                     mode: "DESTROY",
-                    sumThroughputInMBperSecond: tests.sum{ it['sumSeqWriteInKBperSecond'] },
-                    sumSeqReadInKBperSecond: tests.sum{ it['sumSeqReadInKBperSecond'] },
-                    sumRandomReadInKBperSecond: tests.sum{ it['sumRandomReadInKBperSecond'] },
-                    sumRandomWriteInKBperSecond: tests.sum{ it['sumRandomWriteInKBperSecond'] },
-                    meanThroughputInMBperSecond: (tests.sum{ it['sumSeqWriteInKBperSecond'] } / tests.size()) as int,
-                    meanSeqReadInKBperSecond: (tests.sum{ it['sumSeqReadInKBperSecond'] } / tests.size()) as int ,
-                    meanRandomReadInKBperSecond: (tests.sum{ it['sumRandomReadInKBperSecond'] } / tests.size()) as int ,
-                    meanRandomWriteInKBperSecond: (tests.sum{ it['sumRandomWriteInKBperSecond'] } / tests.size()) as int ,
-                    minSeqWriteInKBperSecond: tests.collect{ it['sumSeqWriteInKBperSecond'] }.min(),
-                    minSeqReadInKBperSecond: tests.collect{ it['sumSeqReadInKBperSecond'] }.min(),
-                    minRandomReadInKBperSecond: tests.collect{ it['sumRandomReadInKBperSecond'] }.min(),
-                    minRandomWriteInKBperSecond: tests.collect{ it['sumRandomWriteInKBperSecond'] }.min(),
-                    maxSeqWriteInKBperSecond: tests.collect{ it['sumSeqWriteInKBperSecond'] }.max(),
-                    maxSeqReadInKBperSecond: tests.collect{ it['sumSeqReadInKBperSecond'] }.max(),
-                    maxRandomReadInKBperSecond: tests.collect{ it['sumRandomReadInKBperSecond'] }.max(),
-                    maxRandomWriteInKBperSecond: tests.collect{ it['sumRandomWriteInKBperSecond'] }.max(),
+                    sumNodeThroughputInMBperSecond: tests.sum{ it['sumDiskSeqWriteInKBperSecond'] },
+                    sumNodeSeqReadInKBperSecond: tests.sum{ it['sumDiskSeqReadInKBperSecond'] },
+                    sumNodeRandomReadInKBperSecond: tests.sum{ it['sumDiskRandomReadInKBperSecond'] },
+                    sumNodeRandomWriteInKBperSecond: tests.sum{ it['sumDiskRandomWriteInKBperSecond'] },
+                    meanNodeThroughputInMBperSecond: (tests.sum{ it['sumDiskSeqWriteInKBperSecond'] } / tests.size()) as int,
+                    meanNodeSeqReadInKBperSecond: (tests.sum{ it['sumDiskSeqReadInKBperSecond'] } / tests.size()) as int ,
+                    meanNodeRandomReadInKBperSecond: (tests.sum{ it['sumDiskRandomReadInKBperSecond'] } / tests.size()) as int ,
+                    meanNodeRandomWriteInKBperSecond: (tests.sum{ it['sumDiskRandomWriteInKBperSecond'] } / tests.size()) as int ,
+                    minNodeSeqWriteInKBperSecond: tests.collect{ it['sumDiskSeqWriteInKBperSecond'] }.min(),
+                    minNodeSeqReadInKBperSecond: tests.collect{ it['sumDiskSeqReadInKBperSecond'] }.min(),
+                    minNodeRandomReadInKBperSecond: tests.collect{ it['sumDiskRandomReadInKBperSecond'] }.min(),
+                    minNodeRandomWriteInKBperSecond: tests.collect{ it['sumDiskRandomWriteInKBperSecond'] }.min(),
+                    maxNodeSeqWriteInKBperSecond: tests.collect{ it['sumDiskSeqWriteInKBperSecond'] }.max(),
+                    maxNodeSeqReadInKBperSecond: tests.collect{ it['sumDiskSeqReadInKBperSecond'] }.max(),
+                    maxNodeRandomReadInKBperSecond: tests.collect{ it['sumDiskRandomReadInKBperSecond'] }.max(),
+                    maxNodeRandomWriteInKBperSecond: tests.collect{ it['sumDiskRandomWriteInKBperSecond'] }.max(),
                     tests: tests]
             result.add(testResult)
         }
@@ -194,8 +193,6 @@ wait
 
     def runReadOnlyTests(role) {
         def moduleConfig = globalYamlConfig.modules['benchmark-rawdisk'] as Map<String, ?>
-        def globalDisks = moduleConfig['disks']
-
         def readOnlyTests = moduleConfig.tests.findAll { it.mode == "READONLY" }
         def nodes = globalYamlConfig.nodes.findAll { role == "all" || it.roles.contains(role)  }
         def result = Collections.synchronizedList([])
@@ -215,7 +212,7 @@ wait
                         def homePath = execute 'echo $HOME'
 
                         def node = [:]
-                        def disks = currentNode['disks'] ? currentNode['disks'] : globalDisks
+                        def disks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks'])
                         def bashScript = new ByteArrayInputStream("""#!/bin/bash
 disklist="${disks.join(' ')}"
 size=${dataInMB}
@@ -255,10 +252,10 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
                             return res
                         }
                         node['host'] = remote.host
-                        node['minThroughputInMBperSecond'] = diskTests.collect{ it['throughputInMBperSecond'] }.min() as int
-                        node['maxThroughputInMBperSecond'] = diskTests.collect{ it['throughputInMBperSecond'] }.max() as int
-                        node['sumThroughputInMBperSecond'] = diskTests.sum{ it['throughputInMBperSecond'] } as int
-                        node['meanThroughputInMBperSecond'] = (node['sumThroughputInMBperSecond'] / diskTests.size()) as int
+                        node['minDiskThroughputInMBperSecond'] = diskTests.collect{ it['throughputInMBperSecond'] }.min()
+                        node['maxDiskThroughputInMBperSecond'] = diskTests.collect{ it['throughputInMBperSecond'] }.max()
+                        node['sumDiskThroughputInMBperSecond'] = diskTests.sum{ it['throughputInMBperSecond'] }
+                        node['meanDiskThroughputInMBperSecond'] = (node['sumDiskThroughputInMBperSecond'] / diskTests.size())
                         node['diskTests'] = diskTests
 
                         tests.add(node)
@@ -268,10 +265,10 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
 
             def testHost = [dataInMB: dataInMB,
                             mode: "READONLY",
-                            minThroughputInMBperSecond: tests.collect{ it['sumThroughputInMBperSecond'] }.min(),
-                            maxThroughputInMBperSecond: tests.collect{ it['sumThroughputInMBperSecond'] }.max(),
-                            sumThroughputInMBperSecond: tests.sum{ it['sumThroughputInMBperSecond'] },
-                            sumThroughputInMBperSecond: (tests.sum{ it['sumThroughputInMBperSecond'] } / tests.size()) as int,
+                            minHostThroughputInMBperSecond: tests.collect{ it['minDiskThroughputInMBperSecond'] }.min(),
+                            maxHostThroughputInMBperSecond: tests.collect{ it['maxDiskThroughputInMBperSecond'] }.max(),
+                            sumHostThroughputInMBperSecond: tests.sum{ it['sumDiskThroughputInMBperSecond'] },
+                            meanHostThroughputInMBperSecond: (tests.sum{ it['meanDiskThroughputInMBperSecond'] } / tests.size()),
                             tests: tests]
             result.add(testHost)
         }

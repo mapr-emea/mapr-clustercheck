@@ -12,13 +12,9 @@ modules:
     enabled: true
   benchmark-rawdisk:
     enabled: true
-    disks:
-      - /dev/nvme1n1
-      - /dev/nvme2n1
-      - /dev/nvme3n1
     tests:
     - mode: READONLY
-      data_in_mb: 60
+      data_in_mb: 20
   benchmark-network-iperf:
     enabled: true
     tests:
@@ -76,10 +72,16 @@ modules:
       replication: 3
       compression: 'on'
 
-nodes:
-- host: 10.0.0.171
+nodes-global-config:
+  disks:
+  - /dev/nvme1n1
+  - /dev/nvme2n1
+  - /dev/nvme3n1
   ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
+
+nodes:
+- host: 10.0.0.171
   roles:
   - clusterjob-execution
 
