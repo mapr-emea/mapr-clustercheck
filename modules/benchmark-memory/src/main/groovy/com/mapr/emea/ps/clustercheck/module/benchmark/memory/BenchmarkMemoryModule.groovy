@@ -31,7 +31,7 @@ class BenchmarkMemoryModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return []
+        return [:]
     }
 
     @Override

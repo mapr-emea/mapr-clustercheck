@@ -93,6 +93,9 @@ class MaprClusterCheckApplication implements CommandLineRunner {
                 log.info("> " + m.name() + " -> " + m.version())
             }
             return
+        } else if (CMD_GENERATETEMPLATE.equals(command)) {
+            executeGenerateTemplate(modules)
+            return
         }
         log.info("Number of modules found: " + modules.size())
         if(!executeCommandTestSsh(modules)) {
@@ -105,8 +108,6 @@ class MaprClusterCheckApplication implements CommandLineRunner {
             log.info("Connection to all nodes is working properly.")
         } else if (CMD_VALIDATE.equals(command)) {
             executeCommandValidate(modules)
-        } else if (CMD_GENERATETEMPLATE.equals(command)) {
-            executeGenerateTemplate(modules)
         }
     }
 

@@ -2,37 +2,60 @@ cluster_name: demo.mapr.com
 customer_name: Your company name
 output_dir: /path/for/results
 mapr_user: mapr
+nodes-global-config:
+  disks:
+  - /dev/nvme1n1
+  - /dev/nvme2n1
+  - /dev/nvme3n1
+  ssh_user: ec2-user
+  ssh_identity: /Users/chufe/.ssh/id_rsa
+  ssh_port: 22
 nodes:
 - host: hostname1.fqdn
-  ssh_user: sshuser
-  ssh_identity: /home/user/.ssh/id_rsa
   roles:
   - clusterjob-execution
 - host: hostname2.fqdn
-  ssh_user: sshuser
-  ssh_identity: /home/user/.ssh/id_rsa
 - host: hostname3.fqdn
-  ssh_user: sshuser
-  ssh_identity: /home/user/.ssh/id_rsa
+  ssh_user: different_user
+  ssh_identity: /home/user/.ssh/different_key
+  ssh_port: 22222
 modules:
-  clusteraudit:
+  cluster-audit:
+    enabled: true
+    mapruser: mapr
+  cluster-config-audit:
+    enabled: true
+  benchmark-rawdisk:
+    enabled: true
+    tests:
+    - mode: READONLY
+      data_in_mb: 4096
+    disks:
+    - /dev/sdb
+    - /dev/sdc
+    - /dev/sdd
+  benchmark-memory:
     enabled: true
   benchmark-network-iperf:
     enabled: true
     tests:
     - threads: 1
       data_per_thread: 4096M
+      mode: split
     - threads: 2
       data_per_thread: 2048M
+      mode: split
     - threads: 4
       data_per_thread: 1024M
+      mode: split
     - threads: 8
       data_per_thread: 512M
+      mode: split
   benchmark-maprfs-dfsio:
     enabled: true
     role: clusterjob-execution
     tests:
-    - dfsio_files_per_disk: 1
+    - dfsio_number_of_files: 1024
       dfsio_file_size_in_mb: 8196
       topology: /data
       replication: 1
