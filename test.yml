@@ -25,7 +25,7 @@ modules:
       data_per_thread: 4G
       mode: all
   benchmark-maprfs-dfsio:
-    enabled: false
+    enabled: true
     role: clusterjob-execution
     tests:
     - dfsio_number_of_files: 5

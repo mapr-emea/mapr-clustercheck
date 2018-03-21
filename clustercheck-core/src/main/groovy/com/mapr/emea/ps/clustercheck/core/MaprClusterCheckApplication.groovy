@@ -45,7 +45,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     ApplicationContext ctx;
 
     static void main(String[] args) {
-        if ((args.length == 1 && !CMD_INFO.equalsIgnoreCase(args[0])) && args.length != 2) {
+        if (args.length == 0 || ((args.length == 1 && !CMD_INFO.equalsIgnoreCase(args[0])) && args.length != 2)) {
             printHelpAndExit()
         }
         command = args[0]
