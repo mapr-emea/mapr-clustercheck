@@ -14,7 +14,7 @@ modules:
     enabled: true
     tests:
     - mode: DESTROY
-      data_in_mb: 20
+      data_in_mb: 100
   benchmark-network-iperf:
     enabled: true
     tests:
@@ -82,9 +82,13 @@ nodes-global-config:
 
 nodes:
 - host: 10.0.0.171
+  disks:
+  - /dev/nvme1n1
+  - /dev/nvme2n1a
+  - /dev/nvme3n1
   roles:
   - clusterjob-execution
-
+- host: 10.0.0.193
 #- host: 10.0.0.89
 #  ssh_user: ec2-user
 #  ssh_identity: /Users/chufe/.ssh/id_rsa
