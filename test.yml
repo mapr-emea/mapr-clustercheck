@@ -78,27 +78,18 @@ nodes-global-config:
   - /dev/nvme2n1
   - /dev/nvme3n1
   ssh_user: ec2-user
-  ssh_identity: /Users/chufe/.ssh/id_rsa
+  ssh_password: mapr
+#  ssh_identity: /Users/chufe/.ssh/id_rsa
 
 nodes:
-- host: 10.0.0.171
+- host: 10.0.0.89
   roles:
   - clusterjob-execution
-- host: 10.0.0.193
-#- host: 10.0.0.89
-#  ssh_user: ec2-user
-#  ssh_identity: /Users/chufe/.ssh/id_rsa
-#  roles:
-#  - clusterjob-execution
-#  - benchmark_network_iperf_client
-#- host: 10.0.0.149
-#  ssh_user: ec2-user
-#  ssh_identity: //Users/chufe/.ssh/id_rsa
-#  roles:
-#  - benchmark_network_iperf_client
-#  - benchmark_network_iperf_server
-#- host: 10.0.0.174
-#  ssh_user: ec2-user
-#  ssh_identity: /Users/chufe/.ssh/id_rsa
-#  roles:
-#  - benchmark_network_iperf_server
+  - benchmark_network_iperf_client
+- host: 10.0.0.149
+  roles:
+  - benchmark_network_iperf_client
+  - benchmark_network_iperf_server
+- host: 10.0.0.174
+  roles:
+  - benchmark_network_iperf_server

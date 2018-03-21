@@ -37,7 +37,12 @@ class SshConfig {
                 host = node.get('host', 'localhost')
                 user = node.getOrDefault("ssh_user", globalYamlConfig['nodes-global-config'].getOrDefault('ssh_user', "root"))
                 port = node.getOrDefault("ssh_port", globalYamlConfig['nodes-global-config'].getOrDefault('ssh_port', 22))
-                identity = new File(node.getOrDefault("ssh_identity", globalYamlConfig['nodes-global-config'].getOrDefault('ssh_identity', '/please/provide/ssh_identity')))
+                if(node.getOrDefault("ssh_password", globalYamlConfig['nodes-global-config'].get('ssh_password')) != null) {
+                    password = new File(node.getOrDefault("ssh_password", globalYamlConfig['nodes-global-config'].get('ssh_password')))
+                }
+                if(node.getOrDefault("ssh_identity", globalYamlConfig['nodes-global-config'].get('ssh_identity')) != null) {
+                    identity = new File(node.getOrDefault("ssh_identity", globalYamlConfig['nodes-global-config'].get('ssh_identity')))
+                }
             })
         }
         return ssh;

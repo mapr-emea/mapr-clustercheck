@@ -9,6 +9,8 @@ nodes-global-config:
   - /dev/nvme2n1
   - /dev/nvme3n1
   ssh_user: ec2-user
+# Use only one: ssh_password or ssh_identity
+# ssh_password: mapr
   ssh_identity: /Users/chufe/.ssh/id_rsa
   ssh_port: 22
 nodes:
@@ -18,5 +20,7 @@ nodes:
   - host: hostname2.fqdn
   - host: hostname3.fqdn
     ssh_user: different_user
+# Use only one: ssh_password or ssh_identity
+# ssh_password: mapr
     ssh_identity: '/home/user/.ssh/different_key'
     ssh_port: 22222

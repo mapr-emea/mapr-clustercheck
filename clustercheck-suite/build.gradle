@@ -12,7 +12,7 @@ bootRepackage {
 dependencies {
 	compile project(':clustercheck-core')
 	compile project(':modules:clusteraudit')
-	compile project(':modules:clusterconfigaudit')
+//	compile project(':modules:clusterconfigaudit')
 	compile project(':modules:benchmark-rawdisk')
 	compile project(':modules:benchmark-memory')
 	compile project(':modules:benchmark-network-iperf')
