@@ -4,6 +4,7 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckModule
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
+import groovyx.gpars.GParsPool
 import org.apache.commons.io.FilenameUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -228,33 +229,34 @@ class BenchmarkRawDiskModule implements ExecuteModule {
         log.info(">>>>> ... this can take some time.")
         destroyTests.each { readOnlyTest ->
             def dataInMB = readOnlyTest.getOrDefault("data_in_mb", 4096)
-            def tests = []
+            def tests = Collections.synchronizedList([])
             log.info(">>>>> ... test with ${dataInMB} MB")
-            nodes.each { currentNode ->
-                log.info(">>>>> ...... on node ${currentNode.host}")
-                ssh.run {
-                    settings {
-                        pty = true
-                    }
-                    session(ssh.remotes.role(currentNode.host)) {
-                        def homePath = execute 'echo $HOME'
+            GParsPool.withPool {
+                nodes.eachParallel { currentNode ->
+                    log.info(">>>>> ...... on node ${currentNode.host}")
+                    ssh.run {
+                        settings {
+                            pty = true
+                        }
+                        session(ssh.remotes.role(currentNode.host)) {
+                            def homePath = execute 'echo $HOME'
 
-                        def node = [:]
-                        def wardenStatus = executeSudo("service mapr-warden status > /dev/null 2>&1; echo \$?")
-                        node['host'] = remote.host
-                        if (wardenStatus.trim() != "4") {
-                            node['error'] = "Node has a mapr-warden service available. For safety reasons, destructive tests will not run on nodes with MapR's Warden being installed."
-                            tests.add(node)
-                            return
-                        }
-                        def iozoneStatus = executeSudo("pgrep iozone; echo \$?")
-                        if (iozoneStatus.trim() == "0") {
-                            node['error'] = "Seems that IOzone is still running."
-                            tests.add(node)
-                            return
-                        }
-                        def disks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks'])
-                        def bashScript = new ByteArrayInputStream("""#!/bin/bash
+                            def node = [:]
+                            def wardenStatus = executeSudo("service mapr-warden status > /dev/null 2>&1; echo \$?")
+                            node['host'] = remote.host
+                            if (wardenStatus.trim() != "4") {
+                                node['error'] = "Node has a mapr-warden service available. For safety reasons, destructive tests will not run on nodes with MapR's Warden being installed."
+                                tests.add(node)
+                                return
+                            }
+                            def iozoneStatus = executeSudo("pgrep iozone; echo \$?")
+                            if (iozoneStatus.trim() == "0") {
+                                node['error'] = "Seems that IOzone is still running."
+                                tests.add(node)
+                                return
+                            }
+                            def disks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks'])
+                            def bashScript = new ByteArrayInputStream("""#!/bin/bash
 disklist="${disks.join(' ')}"
 size=${dataInMB}
 
@@ -268,62 +270,69 @@ wait
 """.getBytes())
 
 
-                        executeSudo("mkdir -p ${homePath}/.clustercheck")
-                        put from: bashScript, into: "/tmp/benchmark-rawdisk-destroy"
-                        executeSudo("cp /tmp/benchmark-rawdisk-destroy ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
-                        executeSudo("chmod +x ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
-                        sleep(1000)
+                            executeSudo("mkdir -p ${homePath}/.clustercheck")
+                            put from: bashScript, into: "/tmp/benchmark-rawdisk-destroy"
+                            executeSudo("cp /tmp/benchmark-rawdisk-destroy ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
+                            executeSudo("chmod +x ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
+                            sleep(1000)
 
-                        def readResult = executeSudo("${homePath}/.clustercheck/benchmark-rawdisk-destroy")
-                        if (readResult.contains("Invalid argument")) {
-                            node['error'] = "Cannot read disk: " + readResult
-                            tests.add(node)
-                            return
-                        }
-                        def diskTests = disks.collect { disk ->
-                            def diskBasename = FilenameUtils.getBaseName(disk)
-                            def content = executeSudo("cat ${homePath}/.clustercheck/${diskBasename}-iozone.log")
-                            def tokens = content.tokenize('\n').find { it =~ /^[\d ]*$/ }.trim().tokenize().collect {
-                                it as int
+                            def readResult = executeSudo("${homePath}/.clustercheck/benchmark-rawdisk-destroy")
+                            if (readResult.contains("Invalid argument")) {
+                                node['error'] = "Cannot read disk: " + readResult
+                                tests.add(node)
+                                return
                             }
-                            return [disk                    : disk,
-                                    dataInKB                : tokens[0],
-                                    reclen                  : tokens[1],
-                                    seqWriteInKBperSecond   : tokens[2],
-                                    seqReadInKBperSecond    : tokens[4],
-                                    randomReadInKBperSecond : tokens[6],
-                                    randomWriteInKBperSecond: tokens[7]
-                            ]
+                            def diskTests = disks.collect { disk ->
+                                def diskBasename = FilenameUtils.getBaseName(disk)
+                                def content = executeSudo("cat ${homePath}/.clustercheck/${diskBasename}-iozone.log")
+                                def tokens = content.tokenize('\n').find {
+                                    it =~ /^[\d ]*$/
+                                }.trim().tokenize().collect {
+                                    it as int
+                                }
+                                return [disk                    : disk,
+                                        dataInKB                : tokens[0],
+                                        reclen                  : tokens[1],
+                                        seqWriteInKBperSecond   : tokens[2],
+                                        seqReadInKBperSecond    : tokens[4],
+                                        randomReadInKBperSecond : tokens[6],
+                                        randomWriteInKBperSecond: tokens[7]
+                                ]
+                            }
+                            node['minDiskSeqWriteInKBperSecond'] = diskTests.collect {
+                                it['seqWriteInKBperSecond']
+                            }.min()
+                            node['minDiskSeqReadInKBperSecond'] = diskTests.collect { it['seqReadInKBperSecond'] }.min()
+                            node['minDiskRandomReadInKBperSecond'] = diskTests.collect {
+                                it['randomReadInKBperSecond']
+                            }.min()
+                            node['minDiskRandomWriteInKBperSecond'] = diskTests.collect {
+                                it['randomWriteInKBperSecond']
+                            }.min()
+
+                            node['maxDiskSeqWriteInKBperSecond'] = diskTests.collect {
+                                it['seqWriteInKBperSecond']
+                            }.max()
+                            node['maxDiskSeqReadInKBperSecond'] = diskTests.collect { it['seqReadInKBperSecond'] }.max()
+                            node['maxDiskRandomReadInKBperSecond'] = diskTests.collect {
+                                it['randomReadInKBperSecond']
+                            }.max()
+                            node['maxDiskRandomWriteInKBperSecond'] = diskTests.collect {
+                                it['randomWriteInKBperSecond']
+                            }.max()
+
+                            node['sumDiskSeqWriteInKBperSecond'] = diskTests.sum { it['seqWriteInKBperSecond'] }
+                            node['sumDiskSeqReadInKBperSecond'] = diskTests.sum { it['seqReadInKBperSecond'] }
+                            node['sumDiskRandomReadInKBperSecond'] = diskTests.sum { it['randomReadInKBperSecond'] }
+                            node['sumDiskRandomWriteInKBperSecond'] = diskTests.sum { it['randomWriteInKBperSecond'] }
+
+                            node['meanDiskSeqWriteInKBperSecond'] = (node['sumDiskSeqWriteInKBperSecond'] / diskTests.size()) as int
+                            node['meanDiskSeqReadInKBperSecond'] = (node['sumDiskSeqReadInKBperSecond'] / diskTests.size()) as int
+                            node['meanDiskRandomReadInKBperSecond'] = (node['sumDiskRandomReadInKBperSecond'] / diskTests.size()) as int
+                            node['meanDiskRandomWriteInKBperSecond'] = (node['sumDiskRandomWriteInKBperSecond'] / diskTests.size()) as int
+                            node['diskTests'] = diskTests
+                            tests.add(node)
                         }
-                        node['minDiskSeqWriteInKBperSecond'] = diskTests.collect { it['seqWriteInKBperSecond'] }.min()
-                        node['minDiskSeqReadInKBperSecond'] = diskTests.collect { it['seqReadInKBperSecond'] }.min()
-                        node['minDiskRandomReadInKBperSecond'] = diskTests.collect {
-                            it['randomReadInKBperSecond']
-                        }.min()
-                        node['minDiskRandomWriteInKBperSecond'] = diskTests.collect {
-                            it['randomWriteInKBperSecond']
-                        }.min()
-
-                        node['maxDiskSeqWriteInKBperSecond'] = diskTests.collect { it['seqWriteInKBperSecond'] }.max()
-                        node['maxDiskSeqReadInKBperSecond'] = diskTests.collect { it['seqReadInKBperSecond'] }.max()
-                        node['maxDiskRandomReadInKBperSecond'] = diskTests.collect {
-                            it['randomReadInKBperSecond']
-                        }.max()
-                        node['maxDiskRandomWriteInKBperSecond'] = diskTests.collect {
-                            it['randomWriteInKBperSecond']
-                        }.max()
-
-                        node['sumDiskSeqWriteInKBperSecond'] = diskTests.sum { it['seqWriteInKBperSecond'] }
-                        node['sumDiskSeqReadInKBperSecond'] = diskTests.sum { it['seqReadInKBperSecond'] }
-                        node['sumDiskRandomReadInKBperSecond'] = diskTests.sum { it['randomReadInKBperSecond'] }
-                        node['sumDiskRandomWriteInKBperSecond'] = diskTests.sum { it['randomWriteInKBperSecond'] }
-
-                        node['meanDiskSeqWriteInKBperSecond'] = (node['sumDiskSeqWriteInKBperSecond'] / diskTests.size()) as int
-                        node['meanDiskSeqReadInKBperSecond'] = (node['sumDiskSeqReadInKBperSecond'] / diskTests.size()) as int
-                        node['meanDiskRandomReadInKBperSecond'] = (node['sumDiskRandomReadInKBperSecond'] / diskTests.size()) as int
-                        node['meanDiskRandomWriteInKBperSecond'] = (node['sumDiskRandomWriteInKBperSecond'] / diskTests.size()) as int
-                        node['diskTests'] = diskTests
-                        tests.add(node)
                     }
                 }
             }
@@ -371,20 +380,21 @@ wait
         log.info(">>>>> ... this can take some time.")
         readOnlyTests.each { readOnlyTest ->
             def dataInMB = readOnlyTest.getOrDefault("data_in_mb", 4096)
-            def tests = []
+            def tests = Collections.synchronizedList([])
             log.info(">>>>> ... test with ${dataInMB} MB")
-            nodes.forEach { currentNode ->
-                log.info(">>>>> ...... on node ${currentNode.host}")
-                ssh.run {
-                    settings {
-                        pty = true
-                    }
-                    session(ssh.remotes.role(currentNode.host)) {
-                        def homePath = execute 'echo $HOME'
+            GParsPool.withPool {
+                nodes.eachParallel { currentNode ->
+                    log.info(">>>>> ...... on node ${currentNode.host}")
+                    ssh.run {
+                        settings {
+                            pty = true
+                        }
+                        session(ssh.remotes.role(currentNode.host)) {
+                            def homePath = execute 'echo $HOME'
 
-                        def node = [:]
-                        def disks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks'])
-                        def bashScript = new ByteArrayInputStream("""#!/bin/bash
+                            def node = [:]
+                            def disks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks'])
+                            def bashScript = new ByteArrayInputStream("""#!/bin/bash
 disklist="${disks.join(' ')}"
 size=${dataInMB}
 
@@ -399,44 +409,45 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
 """.getBytes())
 
 
-                        execute("mkdir -p ${homePath}/.clustercheck")
-                        put from: bashScript, into: "/tmp/benchmark-rawdisk-readonly"
-                        execute("cp /tmp/benchmark-rawdisk-readonly ${homePath}/.clustercheck/benchmark-rawdisk-readonly")
-                        execute("chmod +x ${homePath}/.clustercheck/benchmark-rawdisk-readonly")
-                        sleep(1000)
-                        def readResult = executeSudo("${homePath}/.clustercheck/benchmark-rawdisk-readonly")
-                        if (readResult.contains("failed to open")) {
-                            node['host'] = remote.host
-                            node['error'] = readResult
-                            tests.add(node)
-                            return
-                        }
-                        def lines = readResult.tokenize('\n')
-                        def diskTests = disks.collect { disk ->
-                            def dataIdx = lines.findIndexOf { it.trim() == disk.trim() }
-                            if (dataIdx == -1) {
-                                return [:]
+                            execute("mkdir -p ${homePath}/.clustercheck")
+                            put from: bashScript, into: "/tmp/benchmark-rawdisk-readonly"
+                            execute("cp /tmp/benchmark-rawdisk-readonly ${homePath}/.clustercheck/benchmark-rawdisk-readonly")
+                            execute("chmod +x ${homePath}/.clustercheck/benchmark-rawdisk-readonly")
+                            sleep(1000)
+                            def readResult = executeSudo("${homePath}/.clustercheck/benchmark-rawdisk-readonly")
+                            if (readResult.contains("failed to open")) {
+                                node['host'] = remote.host
+                                node['error'] = readResult
+                                tests.add(node)
+                                return
                             }
-                            def res = [:]
-                            res['disk'] = disk
-                            def data = lines[dataIdx + 1].tokenize(',')
-                            res['readBytes'] = data[0].trim().tokenize(' ')[0] as Long
-                            res['timeInSeconds'] = data[1].trim().tokenize(' ')[0] as Double
-                            res['throughputInMBperSecond'] = data[2].trim().tokenize(' ')[0] as Double
-                            return res
-                        }
-                        node['host'] = remote.host
-                        node['minDiskThroughputInMBperSecond'] = diskTests.collect {
-                            it['throughputInMBperSecond']
-                        }.min()
-                        node['maxDiskThroughputInMBperSecond'] = diskTests.collect {
-                            it['throughputInMBperSecond']
-                        }.max()
-                        node['sumDiskThroughputInMBperSecond'] = diskTests.sum { it['throughputInMBperSecond'] }
-                        node['meanDiskThroughputInMBperSecond'] = (node['sumDiskThroughputInMBperSecond'] / diskTests.size())
-                        node['diskTests'] = diskTests
+                            def lines = readResult.tokenize('\n')
+                            def diskTests = disks.collect { disk ->
+                                def dataIdx = lines.findIndexOf { it.trim() == disk.trim() }
+                                if (dataIdx == -1) {
+                                    return [:]
+                                }
+                                def res = [:]
+                                res['disk'] = disk
+                                def data = lines[dataIdx + 1].tokenize(',')
+                                res['readBytes'] = data[0].trim().tokenize(' ')[0] as Long
+                                res['timeInSeconds'] = data[1].trim().tokenize(' ')[0] as Double
+                                res['throughputInMBperSecond'] = data[2].trim().tokenize(' ')[0] as Double
+                                return res
+                            }
+                            node['host'] = remote.host
+                            node['minDiskThroughputInMBperSecond'] = diskTests.collect {
+                                it['throughputInMBperSecond']
+                            }.min()
+                            node['maxDiskThroughputInMBperSecond'] = diskTests.collect {
+                                it['throughputInMBperSecond']
+                            }.max()
+                            node['sumDiskThroughputInMBperSecond'] = diskTests.sum { it['throughputInMBperSecond'] }
+                            node['meanDiskThroughputInMBperSecond'] = (node['sumDiskThroughputInMBperSecond'] / diskTests.size())
+                            node['diskTests'] = diskTests
 
-                        tests.add(node)
+                            tests.add(node)
+                        }
                     }
                 }
             }

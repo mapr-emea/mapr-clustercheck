@@ -11,6 +11,7 @@ bootRepackage {
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
 	compile('org.codehaus.groovy:groovy-all')
+	compile('org.codehaus.gpars:gpars:1.2.0')
 	compile('org.yaml:snakeyaml:1.18')
 	compile('commons-lang:commons-lang:2.4')
 	compile('commons-io:commons-io:2.6')

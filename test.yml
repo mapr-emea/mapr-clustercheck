@@ -13,8 +13,8 @@ modules:
   benchmark-rawdisk:
     enabled: true
     tests:
-    - mode: DESTROY
-      data_in_mb: 100
+    - mode: READONLY
+      data_in_mb: 128
   benchmark-network-iperf:
     enabled: true
     tests:
@@ -25,7 +25,7 @@ modules:
       data_per_thread: 4G
       mode: all
   benchmark-maprfs-dfsio:
-    enabled: true
+    enabled: false
     role: clusterjob-execution
     tests:
     - dfsio_number_of_files: 5
@@ -39,7 +39,7 @@ modules:
       replication: 1
       compression: 'off'
   benchmark-maprfs-rwtest:
-    enabled: true
+    enabled: false
     tests:
     - volume_type: local
       compression: 'off'
@@ -82,10 +82,6 @@ nodes-global-config:
 
 nodes:
 - host: 10.0.0.171
-  disks:
-  - /dev/nvme1n1
-  - /dev/nvme2n1a
-  - /dev/nvme3n1
   roles:
   - clusterjob-execution
 - host: 10.0.0.193
