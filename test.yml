@@ -60,15 +60,15 @@ modules:
       replication: 3
       compression: 'on'
   benchmark-yarn-terasort-spark:
-    enabled: false
+    enabled: true
     role: clusterjob-execution
     tests:
     - chunk_size_in_mb: 256
-      data_size: 1T
-      num_executors: 70
+      data_size: 20M
+      num_executors: 3
       executor_cores: 2
       executor_memory: 4G
-      topology: /data/fast
+      topology: /data
       replication: 3
       compression: 'on'
 

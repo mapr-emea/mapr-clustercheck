@@ -38,8 +38,8 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
     List<String> validate() throws ModuleValidationException {
         def moduleconfig = globalYamlConfig.modules['benchmark-yarn-terasort-mr'] as Map<String, ?>
         def role = moduleconfig.getOrDefault("role", "all")
-        def numberOfNodes = globalYamlConfig.nodes.findAll { it.roles != null && it.roles.contains(role) }.size()
-        if (numberOfNodes > 1) {
+        def numberOfNodes = globalYamlConfig.nodes.findAll { role == "all" || (it.roles != null && it.roles.contains(role)) }.size()
+        if (numberOfNodes != 1) {
             throw new ModuleValidationException("Please specify a role for 'benchmark-yarn-terasort-mr'-module which exactly contains one node. Currently, there are ${numberOfNodes} nodes defined for role '${role}'.")
         }
         ssh.runInOrder {
@@ -89,9 +89,9 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
             textReport += """
 > Test settings:
 >    Chunk size: ${result.chunkSize} bytes
->    Rows: ${result.rows},
->    Compression: ${result.compression},
->    Topology: ${result.topology},
+>    Rows: ${result.rows}
+>    Compression: ${result.compression}
+>    Topology: ${result.topology}
 >    Replication: ${result.replication}
 >    Reduce tasks per node: ${result.reduceTasksPerNode}
 >>> TeraSort:
@@ -110,6 +110,12 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
 >>>    Launched reduce tasks: ${result.teraSort.launchedReduceTasks} 
 >>>    Data local map tasks: ${result.teraSort.dataLocalMapTasks}
 >>>    Reduce shuffle: ${result.teraSort.reduceShuffleBytes} bytes
+>>>    Total time spent by all maps in occupied slots: ${result.teraSort.totalTimeSpentByAllMapsInOccupiedSplots}
+>>>    Total time spent by all reduces in occupied slots: ${result.teraSort.totalTimeSpentByAllReducesInOccupiedSplots}
+>>>    Total time spent by all map tasks: ${result.teraSort.totalTimeSpentByAllMapTasks}
+>>>    Total megabyte-seconds taken by all map tasks: ${result.teraSort.totalMBsecondsTakenByAllMapTasks}
+>>>    Total megabyte-seconds taken by all reduce tasks: ${result.teraSort.totalMBsecondsTakenByAllReduceTasks}
+>>>    Job duration: ${result.teraSort.jobDurationInMs} ms
 
 """
         }

@@ -38,8 +38,8 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
     List<String> validate() throws ModuleValidationException {
         def moduleconfig = globalYamlConfig.modules['benchmark-maprfs-dfsio'] as Map<String, ?>
         def role = moduleconfig.getOrDefault("role", "all")
-        def numberOfNodes = globalYamlConfig.nodes.findAll { it.roles != null && it.roles.contains(role) }.size()
-        if (numberOfNodes > 1) {
+        def numberOfNodes = globalYamlConfig.nodes.findAll { role == "all" || (it.roles != null && it.roles.contains(role)) }.size()
+        if (numberOfNodes != 1) {
             throw new ModuleValidationException("Please specify a role for 'benchmark-maprfs-dfsio'-module which exactly contains one node. Currently, there are ${numberOfNodes} nodes defined for role '${role}'.")
         }
         return []
