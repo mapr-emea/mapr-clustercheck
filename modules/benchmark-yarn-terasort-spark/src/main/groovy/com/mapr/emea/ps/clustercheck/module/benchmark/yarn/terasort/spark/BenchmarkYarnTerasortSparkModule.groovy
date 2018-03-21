@@ -91,7 +91,7 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
         def topology = moduleconfig.getOrDefault("topology", "/data")
         def replication = moduleconfig.getOrDefault("replication", 1)
         def compression = moduleconfig.getOrDefault("compression", "on")
-        def chunkSize = moduleconfig.getOrDefault("chunkSizeInMB", 256) * 1024
+        def chunkSize = moduleconfig.getOrDefault("chunk_size_in_mb", 256) * 1024
 
         ssh.runInOrder {
             settings {

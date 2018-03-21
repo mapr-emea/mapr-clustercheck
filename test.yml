@@ -48,11 +48,11 @@ modules:
       compression: 'off'
       size_in_mb: 32
   benchmark-yarn-terasort-mr:
-    enabled: false
+    enabled: true
     role: clusterjob-execution
     tests:
     - chunk_size_in_mb: 256
-      rows: 1000000
+      rows: 100000
 #      rows: 10000000000
       rows_comment: one row has 100 byte
       reduce_tasks_per_node: 2
