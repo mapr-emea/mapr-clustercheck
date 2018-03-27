@@ -124,15 +124,15 @@ class ClusterAuditModule implements ExecuteModule {
                 def systemd = execute("[ -f /etc/systemd/system.conf ] && echo true || echo false")
                 node['ethernet.controller'] = getColonProperty(ethernetControllers, "Ethernet controller:")
                 node << ifconfigMap
-                node['storage.controller'] = executeSudo("lspci | grep -i -e ide -e raid -e storage -e lsi")
-                node['storage.scsi_raid'] = executeSudo("dmesg | grep -i raid | grep -i -o 'scsi.*\$' | uniq")
+                node['storage.controller'] = executeSudo("lspci | grep -i -e ide -e raid -e storage -e lsi | xargs echo")
+                node['storage.scsi_raid'] = executeSudo("dmesg | grep -i raid | grep -i -o 'scsi.*\$' | uniq | xargs echo")
                 node['storage.disks'] = executeSudo("fdisk -l | grep '^Disk /.*:' |sort").tokenize('\n')
                 node['storage.udev_rules'] = executeSudo("ls /etc/udev/rules.d")
                 node['os.distribution'] = distribution
                 node['os.kernel'] = execute("uname -srvmo | fmt")
                 node['os.time'] = execute("date")
                 node['os.umask'] = executeSudo("umask")
-                node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG'"), "LANG=")
+                node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG | xargs echo'"), "LANG=")
 
                 if (distribution.toLowerCase().contains("ubuntu")) {
                     node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
@@ -147,7 +147,7 @@ class ClusterAuditModule implements ExecuteModule {
                         node['os.selinux'] = execute("rpm -q selinux-tools selinux-policy")
                         node['os.firewall'] = executeSudo("service SuSEfirewall2_init status").tokenize('\n')
                     } else {
-                        node['os.repositories'] = executeSudo("yum --noplugins repolist | grep -i mapr ").tokenize('\n')
+                        node['os.repositories'] = executeSudo("yum --noplugins repolist | grep -i mapr | xargs echo").tokenize('\n')
                         node['os.selinux'] = executeSudo("getenforce")
 
                     }
@@ -184,7 +184,7 @@ class ClusterAuditModule implements ExecuteModule {
                 }
                 node['storage.mount_permissions'] = executeSudo("mount | grep -e noexec -e nosuid | grep -v tmpfs |grep -v 'type cgroup'").tokenize('\n')
                 node['storage.tmp_dir_permission'] = executeSudo("stat -c %a /tmp")
-                def java_version_output = execute("java -version")
+                def java_version_output = execute("java -version | xargs echo")
                 node['java.openjdk'] = java_version_output.toLowerCase().contains("openjdk")
                 node['java.version'] = getColonValueFromLines(java_version_output, "version").replace('"', '')
                 node['java.version_output'] = java_version_output.tokenize('\n')
@@ -194,14 +194,14 @@ class ClusterAuditModule implements ExecuteModule {
                 } else {
                     node['ip'] = execute('hostname -I')
                 }
-                node['ulimit.mapr_processes'] = executeSudo("su - ${mapruser} -c 'ulimit -u'")
-                node['ulimit.mapr_files'] = executeSudo("su - ${mapruser} -c 'ulimit -n'")
+                node['ulimit.mapr_processes'] = executeSudo("su - ${mapruser} -c 'ulimit -u' | xargs echo")
+                node['ulimit.mapr_files'] = executeSudo("su - ${mapruser} -c 'ulimit -n' | xargs echo")
                 node['ulimit.limits_conf'] = executeSudo("grep -e nproc -e nofile /etc/security/limits.conf |grep -v ':#'")
                 node['ulimit.limits_d_conf'] = executeSudo("[ -d /etc/security/limits.d ] && (grep -e nproc -e nofile /etc/security/limits.d/*.conf |grep -v ':#')")
 
 
-                node['dns.lookup'] = execute("host " + node['hostname'])
-                node['dns.reverse'] = execute("host " + node['ip'])
+                node['dns.lookup'] = execute("host " + node['hostname'] + " | xargs echo")
+                node['dns.reverse'] = execute("host " + node['ip'] + " | xargs echo")
 
                 nodes.add(node)
             }
