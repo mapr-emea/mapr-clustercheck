@@ -224,6 +224,9 @@ class BenchmarkRawDiskModule implements ExecuteModule {
             copyToolToRemoteHost(role, "iozone")
         }
         def nodes = globalYamlConfig.nodes.findAll { role == "all" || it.roles.contains(role) }
+        if(nodes.size() == 0) {
+            return []
+        }
         def result = Collections.synchronizedList([])
         log.info(">>>>> Running DESTROY disks tests")
         log.info(">>>>> ... this can take some time.")
@@ -375,6 +378,9 @@ wait
         def moduleConfig = globalYamlConfig.modules['benchmark-rawdisk'] as Map<String, ?>
         def readOnlyTests = moduleConfig.tests.findAll { it.mode == "READONLY" }
         def nodes = globalYamlConfig.nodes.findAll { role == "all" || it.roles.contains(role) }
+        if(nodes.size() == 0) {
+            return []
+        }
         def result = Collections.synchronizedList([])
         log.info(">>>>> Running READONLY disks tests")
         log.info(">>>>> ... this can take some time.")
