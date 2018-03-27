@@ -172,6 +172,9 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
     def checkIfIperfIsRunningAndStop(role) {
         log.info(">>>>> Check for running iperf instances")
         ssh.run {
+            settings {
+                pty = true
+            }
             session(ssh.remotes.role(role)) {
                 def pid = executeSudo "pidof iperf | xargs echo" // xargs echo get rid of return code
                 if (pid) {
@@ -185,6 +188,9 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
     def stopIperfServer(role) {
         log.info(">>>>> Stopping iperf server on all nodes")
         ssh.run {
+            settings {
+                pty = true
+            }
             session(ssh.remotes.role(role)) {
                 executeSudo "pidof iperf | xargs kill -9"
             }
