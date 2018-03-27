@@ -220,13 +220,11 @@ class BenchmarkRawDiskModule implements ExecuteModule {
         def moduleConfig = globalYamlConfig.modules['benchmark-rawdisk'] as Map<String, ?>
 
         def destroyTests = moduleConfig.tests.findAll { it.mode == "DESTROY" }
-        if (destroyTests.size() > 0) {
-            copyToolToRemoteHost(role, "iozone")
-        }
-        def nodes = globalYamlConfig.nodes.findAll { role == "all" || it.roles.contains(role) }
-        if(nodes.size() == 0) {
+        if (destroyTests.size() == 0) {
             return []
         }
+        copyToolToRemoteHost(role, "iozone")
+        def nodes = globalYamlConfig.nodes.findAll { role == "all" || it.roles.contains(role) }
         def result = Collections.synchronizedList([])
         log.info(">>>>> Running DESTROY disks tests")
         log.info(">>>>> ... this can take some time.")
@@ -245,9 +243,9 @@ class BenchmarkRawDiskModule implements ExecuteModule {
                             def homePath = execute 'echo $HOME'
 
                             def node = [:]
-                            def wardenStatus = executeSudo("service mapr-warden status > /dev/null 2>&1; echo \$?")
+                            def wardenStatus = executeSudo("service mapr-warden status | xargs echo")
                             node['host'] = remote.host
-                            if (wardenStatus.trim() != "4") {
+                            if (!wardenStatus.contains("could not be found")) {
                                 node['error'] = "Node has a mapr-warden service available. For safety reasons, destructive tests will not run on nodes with MapR's Warden being installed."
                                 tests.add(node)
                                 return
@@ -273,10 +271,10 @@ wait
 """.getBytes())
 
 
-                            executeSudo("mkdir -p ${homePath}/.clustercheck")
+                            execute("mkdir -p ${homePath}/.clustercheck")
                             put from: bashScript, into: "/tmp/benchmark-rawdisk-destroy"
-                            executeSudo("cp /tmp/benchmark-rawdisk-destroy ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
-                            executeSudo("chmod +x ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
+                            execute("cp /tmp/benchmark-rawdisk-destroy ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
+                            execute("chmod +x ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
                             sleep(1000)
 
                             def readResult = executeSudo("${homePath}/.clustercheck/benchmark-rawdisk-destroy")
@@ -378,7 +376,7 @@ wait
         def moduleConfig = globalYamlConfig.modules['benchmark-rawdisk'] as Map<String, ?>
         def readOnlyTests = moduleConfig.tests.findAll { it.mode == "READONLY" }
         def nodes = globalYamlConfig.nodes.findAll { role == "all" || it.roles.contains(role) }
-        if(nodes.size() == 0) {
+        if(readOnlyTests.size() == 0) {
             return []
         }
         def result = Collections.synchronizedList([])
