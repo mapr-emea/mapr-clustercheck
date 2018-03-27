@@ -6,3 +6,6 @@
  |_|  |_|\__,_| .__/|_|  \_\    |_|\___|\___|_| |_|_| |_|\___/|_|\___/ \__, |_|\___||___/
               | |                                                       __/ |
               |_|                                                      |___/
+
+        ------ Cluster audit tool - developed and maintained by Carsten Hufe ------
+

@@ -79,9 +79,12 @@ $ chmod +x ~/clustercheck-suite
 $ ./maprclustercheck
 
 USAGE: 
-  Run checks:                      ./maprclustercheck run /path/to/myconfig.yaml
-  Validate configuration file:     ./maprclustercheck validate /path/to/myconfig.yaml
-  Create configuration template:   ./maprclustercheck generatetemplate /path/to/myconfig.yaml
+  Show included modules and versions:      ./maprclustercheck info
+  Run checks:                              ./maprclustercheck run /path/to/myconfig.yaml
+  Tests SSH connections:                   ./maprclustercheck testssh /path/to/myconfig.yaml
+  Validate configuration file:             ./maprclustercheck validate /path/to/myconfig.yaml
+  Create configuration template:           ./maprclustercheck generatetemplate /path/to/myconfig.yaml
+
 ```
 
 Based on the bundled modules the checks are executed. It is helpful to generate a configuration file template with `clusterchecksuite generatetemplate`, because this takes all bundled modules into account and generates a configuration file based on this.
