@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 // TODO implement TEXT report
 // TODO implement diffs and give recommendations
 
-// TODO grab storage pools
-// TODO grab disks
 // TODO recommendation nm-local-dir
 // TODO recommentation: at least 3 CLDB
 // TODO dump env files to separate dir?
@@ -57,33 +55,118 @@ class ClusterConfigAuditModule implements ExecuteModule {
                 def node = [:]
                 def exec = { arg -> executeSudo(arg) }
                 node['host'] = remote.host
-            //    node['maprHomeOwnership'] = execute('stat --printf="%U:%G %A %n\\n" $(readlink -f /opt/mapr)')
-            //    node['maprPackages'] = execute('rpm -qa | grep mapr').tokenize('\n')
-//                node['maprSslTruststore'] = collectMaprSslTruststore(exec)
-//                node['maprSslKeystore'] = collectMaprSslKeystore(exec)
-//                node['maprClustersConf'] = collectMaprClustersConf(exec)
-//                node['mfsConf'] = collectMfsConfProperties(exec)
-//                node['wardenConf'] = collectWardenConfProperties(exec)
-//                node['cldbConf'] = collectCldbConfProperties(exec)
-//                node['zooCfg'] = collectZooCfgProperties(exec)
-//                node['yarnSite'] = collectYarnSiteProperties(exec)
-//                node['coreSite'] = collectCoreSiteProperties(exec)
-//                node['hiveSite'] = collectHiveSiteProperties(exec)
-//                node['hiveEnv'] = collectHiveEnv(exec)
-//                node['maprEnvSh'] = collectMaprEnvSh(exec)
-//                node['sparkDefaultsConf'] = collectSparkDefaultsConfProperties(exec)
-//                node['sparkEnv'] = collectSparkEnv(exec)
-//                node['hbaseSite'] = collectHbaseSiteProperties(exec)
-//                node['hbaseEnv'] = collectHbaseEnv(exec)
-//                node['httpfsSite'] = collectHttpfsSiteProperties(exec)
-//                node['httpfsEnv'] = collectHttpfsEnv(exec)
+                node['maprHomeOwnership'] = execute('stat --printf="%U:%G %A %n\\n" $(readlink -f /opt/mapr)')
+                node['maprPackages'] = execute('rpm -qa | grep mapr').tokenize('\n')
+                node['storagePools'] = collectStoragePools(exec)
+                node['maprSslTruststore'] = collectMaprSslTruststore(exec)
+                node['maprSslKeystore'] = collectMaprSslKeystore(exec)
+                node['maprClustersConf'] = collectMaprClustersConf(exec)
+                node['mfsConf'] = collectMfsConfProperties(exec)
+                node['wardenConf'] = collectWardenConfProperties(exec)
+                node['cldbConf'] = collectCldbConfProperties(exec)
+                node['zooCfg'] = collectZooCfgProperties(exec)
+                node['yarnSite'] = collectYarnSiteProperties(exec)
+                node['coreSite'] = collectCoreSiteProperties(exec)
+                node['hiveSite'] = collectHiveSiteProperties(exec)
+                node['hiveEnv'] = collectHiveEnv(exec)
+                node['maprEnvSh'] = collectMaprEnvSh(exec)
+                node['sparkDefaultsConf'] = collectSparkDefaultsConfProperties(exec)
+                node['sparkEnv'] = collectSparkEnv(exec)
+                node['hbaseSite'] = collectHbaseSiteProperties(exec)
+                node['hbaseEnv'] = collectHbaseEnv(exec)
+                node['httpfsSite'] = collectHttpfsSiteProperties(exec)
+                node['httpfsEnv'] = collectHttpfsEnv(exec)
                 result.add(node)
             }
         }
-
+        def groupedResult = groupSameValuesWithHosts(result)
         log.info(">>>>> ... cluster-config-audit finished")
-        return new ClusterCheckResult(reportJson: result, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
+        return new ClusterCheckResult(reportJson: groupedResult, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
     }
+
+    private static def groupSameValuesWithHosts(def nodes) {
+        def result = [:]
+        for (def node : nodes) {
+            def host = node['host']
+            for (def e in node) {
+                if (e.key != "host") {
+                    if (!result.containsKey(e.key)) {
+                        result[e.key] = [['hosts': [host] as Set, value: e.value]]
+                    } else {
+                        def values = result[e.key]
+                        def found = false
+                        for (def value : values) {
+                            if (value['value'] == node[e.key]) {
+                                found = true
+                                value['hosts'] << host
+                            }
+                        }
+                        if (!found) {
+                            result[e.key] << ['hosts': [host] as Set, value: e.value]
+                        }
+                    }
+                }
+            }
+        }
+        result
+    }
+
+    def collectStoragePools(execute) {
+        def spList = execute("/opt/mapr/server/mrconfig sp list")
+        def lines = spList.tokenize('\n')
+        def spLines = lines.findAll { it.startsWith("SP") }.collect{ it.substring(it.indexOf(':') + 1).trim() }
+        def storagePools = spLines.collect { line ->
+            def items = line.tokenize(',').collect { it.trim() }
+            def values = [:]
+            items.each { itemStr ->
+                def item = itemStr.tokenize(' ')
+                if(item[0] == "name") {
+                    values['name'] = item[1]
+                } else if (item[0] == "Online" || item[0] == "Offline") {
+                    values['state'] = item[0]
+                } else if (item[0] == "size") {
+                    values['sizeInMB'] = item[1] as Long
+                } else if (item[0] == "free") {
+                    values['freeInMB'] = item[1] as Long
+                } else if (item[0] == "path") {
+                    values['path'] = item[1]
+                }
+            }
+            return values
+        }
+        def diskList = execute("/opt/mapr/server/mrconfig disk list")
+        def diskLines = diskList.tokenize('\n')
+        def disks = []
+        def currentDisk = [:]
+        diskLines.each { lineUntrimmed ->
+            def line = lineUntrimmed.trim()
+            if(line.startsWith("ListDisks") && !line.contains("ListDisks resp")) {
+                currentDisk['disk'] = line.tokenize(' ')[1].trim()
+            }
+            if(line.startsWith("size")) {
+                currentDisk['sizeInMB'] = line.findAll( /\d+/ )[0] as int
+            }
+            if(line.startsWith("SP")) {
+                // add line
+                def spLine = line.substring(line.indexOf(':') + 1).trim()
+                def items = spLine.tokenize(',').collect { it.trim() }
+                items.each { itemStr ->
+                    def item = itemStr.tokenize(' ')
+                    if(item[0] == "name") {
+                        currentDisk['storagePoolName'] = item[1]
+                    }
+                }
+                disks.add(currentDisk)
+                currentDisk = [:]
+            }
+        }
+
+        return storagePools.collect { sp ->
+            sp['disks'] = disks.findAll { it['storagePoolName'] == sp['name']}
+            return sp
+        }
+    }
+
 
     def collectMaprSslKeystore(execute) {
         return collectMaprSslStore(execute, "/opt/mapr/conf/ssl_keystore")

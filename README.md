@@ -16,12 +16,24 @@ Furthermore the idea is to collect data from customer clusters and put them into
 ## Features
 
 - Run easily cluster checks with only one command
+- Support following authentication methods:
+    - SSH authentication with identity key
+    - SSH authentication with password
+    - Root users
+    - Users with sudo
+    - Sudo with password
 - Only one artifact to copy
 - No external dependencies
 - Standardized output in JSON and text format. Output can be put into database
 - Modules:
     - Cluster audit
-    - Network benchmark with iperf
+    - Cluster config audit
+    - Benchmark memory
+    - Benchmark Raw Disks (dd for readonly, iozone for destructive)
+    - Benchmark Raw Disks (dd for readonly, iozone for destructive)
+    - Benchmark network with iperf
+    - Benchmark DFSIO, cluster disk performance
+    - Benchmark RW test from single node (local volumes / standard volumes)
 
 ## Setup locally
 
