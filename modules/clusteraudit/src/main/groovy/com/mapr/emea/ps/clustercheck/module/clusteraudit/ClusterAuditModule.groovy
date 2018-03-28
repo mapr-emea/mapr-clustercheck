@@ -13,11 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier
  * Created by chufe on 22.08.17.
  */
 
-// TODO grab pam conf
-// TODO grab sssd conf
-// TODO grab nscd conf
-
-
+// TODO check IDs of MapR system user
 @ClusterCheckModule(name = "cluster-audit", version = "1.0")
 class ClusterAuditModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(ClusterAuditModule.class);
@@ -132,7 +128,7 @@ class ClusterAuditModule implements ExecuteModule {
                 node['os.kernel'] = execute("uname -srvmo | fmt")
                 node['os.time'] = execute("date")
                 node['os.umask'] = executeSudo("umask")
-                node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG | xargs echo'"), "LANG=")
+                node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG' | xargs echo"), "LANG=")
 
                 if (distribution.toLowerCase().contains("ubuntu")) {
                     node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
@@ -198,6 +194,7 @@ class ClusterAuditModule implements ExecuteModule {
                 node['ulimit.mapr_files'] = executeSudo("su - ${mapruser} -c 'ulimit -n' | xargs echo")
                 node['ulimit.limits_conf'] = executeSudo("grep -e nproc -e nofile /etc/security/limits.conf |grep -v ':#'")
                 node['ulimit.limits_d_conf'] = executeSudo("[ -d /etc/security/limits.d ] && (grep -e nproc -e nofile /etc/security/limits.d/*.conf |grep -v ':#')")
+                node['mapr.system.user'] = executeSudo("id ${mapruser} | xargs echo")
 
 
                 node['dns.lookup'] = execute("host " + node['hostname'] + " | xargs echo")
@@ -308,6 +305,7 @@ class ClusterAuditModule implements ExecuteModule {
                 "ulimit.mapr_processes",
                 "ulimit.mapr_files",
                 "ulimit.limits_conf",
+                "mapr.system.user",
                 "ulimit.limits_d_conf"
         ]
         return propsWithSameValue.findAll{ it -> result[it].size() != 1 }.collect { it ->
