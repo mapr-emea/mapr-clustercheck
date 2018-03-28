@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Qualifier
  * Created by chufe on 22.08.17.
  */
 
-// TODO check IDs of MapR system user
 @ClusterCheckModule(name = "cluster-audit", version = "1.0")
 class ClusterAuditModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(ClusterAuditModule.class);

@@ -78,8 +78,8 @@ nodes-global-config:
   ssh_identity: /Users/chufe/.ssh/id_rsa
 
 nodes:
-- host: 10.0.0.74
+- host: 10.0.0.63
   roles:
   - clusterjob-execution
-- host: 10.0.0.176
-- host: 10.0.0.215
+- host: 10.0.0.115
+- host: 10.0.0.192
