@@ -252,6 +252,13 @@ class ClusterAuditModule implements ExecuteModule {
         text
     }
 
+    def ifBuildGlobalMessage(Closure<Boolean> condition, String message) {
+        if(condition()) {
+            return [message]
+        }
+        return []
+    }
+
     def ifBuildMessage(def result, String key, Closure<Boolean> condition, String message) {
         def hosts =  result[key].findAll { condition(it['value']) }['hosts'].flatten()
         return hosts.collect{ "${it}: ${message}" }

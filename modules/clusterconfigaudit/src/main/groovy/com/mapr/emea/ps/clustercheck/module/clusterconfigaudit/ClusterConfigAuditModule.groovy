@@ -13,10 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier
  * Created by chufe on 22.08.17.
  */
 // TODO implement TEXT report
-// TODO implement diffs and give recommendations
-
-// TODO recommendation nm-local-dir
-// TODO recommentation: at least 3 CLDB
+// TODO recommendation consider spark shuffle and sort
 // TODO dump env files to separate dir?
 
 @ClusterCheckModule(name = "cluster-config-audit", version = "1.0")
@@ -55,33 +52,58 @@ class ClusterConfigAuditModule implements ExecuteModule {
                 def node = [:]
                 def exec = { arg -> executeSudo(arg) }
                 node['host'] = remote.host
-                node['maprHomeOwnership'] = execute('stat --printf="%U:%G %A %n\\n" $(readlink -f /opt/mapr)')
-                node['maprPackages'] = execute('rpm -qa | grep mapr').tokenize('\n')
-                node['storagePools'] = collectStoragePools(exec)
-                node['maprSslTruststore'] = collectMaprSslTruststore(exec)
-                node['maprSslKeystore'] = collectMaprSslKeystore(exec)
-                node['maprClustersConf'] = collectMaprClustersConf(exec)
-                node['mfsConf'] = collectMfsConfProperties(exec)
-                node['wardenConf'] = collectWardenConfProperties(exec)
-                node['cldbConf'] = collectCldbConfProperties(exec)
-                node['zooCfg'] = collectZooCfgProperties(exec)
-                node['yarnSite'] = collectYarnSiteProperties(exec)
-                node['coreSite'] = collectCoreSiteProperties(exec)
-                node['hiveSite'] = collectHiveSiteProperties(exec)
-                node['hiveEnv'] = collectHiveEnv(exec)
-                node['maprEnvSh'] = collectMaprEnvSh(exec)
-                node['sparkDefaultsConf'] = collectSparkDefaultsConfProperties(exec)
-                node['sparkEnv'] = collectSparkEnv(exec)
-                node['hbaseSite'] = collectHbaseSiteProperties(exec)
-                node['hbaseEnv'] = collectHbaseEnv(exec)
-                node['httpfsSite'] = collectHttpfsSiteProperties(exec)
-                node['httpfsEnv'] = collectHttpfsEnv(exec)
+                node['mapr.home.ownership'] = execute('stat --printf="%U:%G %A %n\\n" $(readlink -f /opt/mapr)')
+                node['mapr.packages'] = executeSudo('rpm -qa | grep mapr').tokenize('\n')
+                node['mapr.cldb.key.md5sum'] = executeSudo('md5sum /opt/mapr/conf/cldb.key').trim()
+                node['mapr.clusterid'] = executeSudo('cat /opt/mapr/conf/clusterid').trim()
+                node['mapr.ssl_truststore'] = collectMaprSslTruststore(exec)
+                node['mapr.ssl_keystore'] = collectMaprSslKeystore(exec)
+                node['mapr.clusters.conf'] = collectMaprClustersConf(exec)
+                node['mapr.storage_pools'] = collectStoragePools(exec)
+                node['mapr.env'] = collectMaprEnvSh(exec)
+                node['mfs.conf'] = collectMfsConfProperties(exec)
+                node['warden.conf'] = collectWardenConfProperties(exec)
+                node['cldb.conf'] = collectCldbConfProperties(exec)
+                node['zoo.cfg'] = collectZooCfgProperties(exec)
+                node['yarn.site'] = collectYarnSiteProperties(exec)
+                node['core.site'] = collectCoreSiteProperties(exec)
+                node['hive.site'] = collectHiveSiteProperties(exec)
+                node['hive.env'] = collectHiveEnv(exec)
+                node['spark.defaults.conf'] = collectSparkDefaultsConfProperties(exec)
+                node['spark.env'] = collectSparkEnv(exec)
+                node['hbase.site'] = collectHbaseSiteProperties(exec)
+                node['hbase.env'] = collectHbaseEnv(exec)
+                node['httpfs.site'] = collectHttpfsSiteProperties(exec)
+                node['httpfs.env'] = collectHttpfsEnv(exec)
                 result.add(node)
             }
         }
         def groupedResult = groupSameValuesWithHosts(result)
+        def recommendations = []
+        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.home.ownership'].size() != 1 }, "MapR Home should have same ownership on all nodes.")
+        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.cldb.key.md5sum'].size() != 1 }, "CLDB key must be the same on all nodes.")
+        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.clusterid'].size() != 1 }, "Cluster ID must be the same on all nodes.")
+        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.ssl_truststore'].size() != 1 }, "ssl_truststore should have same content on all nodes. Use a root CA to sign certificates.")
+        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.clusters.conf'].size() != 1 }, "mapr-clusters.conf must be same on all nodes.")
+        def countCldbs = groupedResult['mapr.packages'].collect { c -> c['value'].count { f -> f.startsWith("mapr-cldb") } > 0 ? c['hosts'].size() : 0 }.sum()
+        recommendations += ifBuildGlobalMessage({ countCldbs < 3 } , "There should be at least 3 CLDBs.")
+        recommendations += ifBuildMessage(groupedResult, "mapr.storage_pools", { sps -> sps.collect { it.disks.size() }.toSet().size() > 1} , "The storage pools should have the same number of disks.")
+        recommendations += ifBuildMessage(groupedResult, "mapr.storage_pools", { sps -> sps.count { it.state == "Offline" } > 0} , "The node has offlined storage pools!")
+        recommendations += ifBuildMessage(groupedResult, "yarn.site", { !it.containsKey("yarn.nodemanager.local-dirs") }, "Consider setting the YARN NodeManager local dir to MapR-FS: https://maprdocs.mapr.com/home/Spark/ConfigureSparkwithNMLocalDirMapR-FS.html")
         log.info(">>>>> ... cluster-config-audit finished")
-        return new ClusterCheckResult(reportJson: groupedResult, reportText: "Not yet implemented", recommendations: ["Not yet implemented"])
+        return new ClusterCheckResult(reportJson: groupedResult, reportText: "Not yet implemented", recommendations: recommendations)
+    }
+
+    def ifBuildGlobalMessage(Closure<Boolean> condition, String message) {
+        if(condition()) {
+            return [message]
+        }
+        return []
+    }
+
+    def ifBuildMessage(def result, String key, Closure<Boolean> condition, String message) {
+        def hosts =  result[key].findAll { condition(it['value']) }['hosts'].flatten()
+        return hosts.collect{ "${it}: ${message}" }
     }
 
     private static def groupSameValuesWithHosts(def nodes) {

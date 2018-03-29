@@ -301,7 +301,12 @@ Module version: ${result.module.version()}
         outputText += """
 ========================= CONFIGURATION ==================================
 """
-        outputText += (configFile as File).text
+        def moduleConfig = globalYamlConfig['modules'][result.module.name()]
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setPrettyFlow(true);
+        def yaml = new Yaml(options)
+        outputText += yaml.dump(moduleConfig)
     //    def outputModuleDir = new File(outputDir.getAbsolutePath() + "/modules/" + result.module.name())
         def outputModuleDir = new File(outputDir.getAbsolutePath())
         outputModuleDir.mkdirs()
