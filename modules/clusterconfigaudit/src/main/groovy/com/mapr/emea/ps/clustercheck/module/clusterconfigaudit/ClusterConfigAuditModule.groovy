@@ -80,18 +80,90 @@ class ClusterConfigAuditModule implements ExecuteModule {
         }
         def groupedResult = groupSameValuesWithHosts(result)
         def recommendations = []
-        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.home.ownership'].size() != 1 }, "MapR Home should have same ownership on all nodes.")
-        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.cldb.key.md5sum'].size() != 1 }, "CLDB key must be the same on all nodes.")
-        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.clusterid'].size() != 1 }, "Cluster ID must be the same on all nodes.")
-        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.ssl_truststore'].size() != 1 }, "ssl_truststore should have same content on all nodes. Use a root CA to sign certificates.")
-        recommendations += ifBuildGlobalMessage({ groupedResult['mapr.clusters.conf'].size() != 1 }, "mapr-clusters.conf must be same on all nodes.")
+        recommendations += ifBuildGlobalMessage({
+            groupedResult['mapr.home.ownership'].size() != 1
+        }, "MapR Home should have same ownership on all nodes.")
+        recommendations += ifBuildGlobalMessage({
+            groupedResult['mapr.cldb.key.md5sum'].size() != 1
+        }, "CLDB key must be the same on all nodes.")
+        recommendations += ifBuildGlobalMessage({
+            groupedResult['mapr.clusterid'].size() != 1
+        }, "Cluster ID must be the same on all nodes.")
+        recommendations += ifBuildGlobalMessage({
+            groupedResult['mapr.ssl_truststore'].size() != 1
+        }, "ssl_truststore should have same content on all nodes. Use a root CA to sign certificates.")
+        recommendations += ifBuildGlobalMessage({
+            groupedResult['mapr.clusters.conf'].size() != 1
+        }, "mapr-clusters.conf must be same on all nodes.")
         def countCldbs = groupedResult['mapr.packages'].collect { c -> c['value'].count { f -> f.startsWith("mapr-cldb") } > 0 ? c['hosts'].size() : 0 }.sum()
-        recommendations += ifBuildGlobalMessage({ countCldbs < 3 } , "There should be at least 3 CLDBs.")
-        recommendations += ifBuildMessage(groupedResult, "mapr.storage_pools", { sps -> sps.collect { it.disks.size() }.toSet().size() > 1} , "The storage pools should have the same number of disks.")
-        recommendations += ifBuildMessage(groupedResult, "mapr.storage_pools", { sps -> sps.count { it.state == "Offline" } > 0} , "The node has offlined storage pools!")
-        recommendations += ifBuildMessage(groupedResult, "yarn.site", { !it.containsKey("yarn.nodemanager.local-dirs") }, "Consider setting the YARN NodeManager local dir to MapR-FS: https://maprdocs.mapr.com/home/Spark/ConfigureSparkwithNMLocalDirMapR-FS.html")
+        recommendations += ifBuildGlobalMessage({ countCldbs < 3 }, "There should be at least 3 CLDBs.")
+        recommendations += ifBuildMessage(groupedResult, "mapr.storage_pools", { sps ->
+            sps.collect {
+                it.disks.size()
+            }.toSet().size() > 1
+        }, "The storage pools should have the same number of disks.")
+        recommendations += ifBuildMessage(groupedResult, "mapr.storage_pools", { sps ->
+            sps.count {
+                it.state == "Offline"
+            } > 0
+        }, "The node has offlined storage pools!")
+        recommendations += ifBuildMessage(groupedResult, "yarn.site", {
+            !it.containsKey("yarn.nodemanager.local-dirs")
+        }, "Consider setting the YARN NodeManager local dir to MapR-FS: https://maprdocs.mapr.com/home/Spark/ConfigureSparkwithNMLocalDirMapR-FS.html")
+        def textReport = buildTextReport(groupedResult)
         log.info(">>>>> ... cluster-config-audit finished")
-        return new ClusterCheckResult(reportJson: groupedResult, reportText: "Not yet implemented", recommendations: recommendations)
+        return new ClusterCheckResult(reportJson: groupedResult, reportText: textReport, recommendations: recommendations)
+    }
+
+    def buildTextReport(result) {
+        def text = ""
+        text += buildTextReportElement(result, "mapr.home.ownership", "Ownership of /opt/mapr")
+        text += buildTextReportElement(result, "mapr.cldb.key.md5sum", "/opt/mapr/conf/cldb.key md5sum")
+        text += buildTextReportElement(result, "mapr.clusterid", "MapR Cluster ID")
+        text += buildTextReportElement(result, "mapr.clusters.conf", "MapR /opt/mapr/conf/mapr-clusters.conf")
+        // TODO seperate report
+//        node['mapr.ssl_truststore'] = collectMaprSslTruststore(exec)
+//        node['mapr.ssl_keystore'] = collectMaprSslKeystore(exec)
+//        node['mapr.storage_pools'] = collectStoragePools(exec)
+        text += buildTextReportElement(result, "mapr.packages", "Installed MapR packages")
+        text += buildTextReportElement(result, "mfs.conf", "MapR /opt/mapr/conf/mfs.conf")
+        text += buildTextReportElement(result, "cldb.conf", "MapR /opt/mapr/conf/cldb.conf")
+        text += buildTextReportElement(result, "zoo.cfg", "Zookeeper configuration zoo.cfg")
+        text += buildTextReportElement(result, "warden.conf", "MapR /opt/mapr/conf/warden.conf")
+        text += buildTextReportElement(result, "yarn.site", "Hadoop yarn-site.xml")
+        text += buildTextReportElement(result, "core.site", "Hadoop core-site.xml")
+        text += buildTextReportElement(result, "hive.site", "Hive hive-site.xml")
+        text += buildTextReportElement(result, "spark.defaults.conf", "Spark spark-defaults.conf")
+        text += buildTextReportElement(result, "hbase.site", "MapR-DB hbase-site.xml")
+        text += buildTextReportElement(result, "httpfs.site", "HttpFS httpfs-site.xml")
+
+        // env keep it or to noisy?
+        text += buildTextReportElement(result, "mapr.env", "MapR /opt/mapr/conf/env.sh")
+        text += buildTextReportElement(result, "hive.env", "Hive hive-env.sh")
+        text += buildTextReportElement(result, "spark.env", "Spark spark-env.sh")
+        text += buildTextReportElement(result, "hbase.env", "MapR-DB hbase-env.sh")
+        text += buildTextReportElement(result, "httpfs.env", "HttpFS httpfs-env.sh")
+        text
+    }
+
+    def buildTextReportElement(result, key, description) {
+        def text = "============== ${description} (${key}) ============== \n"
+        for(def vals in result[key]) {
+            text += "------- Hosts: ${vals['hosts']} -------\n"
+            if(vals['value'] instanceof Collection) {
+                text += vals['value'].join('\n') + '\n'
+            } else if (vals['value'] instanceof Map) {
+                for(def m in vals['value']) {
+                    text += m.key + " = " + m.value + "\n"
+                }
+            }
+            else {
+                text += "${vals['value']}\n"
+            }
+            text += '\n'
+        }
+        text += "\n"
+        text
     }
 
     def ifBuildGlobalMessage(Closure<Boolean> condition, String message) {
