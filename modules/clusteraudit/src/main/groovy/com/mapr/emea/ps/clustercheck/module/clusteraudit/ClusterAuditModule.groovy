@@ -26,7 +26,7 @@ class ClusterAuditModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return ['mapruser': 'mapr']
+        return []
     }
 
     @Override
@@ -62,7 +62,7 @@ class ClusterAuditModule implements ExecuteModule {
     ClusterCheckResult execute() {
         def clusteraudit = globalYamlConfig.modules['cluster-audit'] as Map<String, ?>
         def role = clusteraudit.getOrDefault("role", "all")
-        def mapruser = clusteraudit.getOrDefault("role", "mapr")
+        def mapruser = globalYamlConfig.getOrDefault("mapr_user", "mapr")
         def nodes = Collections.synchronizedList([])
         log.info(">>>>> Running cluster-audit")
         ssh.run {
