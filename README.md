@@ -14,6 +14,7 @@ Furthermore the idea is to collect data from customer clusters and put them into
     - Users with sudo
     - Sudo with password
 - Only one artifact to copy
+- Gives you recommendations for nodes and cluster
 - No external dependencies, e.g. no clustershell is required.
 - Standardized output in JSON and text format. Output can be put into database.
 - Modules:
