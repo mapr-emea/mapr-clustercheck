@@ -12,10 +12,9 @@ import org.springframework.beans.factory.annotation.Qualifier
 /**
  * Created by chufe on 22.08.17.
  */
-// TODO implement TEXT report
 // TODO recommendation consider spark shuffle and sort
-// TODO dump env files to separate dir?
-
+// TODO list 5 largest containers
+// TODO show container 0 information
 @ClusterCheckModule(name = "cluster-config-audit", version = "1.0")
 class ClusterConfigAuditModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(ClusterConfigAuditModule.class);
@@ -79,6 +78,13 @@ class ClusterConfigAuditModule implements ExecuteModule {
             }
         }
         def groupedResult = groupSameValuesWithHosts(result)
+        List recommendations = calculateRecommendations(groupedResult)
+        def textReport = buildTextReport(groupedResult)
+        log.info(">>>>> ... cluster-config-audit finished")
+        return new ClusterCheckResult(reportJson: groupedResult, reportText: textReport, recommendations: recommendations)
+    }
+
+    def List calculateRecommendations(def groupedResult) {
         def recommendations = []
         recommendations += ifBuildGlobalMessage({
             groupedResult['mapr.home.ownership'].size() != 1
@@ -110,9 +116,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         recommendations += ifBuildMessage(groupedResult, "yarn.site", {
             !it.containsKey("yarn.nodemanager.local-dirs")
         }, "Consider setting the YARN NodeManager local dir to MapR-FS: https://maprdocs.mapr.com/home/Spark/ConfigureSparkwithNMLocalDirMapR-FS.html")
-        def textReport = buildTextReport(groupedResult)
-        log.info(">>>>> ... cluster-config-audit finished")
-        return new ClusterCheckResult(reportJson: groupedResult, reportText: textReport, recommendations: recommendations)
+        recommendations
     }
 
     def buildTextReport(result) {
@@ -121,10 +125,9 @@ class ClusterConfigAuditModule implements ExecuteModule {
         text += buildTextReportElement(result, "mapr.cldb.key.md5sum", "/opt/mapr/conf/cldb.key md5sum")
         text += buildTextReportElement(result, "mapr.clusterid", "MapR Cluster ID")
         text += buildTextReportElement(result, "mapr.clusters.conf", "MapR /opt/mapr/conf/mapr-clusters.conf")
-        // TODO seperate report
-//        node['mapr.ssl_truststore'] = collectMaprSslTruststore(exec)
-//        node['mapr.ssl_keystore'] = collectMaprSslKeystore(exec)
-//        node['mapr.storage_pools'] = collectStoragePools(exec)
+        text += buildTextSslReportElement(result, "mapr.ssl_truststore", "MapR /opt/mapr/conf/ssl_truststore")
+        text += buildTextSslReportElement(result, "mapr.ssl_keystore", "MapR /opt/mapr/conf/ssl_keystore")
+        text += buildTextStoragePoolReportElement(result, "mapr.storage_pools", "MapR Storage Pools")
         text += buildTextReportElement(result, "mapr.packages", "Installed MapR packages")
         text += buildTextReportElement(result, "mfs.conf", "MapR /opt/mapr/conf/mfs.conf")
         text += buildTextReportElement(result, "cldb.conf", "MapR /opt/mapr/conf/cldb.conf")
@@ -143,6 +146,63 @@ class ClusterConfigAuditModule implements ExecuteModule {
         text += buildTextReportElement(result, "spark.env", "Spark spark-env.sh")
         text += buildTextReportElement(result, "hbase.env", "MapR-DB hbase-env.sh")
         text += buildTextReportElement(result, "httpfs.env", "HttpFS httpfs-env.sh")
+        text
+    }
+    def buildTextStoragePoolReportElement(result, key, description) {
+        def text = "============== ${description} (${key}) ============== \n"
+        for(def vals in result[key]) {
+            def sps = vals['value']
+            text += "------- Hosts: ${vals['hosts']} -------\n"
+            sps.each { sp ->
+                text += ">>> STORAGE POOL ${sp['name']} <<<\n"
+                text += "Name  = ${sp['name']}\n"
+                text += "Path  = ${sp['path']}\n"
+                text += "State = ${sp['state']}\n"
+                text += "Size  = ${sp['sizeInMB']} MB\n"
+                text += "Free  = ${sp['freeInMB']} MB\n"
+                text += "-----\n"
+                def maxdisklen = sp.disks.collect { it.disk.size() }.max()
+                text += "Disk".padRight(maxdisklen + 1, " ") + '\tSize\n'
+                sp.disks.each { disk ->
+                    text += disk.disk.padRight(maxdisklen + 1, " ") + '\t' + disk.sizeInMB + " MB\n"
+                }
+                text += ">>> END STORAGE POOL <<<\n"
+            }
+            text += '\n'
+        }
+        text += "\n"
+        text
+    }
+
+    def buildTextSslReportElement(result, key, description) {
+        def text = "============== ${description} (${key}) ============== \n"
+        for(def vals in result[key]) {
+            def value = vals['value']
+            text += "------- Hosts: ${vals['hosts']} -------\n"
+            text += "File: ${value['filename']}\n"
+            text += "MD5sum: ${value['md5sum']}\n"
+            // mapping here
+            value['entries'].each { entry ->
+                text += ">>> ENTRY ${entry['aliasName']} <<<\n"
+                text += "Alias name             = ${entry['aliasName']}\n"
+                text += "Creation Date          = ${entry['creationDate']}\n"
+                text += "Entry Type             = ${entry['entryType']}\n"
+                text += "Owner                  = ${entry['owner']}\n"
+                text += "Issuer                 = ${entry['issuer']}\n"
+                text += "Serial Number          = ${entry['serialNumber']}\n"
+                text += "Valid From             = ${entry['validFrom']}\n"
+                text += "Valid Until            = ${entry['validUntil']}\n"
+                text += "Fingerprint MD5        = ${entry['fingerprintMd5']}\n"
+                text += "Fingerprint SHA1       = ${entry['fingerprintSha1']}\n"
+                text += "Fingerprint SHA256     = ${entry['fingerprintSha256']}\n"
+                text += "Signature Algorithm    = ${entry['signatureAlgorithm']}\n"
+                text += "Subject Public Key Alg = ${entry['subjectPublicKeyAlgorithm']}\n"
+                text += "Version                = ${entry['version']}\n"
+                text += ">>> END ENTRY <<<\n"
+            }
+            text += '\n'
+        }
+        text += "\n"
         text
     }
 
