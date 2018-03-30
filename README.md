@@ -26,16 +26,129 @@ Furthermore the idea is to collect data from customer clusters and put them into
 - No external dependencies
 - Standardized output in JSON and text format. Output can be put into database
 - Modules:
-    - Cluster audit
-    - Cluster config audit
-    - Benchmark memory
+    - Cluster Audit
+    - Cluster Config Audit
+    - Benchmark Memory
     - Benchmark Raw Disks (dd for readonly, iozone for destructive)
     - Benchmark Raw Disks (dd for readonly, iozone for destructive)
-    - Benchmark network with iperf
+    - Benchmark Network with iperf
     - Benchmark DFSIO, cluster disk performance
     - Benchmark RW test from single node (local volumes / standard volumes)
 
-## Setup locally
+## How to use
+
+TODO setup java. yum install java-1.8.0-openjdk
+TODO How to generate template
+TODO config nodes with passwd or key
+TODO testssh
+TODO validate
+TODO run
+
+scp maprclustercheck username@123.123.123.123:~
+chmod +x maprclustercheck
+
+./maprclustercheck
+USAGE:
+  Show included modules and versions:      ./maprclustercheck info
+  Run checks:                              ./maprclustercheck run /path/to/myconfig.yaml
+  Tests SSH connections:                   ./maprclustercheck testssh /path/to/myconfig.yaml
+  Validate configuration file:             ./maprclustercheck validate /path/to/myconfig.yaml
+  Create configuration template:           ./maprclustercheck generatetemplate /path/to/myconfig.yaml
+
+
+
+----
+./maprclustercheck info
+...
+
+2018-Mar-30 10:08:34 - INFO Included modules:
+2018-Mar-30 10:08:34 - INFO > cluster-audit -> 1.0
+2018-Mar-30 10:08:34 - INFO > cluster-config-audit -> 1.0
+2018-Mar-30 10:08:34 - INFO > benchmark-rawdisk -> 1.0
+2018-Mar-30 10:08:34 - INFO > benchmark-memory -> 1.0
+2018-Mar-30 10:08:34 - INFO > benchmark-network-iperf -> 1.0
+2018-Mar-30 10:08:34 - INFO > benchmark-maprfs-dfsio -> 1.0
+2018-Mar-30 10:08:34 - INFO > benchmark-maprfs-rwtest -> 1.0
+2018-Mar-30 10:08:34 - INFO > benchmark-yarn-terasort-mr -> 1.0
+2018-Mar-30 10:08:34 - INFO > benchmark-yarn-terasort-spark -> 1.0
+
+./maprclustercheck generatetemplate clustername.yml
+...
+2018-Mar-30 10:09:50 - INFO >>> Configuration template written to /home/mapr/mycluster.yml
+
+cluster_name: demo.mapr.com
+customer_name: Your company name
+output_dir: /path/for/results
+mapr_user: mapr
+nodes-global-config:
+  disks:
+  - /dev/nvme1n1
+  - /dev/nvme2n1
+  - /dev/nvme3n1
+  ssh_user: ec2-user
+  ssh_identity: /Users/chufe/.ssh/id_rsa
+  ssh_port: 22
+nodes:
+- host: hostname1.fqdn
+  roles:
+  - clusterjob-execution
+- host: hostname2.fqdn
+- host: hostname3.fqdn
+  ssh_user: different_user
+  ssh_identity: /home/user/.ssh/different_key
+  ssh_port: 22222
+modules:
+  cluster-audit:
+    enabled: true
+    mapruser: mapr
+...
+
+./maprclustercheck testssh mycluster.yml
+...
+2018-Mar-30 10:12:37 - INFO Number of modules found: 9
+2018-Mar-30 10:12:39 - INFO Connection to all nodes is working properly.
+
+ ./maprclustercheck validate mycluster.yml
+2018-Mar-30 10:13:08 - INFO Number of modules found: 9
+2018-Mar-30 10:13:10 - INFO ====== Starting validation ======
+2018-Mar-30 10:13:10 - INFO Validating cluster-audit - 1.0
+2018-Mar-30 10:13:11 - INFO Validating cluster-config-audit - 1.0
+2018-Mar-30 10:13:11 - INFO >>> Skipping module benchmark-rawdisk, because it is disabled.
+2018-Mar-30 10:13:11 - INFO >>> Skipping module benchmark-memory, because it is disabled.
+2018-Mar-30 10:13:11 - INFO >>> Skipping module benchmark-network-iperf, because it is disabled.
+2018-Mar-30 10:13:11 - INFO >>> Skipping module benchmark-maprfs-dfsio, because it is disabled.
+2018-Mar-30 10:13:11 - INFO >>> Skipping module benchmark-maprfs-rwtest, because it is disabled.
+2018-Mar-30 10:13:11 - INFO >>> Skipping module benchmark-yarn-terasort-mr, because it is disabled.
+2018-Mar-30 10:13:11 - INFO >>> Skipping module benchmark-yarn-terasort-spark, because it is disabled.
+2018-Mar-30 10:13:11 - INFO ====== Validation finished ======
+2018-Mar-30 10:13:11 - INFO >>> Everything is good. You can start cluster checks
+
+Might be possible that it shows something like "Please install following tools".
+
+ ./maprclustercheck run mycluster.yml
+2018-Mar-30 10:15:13 - INFO Number of modules found: 9
+2018-Mar-30 10:15:16 - INFO ====== Starting validation ======
+2018-Mar-30 10:15:16 - INFO Validating cluster-audit - 1.0
+2018-Mar-30 10:15:18 - INFO Validating cluster-config-audit - 1.0
+2018-Mar-30 10:15:18 - INFO >>> Skipping module benchmark-rawdisk, because it is disabled.
+2018-Mar-30 10:15:18 - INFO >>> Skipping module benchmark-memory, because it is disabled.
+2018-Mar-30 10:15:18 - INFO >>> Skipping module benchmark-network-iperf, because it is disabled.
+2018-Mar-30 10:15:18 - INFO >>> Skipping module benchmark-maprfs-dfsio, because it is disabled.
+2018-Mar-30 10:15:18 - INFO >>> Skipping module benchmark-maprfs-rwtest, because it is disabled.
+2018-Mar-30 10:15:18 - INFO >>> Skipping module benchmark-yarn-terasort-mr, because it is disabled.
+2018-Mar-30 10:15:18 - INFO >>> Skipping module benchmark-yarn-terasort-spark, because it is disabled.
+2018-Mar-30 10:15:18 - INFO ====== Validation finished ======
+2018-Mar-30 10:15:18 - INFO ... Creating output directory /home/mapr/clusteraudit/2018-03-30-10-15-18
+2018-Mar-30 10:15:18 - INFO ====== Starting execution =======
+2018-Mar-30 10:15:18 - INFO Executing cluster-audit - 1.0
+2018-Mar-30 10:15:18 - INFO >>>>> Running cluster-audit
+2018-Mar-30 10:15:32 - INFO >>>>> ... cluster-audit finished
+2018-Mar-30 10:15:32 - INFO ... Writing summary JSON result: /home/mapr/clusteraudit/2018-03-30-10-15-18/cluster-audit.json
+2018-Mar-30 10:15:32 - INFO ... Writing summary TEXT report: /home/mapr/clusteraudit/2018-03-30-10-15-18/cluster-audit.txt
+2018-Mar-30 10:15:32 - INFO Executing cluster-config-audit - 1.0
+
+....
+## Setup project locally
 
 The build requires Gradle (www.gradle.org). If you have a MacBook and brew installed, just run the following command to install Gradle
 

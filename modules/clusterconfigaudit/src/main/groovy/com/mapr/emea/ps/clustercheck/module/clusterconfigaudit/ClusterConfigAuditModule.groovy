@@ -51,10 +51,10 @@ class ClusterConfigAuditModule implements ExecuteModule {
                 def node = [:]
                 def exec = { arg -> executeSudo(arg) }
                 node['host'] = remote.host
-                node['mapr.home.ownership'] = execute('stat --printf="%U:%G %A %n\\n" $(readlink -f /opt/mapr)')
+                node['mapr.home.ownership'] = execute('stat --printf="%U:%G %A %n\\n" $(readlink -f /opt/mapr) || true')
                 node['mapr.packages'] = executeSudo('rpm -qa | grep mapr').tokenize('\n')
-                node['mapr.cldb.key.md5sum'] = executeSudo('md5sum /opt/mapr/conf/cldb.key').trim()
-                node['mapr.clusterid'] = executeSudo('cat /opt/mapr/conf/clusterid').trim()
+                node['mapr.cldb.key.md5sum'] = executeSudo('md5sum /opt/mapr/conf/cldb.key || true').trim()
+                node['mapr.clusterid'] = executeSudo('cat /opt/mapr/conf/clusterid || true').trim()
                 node['mapr.ssl_truststore'] = collectMaprSslTruststore(exec)
                 node['mapr.ssl_keystore'] = collectMaprSslKeystore(exec)
                 node['mapr.clusters.conf'] = collectMaprClustersConf(exec)
@@ -179,28 +179,33 @@ class ClusterConfigAuditModule implements ExecuteModule {
         for(def vals in result[key]) {
             def value = vals['value']
             text += "------- Hosts: ${vals['hosts']} -------\n"
-            text += "File: ${value['filename']}\n"
-            text += "MD5sum: ${value['md5sum']}\n"
-            // mapping here
-            value['entries'].each { entry ->
-                text += ">>> ENTRY ${entry['aliasName']} <<<\n"
-                text += "Alias name             = ${entry['aliasName']}\n"
-                text += "Creation Date          = ${entry['creationDate']}\n"
-                text += "Entry Type             = ${entry['entryType']}\n"
-                text += "Owner                  = ${entry['owner']}\n"
-                text += "Issuer                 = ${entry['issuer']}\n"
-                text += "Serial Number          = ${entry['serialNumber']}\n"
-                text += "Valid From             = ${entry['validFrom']}\n"
-                text += "Valid Until            = ${entry['validUntil']}\n"
-                text += "Fingerprint MD5        = ${entry['fingerprintMd5']}\n"
-                text += "Fingerprint SHA1       = ${entry['fingerprintSha1']}\n"
-                text += "Fingerprint SHA256     = ${entry['fingerprintSha256']}\n"
-                text += "Signature Algorithm    = ${entry['signatureAlgorithm']}\n"
-                text += "Subject Public Key Alg = ${entry['subjectPublicKeyAlgorithm']}\n"
-                text += "Version                = ${entry['version']}\n"
-                text += ">>> END ENTRY <<<\n"
+            if(value.containsKey("error")) {
+                text += "${value['error']}\n"
             }
-            text += '\n'
+            else {
+                text += "File: ${value['filename']}\n"
+                text += "MD5sum: ${value['md5sum']}\n"
+                // mapping here
+                value['entries'].each { entry ->
+                    text += ">>> ENTRY ${entry['aliasName']} <<<\n"
+                    text += "Alias name             = ${entry['aliasName']}\n"
+                    text += "Creation Date          = ${entry['creationDate']}\n"
+                    text += "Entry Type             = ${entry['entryType']}\n"
+                    text += "Owner                  = ${entry['owner']}\n"
+                    text += "Issuer                 = ${entry['issuer']}\n"
+                    text += "Serial Number          = ${entry['serialNumber']}\n"
+                    text += "Valid From             = ${entry['validFrom']}\n"
+                    text += "Valid Until            = ${entry['validUntil']}\n"
+                    text += "Fingerprint MD5        = ${entry['fingerprintMd5']}\n"
+                    text += "Fingerprint SHA1       = ${entry['fingerprintSha1']}\n"
+                    text += "Fingerprint SHA256     = ${entry['fingerprintSha256']}\n"
+                    text += "Signature Algorithm    = ${entry['signatureAlgorithm']}\n"
+                    text += "Subject Public Key Alg = ${entry['subjectPublicKeyAlgorithm']}\n"
+                    text += "Version                = ${entry['version']}\n"
+                    text += ">>> END ENTRY <<<\n"
+                }
+                text += '\n'
+            }
         }
         text += "\n"
         text
@@ -266,7 +271,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
     }
 
     def collectStoragePools(execute) {
-        def spList = execute("/opt/mapr/server/mrconfig sp list")
+        def spList = execute("/opt/mapr/server/mrconfig sp list || true")
         def lines = spList.tokenize('\n')
         def spLines = lines.findAll { it.startsWith("SP") }.collect{ it.substring(it.indexOf(':') + 1).trim() }
         def storagePools = spLines.collect { line ->
@@ -288,7 +293,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
             }
             return values
         }
-        def diskList = execute("/opt/mapr/server/mrconfig disk list")
+        def diskList = execute("/opt/mapr/server/mrconfig disk list || true")
         def diskLines = diskList.tokenize('\n')
         def disks = []
         def currentDisk = [:]
@@ -331,7 +336,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
     }
 
     def collectMaprSslStore(execute, filename) {
-        def md5sum = execute("md5sum ${filename}").trim()
+        def md5sum = execute("md5sum ${filename} || true").trim()
         if (!md5sum.contains("No such file")) {
             def result = [:]
             result['md5sum'] = md5sum.tokenize(' ')[0].trim()
@@ -381,167 +386,144 @@ class ClusterConfigAuditModule implements ExecuteModule {
             result['entries'] = entries
             return result
         }
-        return ["File not found"]
+        return [error: "File not found"]
     }
 
-    def collectMaprEnvSh(execute) {
-        def envSh = execute("cat /opt/mapr/conf/env.sh").trim()
+    def collectTextFile(file, execute) {
+        def envSh = execute("cat ${file} || true").trim()
         if (!envSh.contains("No such file")) {
             return envSh.tokenize('\n')
         }
         return ["File not found"]
     }
 
+    def collectMaprEnvSh(execute) {
+        return collectTextFile("/opt/mapr/conf/env.sh", execute)
+    }
+
     def collectMaprClustersConf(execute) {
-        def maprClustersConf = execute("cat /opt/mapr/conf/mapr-clusters.conf").trim()
-        if (!maprClustersConf.contains("No such file")) {
-            return maprClustersConf.tokenize('\n')
+        return collectTextFile("/opt/mapr/conf/mapr-clusters.conf", execute)
+    }
+
+    def collectProperties(file, execute) {
+        try {
+            def conf = execute("cat ${file} || true").trim()
+            if (!conf.contains("No such file")) {
+                def prop = new Properties();
+                prop.load(new ByteArrayInputStream(conf.getBytes()))
+                return prop.toSpreadMap()
+            }
+        } catch(ex) {
+            return ["error": ex.getMessage()]
         }
-        return ["File not found"]
+        return [error:"File not found"]
     }
 
     def collectWardenConfProperties(execute) {
-        def wardenConf = execute("cat /opt/mapr/conf/warden.conf").trim()
-        if (!wardenConf.contains("No such file")) {
-            def prop = new Properties();
-            prop.load(new ByteArrayInputStream(wardenConf.getBytes()))
-            return prop.toSpreadMap()
-        }
-        return [:]
+        return collectProperties("/opt/mapr/conf/warden.conf", execute)
     }
 
     def collectSparkDefaultsConfProperties(execute) {
-        def sparkConf = execute("cat /opt/mapr/spark/spark-*/conf/spark-defaults.conf").trim()
-        if (!sparkConf.contains("No such file")) {
-            def prop = new Properties();
-            prop.load(new ByteArrayInputStream(sparkConf.getBytes()))
-            return prop.toSpreadMap()
-        }
-        return [:]
+        return collectProperties("/opt/mapr/spark/spark-*/conf/spark-defaults.conf", execute)
     }
 
     def collectSparkEnv(execute) {
-        def sparkEnv = execute("cat /opt/mapr/spark/spark-*/conf/spark-env.sh").trim()
-        if (!sparkEnv.contains("No such file")) {
-            return sparkEnv.tokenize('\n')
-        }
-        return ""
+        return collectTextFile("/opt/mapr/spark/spark-*/conf/spark-env.sh", execute)
     }
 
     def collectMfsConfProperties(execute) {
-        def mfsConf = execute("cat /opt/mapr/conf/mfs.conf").trim()
-        if (!mfsConf.contains("No such file")) {
-            def prop = new Properties();
-            prop.load(new ByteArrayInputStream(mfsConf.getBytes()))
-            return prop.toSpreadMap()
-        }
-        return [:]
+        return collectProperties("/opt/mapr/conf/mfs.conf", execute)
     }
 
     def collectCldbConfProperties(execute) {
-        def cldbConf = execute("cat /opt/mapr/conf/cldb.conf").trim()
-        if (!cldbConf.contains("No such file")) {
-            def prop = new Properties();
-            prop.load(new ByteArrayInputStream(cldbConf.getBytes()))
-            return prop.toSpreadMap()
-        }
-        return [:]
+        return collectProperties("/opt/mapr/conf/cldb.conf", execute)
     }
 
     def collectZooCfgProperties(execute) {
-        def zookeeperVersion = execute("cat /opt/mapr/zookeeper/zookeeperversion").trim()
+        def zookeeperVersion = execute("cat /opt/mapr/zookeeper/zookeeperversion || true").trim()
         if (!zookeeperVersion.contains("No such file")) {
-            def zooCfg = execute("cat /opt/mapr/zookeeper/zookeeper-${zookeeperVersion}/conf/zoo.cfg").trim()
-            def prop = new Properties();
-            prop.load(new ByteArrayInputStream(zooCfg.getBytes()))
-            return prop.toSpreadMap()
+            return collectProperties("/opt/mapr/zookeeper/zookeeper-${zookeeperVersion}/conf/zoo.cfg", execute)
         }
-        return [:]
+        return [info:"Zookeeper not installed on node"]
+    }
+
+    def collectXmlSite(file, execute) {
+        try {
+            def site = execute("cat ${file} || true").trim()
+            if (!site.contains("No such file")) {
+                def siteParsed = new XmlSlurper().parseText(site)
+                return siteParsed.property.collectEntries {
+                    [it.name.toString(), it.value.toString()]
+                }
+            }
+        } catch(ex) {
+            return ["error": ex.getMessage()]
+        }
+        return [error:"File not found"]
     }
 
     def collectHttpfsSiteProperties(execute) {
-        def httpfsversion = execute("cat /opt/mapr/httpfs/httpfsversion").trim()
+        def httpfsversion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
         if (!httpfsversion.contains("No such file")) {
-            def site = execute("cat /opt/mapr/httpfs/httpfs-${ httpfsversion }/etc/hadoop/httpfs-site.xml").trim()
-            def siteParsed = new XmlSlurper().parseText(site)
-            return siteParsed.property.collectEntries {
-                [it.name.toString(), it.value.toString()]
-            }
+            return collectXmlSite("/opt/mapr/httpfs/httpfs-${ httpfsversion }/etc/hadoop/httpfs-site.xml", execute)
         }
-        return [:]
+        return [info:"HttpFS is not installed"]
     }
 
     def collectHttpfsEnv(execute) {
-        def hbaseEnvVersion = execute("cat /opt/mapr/httpfs/httpfsversion").trim()
+        def hbaseEnvVersion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
         if (!hbaseEnvVersion.contains("No such file")) {
-            return execute("cat /opt/mapr/httpfs/httpfs-${hbaseEnvVersion}/etc/hadoop/httpfs-env.sh").trim().tokenize('\n')
+            return collectTextFile("/opt/mapr/httpfs/httpfs-${hbaseEnvVersion}/etc/hadoop/httpfs-env.sh", execute)
         }
-        return ""
+        return ["HttpFS is not installed"]
     }
 
     def collectYarnSiteProperties(execute) {
-        def hadoopVersion = execute("cat /opt/mapr/hadoop/hadoopversion").trim()
+        def hadoopVersion = execute("cat /opt/mapr/hadoop/hadoopversion || true").trim()
         if (!hadoopVersion.contains("No such file")) {
-            def site = execute("cat /opt/mapr/hadoop/hadoop-${hadoopVersion}/etc/hadoop/yarn-site.xml").trim()
-            def siteParsed = new XmlSlurper().parseText(site)
-            return siteParsed.property.collectEntries {
-                [it.name.toString(), it.value.toString()]
-            }
+            return collectXmlSite("/opt/mapr/hadoop/hadoop-${hadoopVersion}/etc/hadoop/yarn-site.xml", execute)
         }
-        return [:]
+        return [info:"Hadoop is not installed"]
     }
 
     def collectHbaseSiteProperties(execute) {
-        def hbaseVersion = execute("cat /opt/mapr/hbase/hbaseversion").trim()
+        def hbaseVersion = execute("cat /opt/mapr/hbase/hbaseversion || true").trim()
         if (!hbaseVersion.contains("No such file")) {
-            def site = execute("cat /opt/mapr/hbase/hbase-${hbaseVersion}/conf/hbase-site.xml").trim()
-            def siteParsed = new XmlSlurper().parseText(site)
-            return siteParsed.property.collectEntries {
-                [it.name.toString(), it.value.toString()]
-            }
+            return collectXmlSite("/opt/mapr/hbase/hbase-${hbaseVersion}/conf/hbase-site.xml", execute)
         }
-        return [:]
+        return [info:"HBase client is not installed"]
     }
 
     def collectHbaseEnv(execute) {
-        def hbaseEnvVersion = execute("cat /opt/mapr/hbase/hbaseversion").trim()
-        if (!hbaseEnvVersion.contains("No such file")) {
-            return execute("cat /opt/mapr/hbase/hbase-${hbaseEnvVersion}/conf/hbase-env.sh").trim().tokenize('\n')
+        def hbaseVersion = execute("cat /opt/mapr/hbase/hbaseversion || true").trim()
+        if (!hbaseVersion.contains("No such file")) {
+            return collectTextFile("/opt/mapr/hbase/hbase-${hbaseVersion}/conf/hbase-env.sh", execute)
         }
-        return ""
+        return ["HBase client is not installed"]
     }
 
     def collectCoreSiteProperties(execute) {
-        def hadoopVersion = execute("cat /opt/mapr/hadoop/hadoopversion").trim()
+        def hadoopVersion = execute("cat /opt/mapr/hadoop/hadoopversion || true").trim()
         if (!hadoopVersion.contains("No such file")) {
-            def site = execute("cat /opt/mapr/hadoop/hadoop-${hadoopVersion}/etc/hadoop/core-site.xml").trim()
-            def siteParsed = new XmlSlurper().parseText(site)
-            return siteParsed.property.collectEntries {
-                [it.name.toString(), it.value.toString()]
-            }
+            return collectXmlSite("/opt/mapr/hadoop/hadoop-${hadoopVersion}/etc/hadoop/core-site.xml", execute)
         }
-        return [:]
+        return [info:"Hadoop is not installed"]
     }
 
     def collectHiveSiteProperties(execute) {
-        def hadoopVersion = execute("cat /opt/mapr/hive/hiveversion").trim()
-        if (!hadoopVersion.contains("No such file")) {
-            def site = execute("cat /opt/mapr/hive/hive-${hadoopVersion}/conf/hive-site.xml").trim()
-            def siteParsed = new XmlSlurper().parseText(site)
-            return siteParsed.property.collectEntries {
-                [it.name.toString(), it.value.toString()]
-            }
+        def hiveVersion = execute("cat /opt/mapr/hive/hiveversion || true").trim()
+        if (!hiveVersion.contains("No such file")) {
+            return collectXmlSite("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-site.xml", execute)
         }
-        return [:]
+        return [info:"Hive is not installed"]
+
     }
 
     def collectHiveEnv(execute) {
-        def hadoopVersion = execute("cat /opt/mapr/hive/hiveversion").trim()
-        if (!hadoopVersion.contains("No such file")) {
-            return execute("cat /opt/mapr/hive/hive-${hadoopVersion}/conf/hive-env.sh").trim().tokenize('\n')
+        def hiveVersion = execute("cat /opt/mapr/hive/hiveversion || true").trim()
+        if (!hiveVersion.contains("No such file")) {
+            return collectTextFile("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-env.sh", execute)
         }
-        return ""
+        return ["Hive is not installed"]
     }
-
-
 }

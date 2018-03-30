@@ -119,15 +119,15 @@ class ClusterAuditModule implements ExecuteModule {
                 def systemd = execute("[ -f /etc/systemd/system.conf ] && echo true || echo false")
                 node['ethernet.controller'] = getColonProperty(ethernetControllers, "Ethernet controller:")
                 node << ifconfigMap
-                node['storage.controller'] = executeSudo("lspci | grep -i -e ide -e raid -e storage -e lsi | xargs echo")
-                node['storage.scsi_raid'] = executeSudo("dmesg | grep -i raid | grep -i -o 'scsi.*\$' | uniq | xargs echo")
+                node['storage.controller'] = executeSudo("lspci | grep -i -e ide -e raid -e storage -e lsi || true")
+                node['storage.scsi_raid'] = executeSudo("dmesg | grep -i raid | grep -i -o 'scsi.*\$' | uniq || true")
                 node['storage.disks'] = executeSudo("fdisk -l | grep '^Disk /.*:' |sort").tokenize('\n')
                 node['storage.udev_rules'] = executeSudo("ls /etc/udev/rules.d")
                 node['os.distribution'] = distribution
                 node['os.kernel'] = execute("uname -srvmo | fmt")
                 node['os.time'] = execute("date")
                 node['os.umask'] = executeSudo("umask")
-                node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG' | xargs echo"), "LANG=")
+                node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG' || true"), "LANG=")
 
                 if (distribution.toLowerCase().contains("ubuntu")) {
                     node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
@@ -142,7 +142,7 @@ class ClusterAuditModule implements ExecuteModule {
                         node['os.selinux'] = execute("rpm -q selinux-tools selinux-policy")
                         node['os.firewall'] = executeSudo("service SuSEfirewall2_init status").tokenize('\n')
                     } else {
-                        node['os.repositories'] = executeSudo("yum --noplugins repolist | grep -i mapr | xargs echo").tokenize('\n')
+                        node['os.repositories'] = executeSudo("yum --noplugins repolist | grep -i mapr || true").tokenize('\n')
                         node['os.selinux'] = executeSudo("getenforce")
 
                     }
@@ -179,7 +179,7 @@ class ClusterAuditModule implements ExecuteModule {
                 }
                 node['storage.mount_permissions'] = executeSudo("mount | grep -e noexec -e nosuid | grep -v tmpfs |grep -v 'type cgroup'").tokenize('\n')
                 node['storage.tmp_dir_permission'] = executeSudo("stat -c %a /tmp")
-                def java_version_output = execute("java -version | xargs echo")
+                def java_version_output = execute("java -version || true")
                 node['java.openjdk'] = java_version_output.toLowerCase().contains("openjdk")
                 node['java.version'] = getColonValueFromLines(java_version_output, "version").replace('"', '')
                 node['java.version_output'] = java_version_output.tokenize('\n')
@@ -189,15 +189,15 @@ class ClusterAuditModule implements ExecuteModule {
                 } else {
                     node['ip'] = execute('hostname -I')
                 }
-                node['ulimit.mapr_processes'] = executeSudo("su - ${mapruser} -c 'ulimit -u' | xargs echo")
-                node['ulimit.mapr_files'] = executeSudo("su - ${mapruser} -c 'ulimit -n' | xargs echo")
+                node['ulimit.mapr_processes'] = executeSudo("su - ${mapruser} -c 'ulimit -u' || true")
+                node['ulimit.mapr_files'] = executeSudo("su - ${mapruser} -c 'ulimit -n' || true")
                 node['ulimit.limits_conf'] = executeSudo("grep -e nproc -e nofile /etc/security/limits.conf |grep -v ':#'")
                 node['ulimit.limits_d_conf'] = executeSudo("[ -d /etc/security/limits.d ] && (grep -e nproc -e nofile /etc/security/limits.d/*.conf |grep -v ':#')")
-                node['mapr.system.user'] = executeSudo("id ${mapruser} | xargs echo")
+                node['mapr.system.user'] = executeSudo("id ${mapruser} || true")
 
 
-                node['dns.lookup'] = execute("host " + node['hostname'] + " | xargs echo")
-                node['dns.reverse'] = execute("host " + node['ip'] + " | xargs echo")
+                node['dns.lookup'] = execute("host " + node['hostname'] + " || true")
+                node['dns.reverse'] = execute("host " + node['ip'] + " || true")
 
                 nodes.add(node)
             }
@@ -214,7 +214,6 @@ class ClusterAuditModule implements ExecuteModule {
         recommendations += ifBuildMessage(result, "os.kernel_params.net.ipv4.tcp_retries2", { it != "5"}, "Set kernel parameter net.ipv4.tcp_retries2=5")
         recommendations += ifBuildMessage(result, "os.kernel_params.vm.overcommit_memory", { it != "0"}, "Set kernel parameter os.kernel_params.vm.overcommit_memory=0")
         recommendations += ifBuildMessage(result, "os.packages.required", { it }, "Please install all OS required packages.")
-        recommendations += ifBuildMessage(result, "os.packages.nfs", { it }, "Please install all NFS required packages.")
         recommendations += ifBuildMessage(result, "os.umask", { it != "0022" }, "Default umask must be '0022'")
         recommendations += ifBuildMessage(result, "os.selinux", { it != "Disabled" }, "SE Linux should be disabled.")
         recommendations += ifBuildMessage(result, "os.locale", { it != "en_US.UTF-8" }, "OS locale should be 'en_US.UTF-8'.")
