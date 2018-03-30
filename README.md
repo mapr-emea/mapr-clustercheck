@@ -32,8 +32,11 @@ Furthermore the idea is to collect data from customer clusters and put them into
 
 The artifact only needs to be copied to one node. This tool requires Java. If Java is not installed you can use OpenJDK or Oracle JDK.
 
-Download latest from: TBD
-Collect results in: TBD
+Download latest from: https://drive.google.com/drive/u/0/folders/1NARtRJbbUc7Aw5tBZ_0xYxiQk4emXnY9
+
+Collect results in: https://drive.google.com/drive/u/0/folders/1jMfOQCopAmXqPlFR2aEi0xlLzB9jR09L
+
+Ensure that no passwords are in reports.
 
 Install Java on Redhat:
 
