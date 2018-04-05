@@ -26,7 +26,7 @@ class ClusterAuditModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return []
+        return [:]
     }
 
     @Override
