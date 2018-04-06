@@ -35,7 +35,7 @@ class BenchmarkRawDiskModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [tests: defaultTestMatrix, disks: ["/dev/sdb", "/dev/sdc", "/dev/sdd"]]
+        return [tests: defaultTestMatrix]
     }
 
     @Override

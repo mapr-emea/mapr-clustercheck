@@ -222,7 +222,7 @@ sleep 3
             def replication = standardConfig.getOrDefault("replication", 3)
             def compression = standardConfig.getOrDefault("compression", "off")
             def sizeInMB = standardConfig.getOrDefault("size_in_mb", 8192)
-            def threads = standardConfig.getOrDefault("threads", 1)
+            def threads = standardConfig.getOrDefault("threads", 4)
             def dataSizePerThread = (sizeInMB / threads) as Integer
             log.info(">>> Run test on standard volume - size: ${sizeInMB} MB - Threads: ${threads} - Topology: ${topology} - Replication: ${replication} - Compression: ${compression}")
             def testCaseResults = []
