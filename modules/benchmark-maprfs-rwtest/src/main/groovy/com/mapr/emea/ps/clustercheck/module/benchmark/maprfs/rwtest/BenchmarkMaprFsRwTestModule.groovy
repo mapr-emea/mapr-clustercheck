@@ -147,7 +147,7 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
                         def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${numberOfDisks}); do 
-    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest ${dataSizePerThread} maprfs:/// & 
+    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest\${i} ${dataSizePerThread} maprfs:/// & 
 done 
 wait 
 sleep 3 
@@ -163,7 +163,7 @@ sleep 3
                         def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${numberOfDisks}); do 
-    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest ${dataSizePerThread * -1} maprfs:/// & 
+    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest\${i} ${dataSizePerThread * -1} maprfs:/// & 
 done 
 wait 
 sleep 3 
@@ -247,7 +247,7 @@ sleep 3
                         def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${threads}); do 
-    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest ${dataSizePerThread} maprfs:/// & 
+    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest\${i} ${dataSizePerThread} maprfs:/// & 
 done 
 wait 
 sleep 3 
@@ -263,7 +263,7 @@ sleep 3
                         def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${threads}); do 
-    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest ${dataSizePerThread * -1} maprfs:/// & 
+    hadoop jar ${diagnosticsJar} com.mapr.fs.RWSpeedTest /${volumeName}/RWTestSingleTest\${i} ${dataSizePerThread * -1} maprfs:/// & 
 done 
 wait 
 sleep 3 
