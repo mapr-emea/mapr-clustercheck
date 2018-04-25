@@ -286,9 +286,20 @@ wait
                             def diskTests = disks.collect { disk ->
                                 def diskBasename = FilenameUtils.getBaseName(disk)
                                 def content = executeSudo("cat ${homePath}/.clustercheck/${diskBasename}-iozone.log")
-                                def tokens = content.tokenize('\n').find {
+                                def tmpTokens = content.tokenize('\n').find {
                                     it =~ /^[\d ]*$/
-                                }.trim().tokenize().collect {
+                                }
+                                if(!tmpTokens) {
+                                    return [disk                    : disk,
+                                            dataInKB                : 0,
+                                            reclen                  : 0,
+                                            seqWriteInKBperSecond   : 0,
+                                            seqReadInKBperSecond    : 0,
+                                            randomReadInKBperSecond : 0,
+                                            randomWriteInKBperSecond: 0,
+                                            error                   : "No result found in iozone output."]
+                                }
+                                def tokens = tmpTokens.trim().tokenize().collect {
                                     it as int
                                 }
                                 return [disk                    : disk,
