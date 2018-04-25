@@ -240,7 +240,8 @@ class BenchmarkRawDiskModule implements ExecuteModule {
                             pty = true
                         }
                         session(ssh.remotes.role(currentNode.host)) {
-                            def homePath = execute 'echo $HOME'
+                            def homePath = '/tmp'
+                        //    def homePath = execute 'echo $HOME'
 
                             def node = [:]
                             def wardenStatus = executeSudo("service mapr-warden status | xargs echo")
@@ -394,7 +395,8 @@ wait
                             pty = true
                         }
                         session(ssh.remotes.role(currentNode.host)) {
-                            def homePath = execute 'echo $HOME'
+                            def homePath = '/tmp'
+                        //    def homePath = execute 'echo $HOME'
 
                             def node = [:]
                             def disks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks'])
@@ -479,7 +481,8 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
         log.info(">>>>> Copy ${tool} to remote hosts")
         ssh.run {
             session(ssh.remotes.role(role)) {
-                def homePath = execute 'echo $HOME'
+            //    def homePath = execute 'echo $HOME'
+                def homePath = "/tmp"
                 execute "mkdir -p ${homePath}/.clustercheck"
                 def toolInputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/benchmark/rawdisk/" + tool).getInputStream()
                 put from: toolInputStream, into: "${homePath}/.clustercheck/" + tool

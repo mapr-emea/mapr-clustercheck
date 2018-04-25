@@ -143,7 +143,8 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
                         executeSudo suStr("hadoop fs -chmod 777 /${volumeName}")
                         executeSudo suStr("hadoop mfs -setcompression ${compression} /${volumeName}")
                         // Run Write test
-                        def homePath = executeSudo suStr("echo \$HOME")
+                    //    def homePath = executeSudo suStr("echo \$HOME")
+                        def homePath = "/tmp"
                         def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${numberOfDisks}); do 
@@ -243,7 +244,8 @@ sleep 3
                         executeSudo suStr("hadoop mfs -setcompression ${compression} /${volumeName}")
 
                         // Run Write test
-                        def homePath = executeSudo suStr("echo \$HOME")
+                        def homePath = "/tmp"
+                    //    def homePath = executeSudo suStr("echo \$HOME")
                         def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${threads}); do 
