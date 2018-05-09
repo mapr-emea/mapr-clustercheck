@@ -133,7 +133,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     }
 
     def executeCommandTestSsh(Map<String, Object> modules) {
-        def workingNodes = []
+        def workingNodes = Collections.synchronizedList([])
         try {
             ssh.run {
                 settings {
