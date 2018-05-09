@@ -24,7 +24,7 @@ class SshConfig {
         ssh.settings {
             knownHosts = allowAnyHosts
             ignoreError = true
-//    dryRun = true
+            retryCount = 5
         }
         def nodes = globalYamlConfig.get("nodes")
         for (Map<String, Object> node  : nodes) {
