@@ -467,20 +467,22 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
                 }
             }
             def testsWithOutError = tests.findAll{ !it['error'] }
-            def testHost = [dataInMB                       : dataInMB,
-                            mode                           : "READONLY",
-                            minHostThroughputInMBperSecond : testsWithOutError.collect {
-                                it['minDiskThroughputInMBperSecond']
-                            }.min(),
-                            maxHostThroughputInMBperSecond : testsWithOutError.collect {
-                                it['maxDiskThroughputInMBperSecond']
-                            }.max(),
-                            sumHostThroughputInMBperSecond : testsWithOutError.sum { it['sumDiskThroughputInMBperSecond'] },
-                            meanHostThroughputInMBperSecond: (testsWithOutError.sum {
-                                it['meanDiskThroughputInMBperSecond']
-                            } / testsWithOutError.size()),
-                            hostTests                      : tests]
-            result.add(testHost)
+            if(testsWithOutError.size() > 0) {
+                def testHost = [dataInMB                       : dataInMB,
+                                mode                           : "READONLY",
+                                minHostThroughputInMBperSecond : testsWithOutError.collect {
+                                    it['minDiskThroughputInMBperSecond']
+                                }.min(),
+                                maxHostThroughputInMBperSecond : testsWithOutError.collect {
+                                    it['maxDiskThroughputInMBperSecond']
+                                }.max(),
+                                sumHostThroughputInMBperSecond : testsWithOutError.sum { it['sumDiskThroughputInMBperSecond'] },
+                                meanHostThroughputInMBperSecond: (testsWithOutError.sum {
+                                    it['meanDiskThroughputInMBperSecond']
+                                } / testsWithOutError.size()),
+                                hostTests                      : tests]
+                result.add(testHost)
+            }
         }
         log.info(">>>>> READONLY disks tests finished")
         return result

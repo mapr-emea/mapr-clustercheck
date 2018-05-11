@@ -50,9 +50,15 @@ class ClusterConfigAuditModule implements ExecuteModule {
             session(ssh.remotes.role(role)) {
                 def node = [:]
                 def exec = { arg -> executeSudo(arg) }
+                def distribution = execute("[ -f /etc/system-release ] && cat /etc/system-release || cat /etc/os-release | uniq")
+
                 node['host'] = remote.host
                 node['mapr.home.ownership'] = execute('stat --printf="%U:%G %A %n\\n" $(readlink -f /opt/mapr) || true')
-                node['mapr.packages'] = executeSudo('rpm -qa | grep mapr').tokenize('\n')
+                if (distribution.toLowerCase().contains("ubuntu")) {
+                    node['mapr.packages'] = executeSudo('apt list --installed').tokenize('\n')
+                } else {
+                    node['mapr.packages'] = executeSudo('rpm -qa | grep mapr').tokenize('\n')
+                }
                 node['mapr.cldb.key.md5sum'] = executeSudo('md5sum /opt/mapr/conf/cldb.key || true').trim()
                 node['mapr.clusterid'] = executeSudo('cat /opt/mapr/conf/clusterid || true').trim()
                 node['mapr.ssl_truststore'] = collectMaprSslTruststore(exec)
@@ -148,9 +154,10 @@ class ClusterConfigAuditModule implements ExecuteModule {
         text += buildTextReportElement(result, "httpfs.env", "HttpFS httpfs-env.sh")
         text
     }
+
     def buildTextStoragePoolReportElement(result, key, description) {
         def text = "============== ${description} (${key}) ============== \n"
-        for(def vals in result[key]) {
+        for (def vals in result[key]) {
             def sps = vals['value']
             text += "------- Hosts: ${vals['hosts']} -------\n"
             sps.each { sp ->
@@ -176,13 +183,12 @@ class ClusterConfigAuditModule implements ExecuteModule {
 
     def buildTextSslReportElement(result, key, description) {
         def text = "============== ${description} (${key}) ============== \n"
-        for(def vals in result[key]) {
+        for (def vals in result[key]) {
             def value = vals['value']
             text += "------- Hosts: ${vals['hosts']} -------\n"
-            if(value.containsKey("error")) {
+            if (value.containsKey("error")) {
                 text += "${value['error']}\n"
-            }
-            else {
+            } else {
                 text += "File: ${value['filename']}\n"
                 text += "MD5sum: ${value['md5sum']}\n"
                 // mapping here
@@ -213,16 +219,15 @@ class ClusterConfigAuditModule implements ExecuteModule {
 
     def buildTextReportElement(result, key, description) {
         def text = "============== ${description} (${key}) ============== \n"
-        for(def vals in result[key]) {
+        for (def vals in result[key]) {
             text += "------- Hosts: ${vals['hosts']} -------\n"
-            if(vals['value'] instanceof Collection) {
+            if (vals['value'] instanceof Collection) {
                 text += vals['value'].join('\n') + '\n'
             } else if (vals['value'] instanceof Map) {
-                for(def m in vals['value']) {
+                for (def m in vals['value']) {
                     text += m.key + " = " + m.value + "\n"
                 }
-            }
-            else {
+            } else {
                 text += "${vals['value']}\n"
             }
             text += '\n'
@@ -232,15 +237,15 @@ class ClusterConfigAuditModule implements ExecuteModule {
     }
 
     def ifBuildGlobalMessage(Closure<Boolean> condition, String message) {
-        if(condition()) {
+        if (condition()) {
             return [message]
         }
         return []
     }
 
     def ifBuildMessage(def result, String key, Closure<Boolean> condition, String message) {
-        def hosts =  result[key].findAll { condition(it['value']) }['hosts'].flatten()
-        return hosts.collect{ "${it}: ${message}" }
+        def hosts = result[key].findAll { condition(it['value']) }['hosts'].flatten()
+        return hosts.collect { "${it}: ${message}" }
     }
 
     private static def groupSameValuesWithHosts(def nodes) {
@@ -273,13 +278,13 @@ class ClusterConfigAuditModule implements ExecuteModule {
     def collectStoragePools(execute) {
         def spList = execute("/opt/mapr/server/mrconfig sp list || true")
         def lines = spList.tokenize('\n')
-        def spLines = lines.findAll { it.startsWith("SP") }.collect{ it.substring(it.indexOf(':') + 1).trim() }
+        def spLines = lines.findAll { it.startsWith("SP") }.collect { it.substring(it.indexOf(':') + 1).trim() }
         def storagePools = spLines.collect { line ->
             def items = line.tokenize(',').collect { it.trim() }
             def values = [:]
             items.each { itemStr ->
                 def item = itemStr.tokenize(' ')
-                if(item[0] == "name") {
+                if (item[0] == "name") {
                     values['name'] = item[1]
                 } else if (item[0] == "Online" || item[0] == "Offline") {
                     values['state'] = item[0]
@@ -299,19 +304,19 @@ class ClusterConfigAuditModule implements ExecuteModule {
         def currentDisk = [:]
         diskLines.each { lineUntrimmed ->
             def line = lineUntrimmed.trim()
-            if(line.startsWith("ListDisks") && !line.contains("ListDisks resp")) {
+            if (line.startsWith("ListDisks") && !line.contains("ListDisks resp")) {
                 currentDisk['disk'] = line.tokenize(' ')[1].trim()
             }
-            if(line.startsWith("size")) {
-                currentDisk['sizeInMB'] = line.findAll( /\d+/ )[0] as int
+            if (line.startsWith("size")) {
+                currentDisk['sizeInMB'] = line.findAll(/\d+/)[0] as int
             }
-            if(line.startsWith("SP")) {
+            if (line.startsWith("SP")) {
                 // add line
                 def spLine = line.substring(line.indexOf(':') + 1).trim()
                 def items = spLine.tokenize(',').collect { it.trim() }
                 items.each { itemStr ->
                     def item = itemStr.tokenize(' ')
-                    if(item[0] == "name") {
+                    if (item[0] == "name") {
                         currentDisk['storagePoolName'] = item[1]
                     }
                 }
@@ -321,7 +326,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         }
 
         return storagePools.collect { sp ->
-            sp['disks'] = disks.findAll { it['storagePoolName'] == sp['name']}
+            sp['disks'] = disks.findAll { it['storagePoolName'] == sp['name'] }
             return sp
         }
     }
@@ -344,38 +349,37 @@ class ClusterConfigAuditModule implements ExecuteModule {
             def sslTruststore = execute("keytool -list -v -keystore ${filename} -storepass mapr123")
             def current = [:]
             def entries = []
-            if(sslTruststore.contains("Your keystore contains")) {
+            if (sslTruststore.contains("Your keystore contains")) {
                 def lines = sslTruststore.tokenize('\n')
                 lines.each { line ->
-                    if(line.startsWith("Alias name:")) {
+                    if (line.startsWith("Alias name:")) {
                         current['aliasName'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.startsWith("Creation date:")) {
+                    } else if (line.startsWith("Creation date:")) {
                         current['creationDate'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.startsWith("Entry type:")) {
+                    } else if (line.startsWith("Entry type:")) {
                         current['entryType'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.startsWith("Owner:")) {
+                    } else if (line.startsWith("Owner:")) {
                         current['owner'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.startsWith("Issuer:")) {
+                    } else if (line.startsWith("Issuer:")) {
                         current['issuer'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.startsWith("Serial number:")) {
+                    } else if (line.startsWith("Serial number:")) {
                         current['serialNumber'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.startsWith("Valid from:")) {
-                         def dateBlock = line.substring(line.indexOf(':') + 1).trim()
-                         def indexUntil = dateBlock.indexOf(" until: ")
+                    } else if (line.startsWith("Valid from:")) {
+                        def dateBlock = line.substring(line.indexOf(':') + 1).trim()
+                        def indexUntil = dateBlock.indexOf(" until: ")
                         current['validFrom'] = dateBlock.substring(0, indexUntil).trim()
                         current['validUntil'] = dateBlock.substring(indexUntil + 7).trim()
-                    } else if(line.startsWith("Signature algorithm name:")) {
+                    } else if (line.startsWith("Signature algorithm name:")) {
                         current['signatureAlgorithm'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.startsWith("Subject Public Key Algorithm:")) {
+                    } else if (line.startsWith("Subject Public Key Algorithm:")) {
                         current['subjectPublicKeyAlgorithm'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.contains("MD5:")) {
+                    } else if (line.contains("MD5:")) {
                         current['fingerprintMd5'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.contains("SHA1:")) {
+                    } else if (line.contains("SHA1:")) {
                         current['fingerprintSha1'] = line.substring(line.indexOf(':') + 1).trim()
-                    } else if(line.contains("SHA256:")) {
+                    } else if (line.contains("SHA256:")) {
                         current['fingerprintSha256'] = line.substring(line.indexOf(':') + 1).trim()
-                    }
-                    else if(line.startsWith("Version:")) {
+                    } else if (line.startsWith("Version:")) {
                         current['version'] = line.substring(line.indexOf(':') + 1).trim()
                         entries.add(current)
                         current = [:]
@@ -413,10 +417,10 @@ class ClusterConfigAuditModule implements ExecuteModule {
                 prop.load(new ByteArrayInputStream(conf.getBytes()))
                 return prop.toSpreadMap()
             }
-        } catch(ex) {
+        } catch (ex) {
             return ["error": ex.getMessage()]
         }
-        return [error:"File not found"]
+        return [error: "File not found"]
     }
 
     def collectWardenConfProperties(execute) {
@@ -444,7 +448,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         if (!zookeeperVersion.contains("No such file")) {
             return collectProperties("/opt/mapr/zookeeper/zookeeper-${zookeeperVersion}/conf/zoo.cfg", execute)
         }
-        return [info:"Zookeeper not installed on node"]
+        return [info: "Zookeeper not installed on node"]
     }
 
     def collectXmlSite(file, execute) {
@@ -456,18 +460,18 @@ class ClusterConfigAuditModule implements ExecuteModule {
                     [it.name.toString(), it.value.toString()]
                 }
             }
-        } catch(ex) {
+        } catch (ex) {
             return ["error": ex.getMessage()]
         }
-        return [error:"File not found"]
+        return [error: "File not found"]
     }
 
     def collectHttpfsSiteProperties(execute) {
         def httpfsversion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
         if (!httpfsversion.contains("No such file")) {
-            return collectXmlSite("/opt/mapr/httpfs/httpfs-${ httpfsversion }/etc/hadoop/httpfs-site.xml", execute)
+            return collectXmlSite("/opt/mapr/httpfs/httpfs-${httpfsversion}/etc/hadoop/httpfs-site.xml", execute)
         }
-        return [info:"HttpFS is not installed"]
+        return [info: "HttpFS is not installed"]
     }
 
     def collectHttpfsEnv(execute) {
@@ -483,7 +487,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         if (!hadoopVersion.contains("No such file")) {
             return collectXmlSite("/opt/mapr/hadoop/hadoop-${hadoopVersion}/etc/hadoop/yarn-site.xml", execute)
         }
-        return [info:"Hadoop is not installed"]
+        return [info: "Hadoop is not installed"]
     }
 
     def collectHbaseSiteProperties(execute) {
@@ -491,7 +495,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         if (!hbaseVersion.contains("No such file")) {
             return collectXmlSite("/opt/mapr/hbase/hbase-${hbaseVersion}/conf/hbase-site.xml", execute)
         }
-        return [info:"HBase client is not installed"]
+        return [info: "HBase client is not installed"]
     }
 
     def collectHbaseEnv(execute) {
@@ -507,7 +511,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         if (!hadoopVersion.contains("No such file")) {
             return collectXmlSite("/opt/mapr/hadoop/hadoop-${hadoopVersion}/etc/hadoop/core-site.xml", execute)
         }
-        return [info:"Hadoop is not installed"]
+        return [info: "Hadoop is not installed"]
     }
 
     def collectHiveSiteProperties(execute) {
@@ -515,7 +519,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         if (!hiveVersion.contains("No such file")) {
             return collectXmlSite("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-site.xml", execute)
         }
-        return [info:"Hive is not installed"]
+        return [info: "Hive is not installed"]
 
     }
 

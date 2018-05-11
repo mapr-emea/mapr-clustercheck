@@ -33,7 +33,7 @@ class ClusterAuditModule implements ExecuteModule {
     List<String> validate() throws ModuleValidationException {
         def clusteraudit = globalYamlConfig.modules['cluster-audit'] as Map<String, ?>
         def role = clusteraudit.getOrDefault("role", "all")
-        def warnings = []
+        def warnings = Collections.synchronizedList([])
         ssh.run {
             settings {
                 pty = true
@@ -42,13 +42,13 @@ class ClusterAuditModule implements ExecuteModule {
                 def distribution = execute("[ -f /etc/system-release ] && cat /etc/system-release || cat /etc/os-release | uniq")
                 if (distribution.toLowerCase().contains("ubuntu")) {
                     def result = execute("dpkg -l pciutils dmidecode net-tools ethtool bind9utils > /dev/null || true").trim()
-                    if(result) {
+                    if (result) {
                         warnings << ("Please install following tools: " + result)
                     }
 
                 } else {
                     def result = execute("rpm -q pciutils dmidecode net-tools ethtool bind-utils | grep 'is not installed' || true").trim()
-                    if(result) {
+                    if (result) {
                         warnings << ("Please install following tools: \n " + result)
                     }
                 }
@@ -126,17 +126,18 @@ class ClusterAuditModule implements ExecuteModule {
                 node['os.distribution'] = distribution
                 node['os.kernel'] = execute("uname -srvmo | fmt")
                 node['os.time'] = execute("date")
-                node['os.umask'] = executeSudo("umask")
                 node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG' || true"), "LANG=")
 
                 if (distribution.toLowerCase().contains("ubuntu")) {
+                    node['os.umask'] = executeSudo("su -c umask")
                     node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
                     node['os.services.apparmor'] = executeSudo("apparmor_status | sed 's/([0-9]*)//' || true")
                     node['os.services.selinux'] = execute("([ -d /etc/selinux -a -f /etc/selinux/config ] && grep ^SELINUX= /etc/selinux/config) || echo 'Disabled'")
                     node['os.services.firewall'] = executeSudo("service ufw status | head -10 || true").tokenize('\n')
                     node['os.services.iptables'] = executeSudo("iptables -L | head -10 || true").tokenize('\n')
-                    node['os.packages.nfs'] = execute("dpkg -l '*nfs*' | grep ^i").tokenize('\n')
+                    node['os.packages.nfs'] = execute("dpkg -l '*nfs*' | grep ^i || true").tokenize('\n')
                 } else {
+                    node['os.umask'] = executeSudo("umask")
                     if (distribution.toLowerCase().contains("sles")) {
                         node['os.repositories'] = execute("zypper repos | grep -i mapr").tokenize('\n')
                         node['os.selinux'] = execute("rpm -q selinux-tools selinux-policy")
@@ -192,7 +193,7 @@ class ClusterAuditModule implements ExecuteModule {
                 node['ulimit.mapr_processes'] = executeSudo("su - ${mapruser} -c 'ulimit -u' || true")
                 node['ulimit.mapr_files'] = executeSudo("su - ${mapruser} -c 'ulimit -n' || true")
                 node['ulimit.limits_conf'] = executeSudo("grep -e nproc -e nofile /etc/security/limits.conf |grep -v ':#'")
-                node['ulimit.limits_d_conf'] = executeSudo("[ -d /etc/security/limits.d ] && (grep -e nproc -e nofile /etc/security/limits.d/*.conf |grep -v ':#')")
+                node['ulimit.limits_d_conf'] = executeSudo("[ -d /etc/security/limits.d ] && (grep -e nproc -e nofile /etc/security/limits.d/*.conf |grep -v ':#') || true")
                 node['mapr.system.user'] = executeSudo("id ${mapruser} || true")
 
 
@@ -207,18 +208,38 @@ class ClusterAuditModule implements ExecuteModule {
 
         def recommendations = []
         recommendations += calculateRecommendationsForDiffValues(result)
-        recommendations += ifBuildMessage(result, "os.thp", { it.contains("[always]") }, "Disable Transparent Huge Pages.")
-        recommendations += ifBuildMessage(result, "ulimit.mapr_processes", { it != "unlimited" || !(it =~ /^[0-9]+$/) || (it as int) < 64000 }, "Set MapR system user process limit to a minimum of 64000.")
-        recommendations += ifBuildMessage(result, "ulimit.mapr_files", {  it != "unlimited" || !(it =~ /^[0-9]+$/) || (it as int) < 64000 }, "Set MapR system user files limit to a minimum of 64000.")
-        recommendations += ifBuildMessage(result, "os.kernel_params.vm.swappiness", { it != "10"}, "Set kernel parameter vm.swappiness=10")
-        recommendations += ifBuildMessage(result, "os.kernel_params.net.ipv4.tcp_retries2", { it != "5"}, "Set kernel parameter net.ipv4.tcp_retries2=5")
-        recommendations += ifBuildMessage(result, "os.kernel_params.vm.overcommit_memory", { it != "0"}, "Set kernel parameter os.kernel_params.vm.overcommit_memory=0")
-        recommendations += ifBuildMessage(result, "os.packages.required", { it }, "Please install all OS required packages.")
+        recommendations += ifBuildMessage(result, "os.thp", {
+            it.contains("[always]")
+        }, "Disable Transparent Huge Pages.")
+        recommendations += ifBuildMessage(result, "ulimit.mapr_processes", {
+            it != "unlimited" || !(it =~ /^[0-9]+$/) || (it as int) < 64000
+        }, "Set MapR system user process limit to a minimum of 64000.")
+        recommendations += ifBuildMessage(result, "ulimit.mapr_files", {
+            it != "unlimited" || !(it =~ /^[0-9]+$/) || (it as int) < 64000
+        }, "Set MapR system user files limit to a minimum of 64000.")
+        recommendations += ifBuildMessage(result, "os.kernel_params.vm.swappiness", {
+            it != "10"
+        }, "Set kernel parameter vm.swappiness=10")
+        recommendations += ifBuildMessage(result, "os.kernel_params.net.ipv4.tcp_retries2", {
+            it != "5"
+        }, "Set kernel parameter net.ipv4.tcp_retries2=5")
+        recommendations += ifBuildMessage(result, "os.kernel_params.vm.overcommit_memory", {
+            it != "0"
+        }, "Set kernel parameter os.kernel_params.vm.overcommit_memory=0")
+        recommendations += ifBuildMessage(result, "os.packages.required", {
+            it
+        }, "Please install all OS required packages.")
         recommendations += ifBuildMessage(result, "os.umask", { it != "0022" }, "Default umask must be '0022'")
         recommendations += ifBuildMessage(result, "os.selinux", { it != "Disabled" }, "SE Linux should be disabled.")
-        recommendations += ifBuildMessage(result, "os.locale", { it != "en_US.UTF-8" }, "OS locale should be 'en_US.UTF-8'.")
-        recommendations += ifBuildMessage(result, "dns.lookup", { !it.contains("has address") }, "DNS lookup for host does not work.")
-        recommendations += ifBuildMessage(result, "dns.reverse", { !it.contains("domain name pointer") }, "Reverse DNS lookup for host does not work.")
+        recommendations += ifBuildMessage(result, "os.locale", {
+            it != "en_US.UTF-8"
+        }, "OS locale should be 'en_US.UTF-8'.")
+        recommendations += ifBuildMessage(result, "dns.lookup", {
+            !it.contains("has address")
+        }, "DNS lookup for host does not work.")
+        recommendations += ifBuildMessage(result, "dns.reverse", {
+            !it.contains("domain name pointer")
+        }, "Reverse DNS lookup for host does not work.")
 
         def textReport = buildTextReport(result)
 
@@ -228,20 +249,19 @@ class ClusterAuditModule implements ExecuteModule {
 
     def buildTextReport(def result) {
         def text = ""
-        for(def res in result) {
+        for (def res in result) {
             def firstRun = true
-            for(def vals in res.value) {
-                if(!firstRun) {
+            for (def vals in res.value) {
+                if (!firstRun) {
                     text += "---\n"
                 }
                 text += "Hosts: ${vals['hosts']}\n"
-                if(vals['value'] instanceof Collection) {
+                if (vals['value'] instanceof Collection) {
                     text += "${res.key} = \n"
-                    for(def line in vals['value']) {
+                    for (def line in vals['value']) {
                         text += "> ${line}\n"
                     }
-                }
-                else {
+                } else {
                     text += "${res.key} = ${vals['value']}\n"
                 }
                 firstRun = false
@@ -252,15 +272,15 @@ class ClusterAuditModule implements ExecuteModule {
     }
 
     def ifBuildGlobalMessage(Closure<Boolean> condition, String message) {
-        if(condition()) {
+        if (condition()) {
             return [message]
         }
         return []
     }
 
     def ifBuildMessage(def result, String key, Closure<Boolean> condition, String message) {
-        def hosts =  result[key].findAll { condition(it['value']) }['hosts'].flatten()
-        return hosts.collect{ "${it}: ${message}" }
+        def hosts = result[key].findAll { condition(it['value']) }['hosts'].flatten()
+        return hosts.collect { "${it}: ${message}" }
     }
 
     def calculateRecommendationsForDiffValues(def result) {
@@ -313,8 +333,10 @@ class ClusterAuditModule implements ExecuteModule {
                 "mapr.system.user",
                 "ulimit.limits_d_conf"
         ]
-        return propsWithSameValue.findAll{ it -> result[it].size() != 1 }.collect { it ->
-                return "'${it}' should have the same values for all nodes."
+        return propsWithSameValue.findAll {
+            it -> result[it] != null && result[it].size() != 1
+        }.collect { it ->
+            return "'${it}' should have the same values for all nodes."
         }
     }
 
@@ -357,8 +379,16 @@ class ClusterAuditModule implements ExecuteModule {
                         result << getEthtool(ifName, executeSudo)
                         result['ethernet.interfaces.' + ifName + '.ifconfig'] = ifText.tokenize('\n')
                     }
-                    ifName = token.substring(0, token.indexOf(':')).trim()
-                    ifText = token.substring(token.indexOf(':') + 1).trim()
+                    def devTokens = token.tokenize(": ")
+                    //    ifName = token.substring(0, token.indexOf(':')).trim()
+                    if (devTokens.size() > 0) {
+                        ifName = devTokens[0].trim()
+                        ifText = token.substring(token.indexOf(':') + 1).trim()
+                    }
+                    else {
+                        ifName = "notfound"
+                        ifText = "not able to detect interface"
+                    }
                 } else {
                     ifText += '\n' + token.trim()
                 }
@@ -380,7 +410,7 @@ class ClusterAuditModule implements ExecuteModule {
     }
 
     def getColonProperty(String memoryString, String property) {
-        if(!memoryString) {
+        if (!memoryString) {
             return "not found"
         }
         def tokens = memoryString.tokenize('\n')

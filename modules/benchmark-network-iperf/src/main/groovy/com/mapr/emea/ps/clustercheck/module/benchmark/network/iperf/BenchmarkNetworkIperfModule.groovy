@@ -92,10 +92,10 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
         def moduleConfig = globalYamlConfig.modules['benchmark-network-iperf'] as Map<String, ?>
         def testMatrix = moduleConfig.getOrDefault("tests", defaultTestMatrix)
 
-        def result = []
+        def result = Collections.synchronizedList([])
         // only one command executed with runInOrder
         testMatrix.each { matrixItem ->
-            def iperfTests = []
+            def iperfTests = Collections.synchronizedList([])
             log.info(">>>>> Running iperf tests - Threads: ${matrixItem.threads} - Data per thread: ${matrixItem.data_per_thread}")
             log.info(">>>>> ... this can take some time.")
             if (matrixItem.mode == "all") {
