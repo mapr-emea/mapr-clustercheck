@@ -55,7 +55,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
                 node['host'] = remote.host
                 node['mapr.home.ownership'] = execute('stat --printf="%U:%G %A %n\\n" $(readlink -f /opt/mapr) || true')
                 if (distribution.toLowerCase().contains("ubuntu")) {
-                    node['mapr.packages'] = executeSudo('apt list --installed').tokenize('\n')
+                    node['mapr.packages'] = executeSudo('apt list --installed | grep mapr').tokenize('\n')
                 } else {
                     node['mapr.packages'] = executeSudo('rpm -qa | grep mapr').tokenize('\n')
                 }
@@ -107,7 +107,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         recommendations += ifBuildGlobalMessage({
             groupedResult['mapr.clusters.conf'].size() != 1
         }, "mapr-clusters.conf must be same on all nodes.")
-        def countCldbs = groupedResult['mapr.packages'].collect { c -> c['value'].count { f -> f.startsWith("mapr-cldb") } > 0 ? c['hosts'].size() : 0 }.sum()
+        def countCldbs = groupedResult['mapr.packages'].collect { c -> c['value'].count { f -> f.contains("mapr-cldb") } > 0 ? c['hosts'].size() : 0 }.sum()
         recommendations += ifBuildGlobalMessage({ countCldbs < 3 }, "There should be at least 3 CLDBs.")
         recommendations += ifBuildMessage(groupedResult, "mapr.storage_pools", { sps ->
             sps.collect {
@@ -467,19 +467,19 @@ class ClusterConfigAuditModule implements ExecuteModule {
     }
 
     def collectHttpfsSiteProperties(execute) {
-        def httpfsversion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
-        if (!httpfsversion.contains("No such file")) {
-            return collectXmlSite("/opt/mapr/httpfs/httpfs-${httpfsversion}/etc/hadoop/httpfs-site.xml", execute)
-        }
-        return [info: "HttpFS is not installed"]
+        //    def httpfsversion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
+        //    if (!httpfsversion.contains("No such file")) {
+        return collectXmlSite("/opt/mapr/httpfs/httpfs-${httpfsversion}/etc/hadoop/httpfs-site.xml", execute)
+        //    }
+        //    return [info: "HttpFS is not installed"]
     }
 
     def collectHttpfsEnv(execute) {
-        def hbaseEnvVersion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
-        if (!hbaseEnvVersion.contains("No such file")) {
-            return collectTextFile("/opt/mapr/httpfs/httpfs-${hbaseEnvVersion}/etc/hadoop/httpfs-env.sh", execute)
-        }
-        return ["HttpFS is not installed"]
+        //    def hbaseEnvVersion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
+        //    if (!hbaseEnvVersion.contains("No such file")) {
+        return collectTextFile("/opt/mapr/httpfs/httpfs-${hbaseEnvVersion}/etc/hadoop/httpfs-env.sh", execute)
+        //    }
+        //    return ["HttpFS is not installed"]
     }
 
     def collectYarnSiteProperties(execute) {
@@ -515,19 +515,19 @@ class ClusterConfigAuditModule implements ExecuteModule {
     }
 
     def collectHiveSiteProperties(execute) {
-        def hiveVersion = execute("cat /opt/mapr/hive/hiveversion || true").trim()
-        if (!hiveVersion.contains("No such file")) {
-            return collectXmlSite("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-site.xml", execute)
-        }
-        return [info: "Hive is not installed"]
+        //    def hiveVersion = execute("cat /opt/mapr/hive/hiveversion || true").trim()
+        //    if (!hiveVersion.contains("No such file")) {
+        return collectXmlSite("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-site.xml", execute)
+        //    }
+        //    return [info: "Hive is not installed"]
 
     }
 
     def collectHiveEnv(execute) {
-        def hiveVersion = execute("cat /opt/mapr/hive/hiveversion || true").trim()
-        if (!hiveVersion.contains("No such file")) {
-            return collectTextFile("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-env.sh", execute)
-        }
-        return ["Hive is not installed"]
+        //    def hiveVersion = execute("cat /opt/mapr/hive/hiveversion || true").trim()
+        //    if (!hiveVersion.contains("No such file")) {
+        return collectTextFile("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-env.sh", execute)
+        //    }
+        //    return ["Hive is not installed"]
     }
 }

@@ -153,14 +153,24 @@ class ClusterAuditModule implements ExecuteModule {
                 }
 
                 if (systemd == "true") {
-                    node['os.services.ntpd'] = executeSudo("systemctl status ntpd || true").tokenize('\n')
+                    if (distribution.toLowerCase().contains("ubuntu")) {
+                        node['os.services.ntpd'] = executeSudo("systemctl status ntp || true").tokenize('\n')
+                    }
+                    else {
+                        node['os.services.ntpd'] = executeSudo("systemctl status ntpd || true").tokenize('\n')
+                    }
                     node['os.services.sssd'] = executeSudo("systemctl status sssd || true").tokenize('\n')
                     node['os.services.firewall'] = executeSudo("systemctl status firewalld || true").tokenize('\n')
                     node['os.services.iptables'] = executeSudo("systemctl status iptables || true").tokenize('\n')
                     node['os.services.cpuspeed'] = executeSudo("systemctl status cpuspeed || true").tokenize('\n')
 
                 } else {
-                    node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
+                    if (distribution.toLowerCase().contains("ubuntu")) {
+                        node['os.services.ntpd'] = executeSudo("service ntp status || true").tokenize('\n')
+                    }
+                    else {
+                        node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
+                    }
                     node['os.services.sssd'] = executeSudo("service sssd status || true").tokenize('\n')
                     node['os.services.iptables'] = executeSudo("service iptables status | head -10 || true").tokenize('\n')
                     node['os.services.cpuspeed'] = executeSudo("chkconfig --list cpuspeed || true").tokenize('\n')

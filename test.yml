@@ -22,7 +22,7 @@ modules:
       data_per_thread: 4G
       mode: split
   benchmark-maprfs-dfsio:
-    enabled: true
+    enabled: false
     role: clusterjob-execution
     tests:
     - dfsio_number_of_files: 5
@@ -36,7 +36,7 @@ modules:
       replication: 1
       compression: 'off'
   benchmark-maprfs-rwtest:
-    enabled: true
+    enabled: false
     tests:
     - volume_type: local
       compression: 'off'
@@ -57,7 +57,7 @@ modules:
       replication: 3
       compression: 'on'
   benchmark-yarn-terasort-spark:
-    enabled: true
+    enabled: false
     role: clusterjob-execution
     tests:
     - chunk_size_in_mb: 256
@@ -71,15 +71,15 @@ modules:
 
 nodes-global-config:
   disks:
-  - /dev/nvme1n1
-  - /dev/nvme2n1
-  - /dev/nvme3n1
-  ssh_user: ec2-user
+  - /dev/xvda
+  ssh_user: ubuntu
   ssh_identity: /Users/chufe/.ssh/id_rsa
 
 nodes:
-- host: 10.0.0.63
+- host: 10.0.0.36
   roles:
   - clusterjob-execution
-- host: 10.0.0.115
-- host: 10.0.0.192
+- host: 10.0.0.207
+- host: 10.0.0.212
+- host: 10.0.0.154
+  ssh_user: ec2-user
