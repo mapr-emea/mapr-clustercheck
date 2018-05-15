@@ -36,6 +36,7 @@ class ClusterAuditModule implements ExecuteModule {
         def warnings = Collections.synchronizedList([])
         ssh.run {
             settings {
+                timeoutSec = 10
                 pty = true
             }
             session(ssh.remotes.role(role)) {
@@ -68,6 +69,7 @@ class ClusterAuditModule implements ExecuteModule {
         ssh.run {
             settings {
                 pty = true
+                timeoutSec = 10
             }
             session(ssh.remotes.role(role)) {
                 def node = [:]
@@ -207,8 +209,8 @@ class ClusterAuditModule implements ExecuteModule {
                 node['mapr.system.user'] = executeSudo("id ${mapruser} || true")
 
 
-                node['dns.lookup'] = execute("host " + node['hostname'] + " || true")
-                node['dns.reverse'] = execute("host " + node['ip'] + " || true")
+                node['dns.lookup'] = execute("host -W 10 " + node['hostname'] + " || true")
+                node['dns.reverse'] = execute("host -W 10 " + node['ip'] + " || true")
 
                 nodes.add(node)
             }
@@ -222,10 +224,10 @@ class ClusterAuditModule implements ExecuteModule {
             it.contains("[always]")
         }, "Disable Transparent Huge Pages.")
         recommendations += ifBuildMessage(result, "ulimit.mapr_processes", {
-            it != "unlimited" || !(it =~ /^[0-9]+$/) || (it as int) < 64000
+            it != "unlimited" || (!(it =~ /^[0-9]+$/) || (it as int) <= 64000)
         }, "Set MapR system user process limit to a minimum of 64000.")
         recommendations += ifBuildMessage(result, "ulimit.mapr_files", {
-            it != "unlimited" || !(it =~ /^[0-9]+$/) || (it as int) < 64000
+            it != "unlimited" || (!(it =~ /^[0-9]+$/) || (it as int) <= 64000)
         }, "Set MapR system user files limit to a minimum of 64000.")
         recommendations += ifBuildMessage(result, "os.kernel_params.vm.swappiness", {
             it != "10"

@@ -469,7 +469,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
     def collectHttpfsSiteProperties(execute) {
         //    def httpfsversion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
         //    if (!httpfsversion.contains("No such file")) {
-        return collectXmlSite("/opt/mapr/httpfs/httpfs-${httpfsversion}/etc/hadoop/httpfs-site.xml", execute)
+        return collectXmlSite("/opt/mapr/httpfs/httpfs-*/etc/hadoop/httpfs-site.xml", execute)
         //    }
         //    return [info: "HttpFS is not installed"]
     }
@@ -477,7 +477,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
     def collectHttpfsEnv(execute) {
         //    def hbaseEnvVersion = execute("cat /opt/mapr/httpfs/httpfsversion || true").trim()
         //    if (!hbaseEnvVersion.contains("No such file")) {
-        return collectTextFile("/opt/mapr/httpfs/httpfs-${hbaseEnvVersion}/etc/hadoop/httpfs-env.sh", execute)
+        return collectTextFile("/opt/mapr/httpfs/httpfs-*/etc/hadoop/httpfs-env.sh", execute)
         //    }
         //    return ["HttpFS is not installed"]
     }
@@ -517,7 +517,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
     def collectHiveSiteProperties(execute) {
         //    def hiveVersion = execute("cat /opt/mapr/hive/hiveversion || true").trim()
         //    if (!hiveVersion.contains("No such file")) {
-        return collectXmlSite("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-site.xml", execute)
+        return collectXmlSite("/opt/mapr/hive/hive-*/conf/hive-site.xml", execute)
         //    }
         //    return [info: "Hive is not installed"]
 
@@ -526,7 +526,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
     def collectHiveEnv(execute) {
         //    def hiveVersion = execute("cat /opt/mapr/hive/hiveversion || true").trim()
         //    if (!hiveVersion.contains("No such file")) {
-        return collectTextFile("/opt/mapr/hive/hive-${hiveVersion}/conf/hive-env.sh", execute)
+        return collectTextFile("/opt/mapr/hive/hive-*/conf/hive-env.sh", execute)
         //    }
         //    return ["Hive is not installed"]
     }

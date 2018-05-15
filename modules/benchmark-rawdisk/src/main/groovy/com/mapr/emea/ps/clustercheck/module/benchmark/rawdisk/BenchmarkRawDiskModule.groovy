@@ -444,7 +444,8 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
                                 }
                                 def res = [:]
                                 res['disk'] = disk
-                                def data = lines[dataIdx + 1].tokenize(',')
+                                // replace All removes content in (), because of, 8589934592 bytes (8.6 GB) copied, 19.4003 s, 443 MB/s
+                                def data = lines[dataIdx + 1].replaceAll("\\(.*?\\)", "").tokenize(',')
                                 res['readBytes'] = data[0].trim().tokenize(' ')[0] as Long
                                 res['timeInSeconds'] = data[1].trim().tokenize(' ')[0] as Double
                                 res['throughputInMBperSecond'] = data[2].trim().tokenize(' ')[0] as Double
