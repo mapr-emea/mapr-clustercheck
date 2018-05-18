@@ -132,7 +132,6 @@ class ClusterAuditModule implements ExecuteModule {
 
                 if (distribution.toLowerCase().contains("ubuntu")) {
                     node['os.umask'] = executeSudo("su -c umask")
-                    node['os.services.ntpd'] = executeSudo("service ntpd status || true").tokenize('\n')
                     node['os.services.apparmor'] = executeSudo("apparmor_status | sed 's/([0-9]*)//' || true")
                     node['os.services.selinux'] = execute("([ -d /etc/selinux -a -f /etc/selinux/config ] && grep ^SELINUX= /etc/selinux/config) || echo 'Disabled'")
                     node['os.services.firewall'] = executeSudo("service ufw status | head -10 || true").tokenize('\n')
