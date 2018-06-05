@@ -1,6 +1,6 @@
 cluster_name: demo.mapr.com
 customer_name: Custom Test Environment
-output_dir: /Users/chufe/audit
+output_dir: /Users/chufe/Documents/workspaces/mapr-clustercheck/audit
 mapr_user: mapr
 
 modules:
@@ -14,13 +14,13 @@ modules:
     enabled: true
     tests:
     - mode: READONLY
-      data_in_mb: 1024
+      data_in_mb: 2048
   benchmark-network-iperf:
     enabled: true
     tests:
     - threads: 4
-      data_per_thread: 4G
-      mode: split
+      data_per_thread: 2G
+      mode: all
   benchmark-maprfs-dfsio:
     enabled: false
     role: clusterjob-execution
@@ -45,7 +45,7 @@ modules:
       compression: 'off'
       size_in_mb: 32
   benchmark-yarn-terasort-mr:
-    enabled: false
+    enabled: true
     role: clusterjob-execution
     tests:
     - chunk_size_in_mb: 256
@@ -71,15 +71,15 @@ modules:
 
 nodes-global-config:
   disks:
-  - /dev/xvda
-  ssh_user: ubuntu
+  - /dev/nvme1n1
+  - /dev/nvme2n1
+  - /dev/nvme3n1
+  ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
 
 nodes:
-- host: 10.0.0.36
+- host: 10.0.0.63
   roles:
   - clusterjob-execution
-- host: 10.0.0.207
-- host: 10.0.0.212
-- host: 10.0.0.154
-  ssh_user: ec2-user
+- host: 10.0.0.110
+- host: 10.0.0.232

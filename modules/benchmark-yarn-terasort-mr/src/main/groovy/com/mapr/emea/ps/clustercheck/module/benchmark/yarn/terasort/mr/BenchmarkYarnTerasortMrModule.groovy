@@ -38,7 +38,9 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
     List<String> validate() throws ModuleValidationException {
         def moduleconfig = globalYamlConfig.modules['benchmark-yarn-terasort-mr'] as Map<String, ?>
         def role = moduleconfig.getOrDefault("role", "all")
-        def numberOfNodes = globalYamlConfig.nodes.findAll { role == "all" || (it.roles != null && it.roles.contains(role)) }.size()
+        def numberOfNodes = globalYamlConfig.nodes.findAll {
+            role == "all" || (it.roles != null && it.roles.contains(role))
+        }.size()
         if (numberOfNodes != 1) {
             throw new ModuleValidationException("Please specify a role for 'benchmark-yarn-terasort-mr'-module which exactly contains one node. Currently, there are ${numberOfNodes} nodes defined for role '${role}'.")
         }
@@ -49,7 +51,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
             session(ssh.remotes.role(role)) {
                 def hadoopPath = executeSudo("ls -d /opt/mapr/hadoop/hadoop-2*")
                 def hadoopExamplesJar = executeSudo("ls ${hadoopPath}/share/hadoop/mapreduce/hadoop-mapreduce-examples*.jar")
-                if(hadoopExamplesJar.contains("No such file or directory")) {
+                if (hadoopExamplesJar.contains("No such file or directory")) {
                     throw new ModuleValidationException("Cannot find hadoop examples jar in path /opt/mapr/hadoop/hadoop-2*/share/hadoop/mapreduce/hadoop-mapreduce-examples*.jar")
                 }
             }
@@ -63,7 +65,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
         def role = moduleconfig.getOrDefault("role", "all")
         def tests = moduleconfig.tests
         def result = []
-        for (def test  : tests) {
+        for (def test : tests) {
             def rows = test.getOrDefault("rows", 10000000000) as Long
             def topology = test.getOrDefault("topology", "/data")
             def replication = test.getOrDefault("replication", 1)
@@ -86,7 +88,8 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
     def generateTextReport(results) {
         def textReport = ""
         for (def result : results) {
-            textReport += """
+            if (result['teraGen'].containsKey("error") || result['teraSort'].containsKey("error")) {
+                textReport += """
 > Test settings:
 >    Chunk size: ${result.chunkSize} bytes
 >    Rows: ${result.rows}
@@ -94,8 +97,21 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
 >    Topology: ${result.topology}
 >    Replication: ${result.replication}
 >    Reduce tasks per node: ${result.reduceTasksPerNode}
+>>> TeraGen:
+${result.teraGen.error}
 >>> TeraSort:
->>>    Bytes written: ${result.teraGen.bytesWritten} bytes / ${result.teraGen.bytesWritten / 1024 / 1024 / 1024} GB
+${result.teraSort.error}
+"""
+            } else {
+                textReport += """
+> Test settings:
+>    Chunk size: ${result.chunkSize} bytes
+>    Rows: ${result.rows}
+>    Compression: ${result.compression}
+>    Topology: ${result.topology}
+>    Replication: ${result.replication}
+>    Reduce tasks per node: ${result.reduceTasksPerNode}
+>>> TeraGen written: ${result.teraGen.bytesWritten} bytes / ${result.teraGen.bytesWritten / 1024 / 1024 / 1024} GB
 >>>    GC time elapsed: ${result.teraGen.gcTimeElapsedInMs} ms
 >>>    CPU time spent: ${result.teraGen.cpuTimeSpentInMs} ms
 >>>    Job duration: ${result.teraGen.jobDurationInMs} ms
@@ -118,6 +134,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
 >>>    Job duration: ${result.teraSort.jobDurationInMs} ms
 
 """
+            }
         }
         return textReport
     }
@@ -177,13 +194,17 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
       -Dmapreduce.map.output.compress=false \\
       ${config.rows} /${volumeName}/tera/in
 """))
-                def tokens = teraGenOutout.tokenize('\n')
-                result = [
-                        bytesWritten:tokens.find{ it.contains("Bytes Written") }.tokenize('=')[1] as Long,
-                        gcTimeElapsedInMs:tokens.find{ it.contains("GC time elapsed") }.tokenize('=')[1] as Long,
-                        cpuTimeSpentInMs:tokens.find{ it.contains("CPU time spent") }.tokenize('=')[1] as Long,
-                        jobDurationInMs: (System.currentTimeMillis() - start)
-                ]
+                if (teraGenOutout.contains("completed successfully")) {
+                    def tokens = teraGenOutout.tokenize('\n')
+                    result = [
+                            bytesWritten     : tokens.find { it.contains("Bytes Written") }.tokenize('=')[1] as Long,
+                            gcTimeElapsedInMs: tokens.find { it.contains("GC time elapsed") }.tokenize('=')[1] as Long,
+                            cpuTimeSpentInMs : tokens.find { it.contains("CPU time spent") }.tokenize('=')[1] as Long,
+                            jobDurationInMs  : (System.currentTimeMillis() - start)
+                    ]
+                } else {
+                    result = [error: teraGenOutout]
+                }
             }
         }
         log.info(">>>>> ... TeraGen finished")
@@ -206,45 +227,80 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
                 def hadoopExamplesJar = executeSudo("ls ${hadoopPath}/share/hadoop/mapreduce/hadoop-mapreduce-examples*.jar")
                 def dashboardInfoJson = executeSudo(suStr("maprcli node list -columns hostname,cpus,service -json"))
                 def dashboardConfig = jsonSlurper.parseText(dashboardInfoJson)
-                def numberOfNodes = dashboardConfig.data.collect{ it.service.contains("nodemanager") }.size()
+                def numberOfNodes = dashboardConfig.data.collect { it.service.contains("nodemanager") }.size()
                 def reduceTasks = config.reduceTasksPerNode * numberOfNodes
-                def teraSortOutout = executeSudo(suStr("""hadoop jar ${hadoopExamplesJar} terasort \\
+                def teraSortOutput = executeSudo(suStr("""hadoop jar ${hadoopExamplesJar} terasort \\
       -Dmapreduce.map.disk=0 \\
       -Dmapreduce.map.cpu.vcores=0 \\
       -Dmapreduce.map.output.compress=false \\
       -Dmapreduce.map.sort.spill.percent=0.99 \\
       -Dmapreduce.reduce.disk=0 \\
       -Dmapreduce.reduce.cpu.vcores=0 \\
-      -Dmapreduce.reduce.shuffle.parallelcopies=${ numberOfNodes } \\
+      -Dmapreduce.reduce.shuffle.parallelcopies=${numberOfNodes} \\
       -Dmapreduce.reduce.merge.inmem.threshold=0 \\
       -Dmapreduce.task.io.sort.mb=480 \\
       -Dmapreduce.task.io.sort.factor=100 \\
-      -Dmapreduce.job.reduces=${ reduceTasks } \\
+      -Dmapreduce.job.reduces=${reduceTasks} \\
       -Dmapreduce.job.reduce.slowstart.completedmaps=0.55 \\
       -Dyarn.app.mapreduce.am.log.level=ERROR \\
       /${volumeName}/tera/in /${volumeName}/tera/out
 """))
 
-                def tokens = teraSortOutout.tokenize('\n')
-                result = [
-                    inputSplitBytes: tokens.find{ it.contains("Input split byte") }.tokenize('=')[1] as Long,
-                    bytesRead: tokens.find{ it.contains("Bytes Read") }.tokenize('=')[1] as Long,
-                    bytesWritten: tokens.find{ it.contains("Bytes Written") }.tokenize('=')[1] as Long,
-                    gcTimeElapsedInMs: tokens.find{ it.contains("GC time elapsed") }.tokenize('=')[1] as Long,
-                    cpuTimeSpentInMs: tokens.find{ it.contains("CPU time spent") }.tokenize('=')[1] as Long,
-                    shuffledMaps: tokens.find{ it.contains("Shuffled Maps") }.tokenize('=')[1] as Long,
-                    launchedMapTasks: tokens.find{ it.contains("Launched map tasks") }.tokenize('=')[1] as Long,
-                    launchedReduceTasks: tokens.find{ it.contains("Launched reduce tasks") }.tokenize('=')[1] as Long,
-                    dataLocalMapTasks: tokens.find{ it.contains("Data-local map tasks") }.tokenize('=')[1] as Long,
-                    reduceShuffleBytes: tokens.find{ it.contains("Reduce shuffle bytes") }.tokenize('=')[1] as Long,
-                    totalTimeSpentByAllMapsInOccupiedSplots: tokens.find{ it.contains("Total time spent by all maps in occupied slots") }.tokenize('=')[1] as Long,
-                    totalTimeSpentByAllReducesInOccupiedSplots: tokens.find{ it.contains("Total time spent by all reduces in occupied slots") }.tokenize('=')[1] as Long,
-                    totalTimeSpentByAllMapTasks: tokens.find{ it.contains("Total time spent by all map tasks") }.tokenize('=')[1] as Long,
-                    totalMBsecondsTakenByAllMapTasks: tokens.find{ it.contains("Total megabyte-seconds taken by all map tasks") }.tokenize('=')[1] as Long,
-                    totalMBsecondsTakenByAllReduceTasks: tokens.find{ it.contains("Total megabyte-seconds taken by all reduce tasks") }.tokenize('=')[1] as Long,
-                    jobDurationInMs: (System.currentTimeMillis() - start)
+                if (teraSortOutput.contains("completed successfully")) {
 
-                ]
+                    def tokens = teraSortOutput.tokenize('\n')
+                    result = [
+                            inputSplitBytes                           : tokens.find {
+                                it.contains("Input split byte")
+                            }.tokenize('=')[1] as Long,
+                            bytesRead                                 : tokens.find {
+                                it.contains("Bytes Read")
+                            }.tokenize('=')[1] as Long,
+                            bytesWritten                              : tokens.find {
+                                it.contains("Bytes Written")
+                            }.tokenize('=')[1] as Long,
+                            gcTimeElapsedInMs                         : tokens.find {
+                                it.contains("GC time elapsed")
+                            }.tokenize('=')[1] as Long,
+                            cpuTimeSpentInMs                          : tokens.find {
+                                it.contains("CPU time spent")
+                            }.tokenize('=')[1] as Long,
+                            shuffledMaps                              : tokens.find {
+                                it.contains("Shuffled Maps")
+                            }.tokenize('=')[1] as Long,
+                            launchedMapTasks                          : tokens.find {
+                                it.contains("Launched map tasks")
+                            }.tokenize('=')[1] as Long,
+                            launchedReduceTasks                       : tokens.find {
+                                it.contains("Launched reduce tasks")
+                            }.tokenize('=')[1] as Long,
+                            dataLocalMapTasks                         : tokens.find {
+                                it.contains("Data-local map tasks")
+                            }.tokenize('=')[1] as Long,
+                            reduceShuffleBytes                        : tokens.find {
+                                it.contains("Reduce shuffle bytes")
+                            }.tokenize('=')[1] as Long,
+                            totalTimeSpentByAllMapsInOccupiedSplots   : tokens.find {
+                                it.contains("Total time spent by all maps in occupied slots")
+                            }.tokenize('=')[1] as Long,
+                            totalTimeSpentByAllReducesInOccupiedSplots: tokens.find {
+                                it.contains("Total time spent by all reduces in occupied slots")
+                            }.tokenize('=')[1] as Long,
+                            totalTimeSpentByAllMapTasks               : tokens.find {
+                                it.contains("Total time spent by all map tasks")
+                            }.tokenize('=')[1] as Long,
+                            totalMBsecondsTakenByAllMapTasks          : tokens.find {
+                                it.contains("Total megabyte-seconds taken by all map tasks")
+                            }.tokenize('=')[1] as Long,
+                            totalMBsecondsTakenByAllReduceTasks       : tokens.find {
+                                it.contains("Total megabyte-seconds taken by all reduce tasks")
+                            }.tokenize('=')[1] as Long,
+                            jobDurationInMs                           : (System.currentTimeMillis() - start)
+
+                    ]
+                } else {
+                    result = [error: teraSortOutput]
+                }
             }
         }
         log.info(">>>>> ... TeraSort finished")
