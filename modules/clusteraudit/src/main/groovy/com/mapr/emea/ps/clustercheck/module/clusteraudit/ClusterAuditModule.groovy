@@ -211,6 +211,13 @@ class ClusterAuditModule implements ExecuteModule {
                 node['dns.lookup'] = execute("host -W 10 " + node['hostname'] + " || true")
                 node['dns.reverse'] = execute("host -W 10 " + node['ip'] + " || true")
 
+                // MapR Cluster
+                def maprcli_alarm_output = executeSudo(suStr("maprcli alarm list | tail -n +2 | awk '\"'\"'{print \$(NF-1)}'\"'\"'"))
+                if(maprcli_alarm_output.toLowerCase().contains("alarm")){
+                    node['cluster.alarms'] = maprcli_alarm_output.tokenize('\n')
+                }
+   
+
                 nodes.add(node)
             }
         }
@@ -251,6 +258,10 @@ class ClusterAuditModule implements ExecuteModule {
         recommendations += ifBuildMessage(result, "dns.reverse", {
             !it.contains("domain name pointer")
         }, "Reverse DNS lookup for host does not work.")
+        recommendations += ifBuildMessage(result, "cluster.alarms", {
+            it
+        }, "Please clear the alarms.")
+
 
         def textReport = buildTextReport(result)
 
@@ -342,7 +353,8 @@ class ClusterAuditModule implements ExecuteModule {
                 "ulimit.mapr_files",
                 "ulimit.limits_conf",
                 "mapr.system.user",
-                "ulimit.limits_d_conf"
+                "ulimit.limits_d_conf",
+                "cluster.alarms"
         ]
         return propsWithSameValue.findAll {
             it -> result[it] != null && result[it].size() != 1
@@ -449,6 +461,10 @@ class ClusterAuditModule implements ExecuteModule {
         def tokens = allLines.tokenize('\n')
         def result = tokens.find { it.trim().contains(property) }
         return result
+    }
+
+    def suStr(exec) {
+        return "su ${globalYamlConfig.mapr_user} -c 'export MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket;${exec}'"
     }
 
 }
