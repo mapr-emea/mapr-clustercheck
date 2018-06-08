@@ -8,6 +8,8 @@ modules:
     enabled: true
   cluster-config-audit:
     enabled: true
+  ecosystem-healthcheck:
+    enabled: true
   benchmark-memory:
     enabled: true
   benchmark-rawdisk:
