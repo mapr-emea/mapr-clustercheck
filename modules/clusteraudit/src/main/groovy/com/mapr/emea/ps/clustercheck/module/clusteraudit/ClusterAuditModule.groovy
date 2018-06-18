@@ -179,7 +179,9 @@ class ClusterAuditModule implements ExecuteModule {
 
                 node['os.kernel_params.vm.swappiness'] = getColonValue(executeSudo("sysctl vm.swappiness"), '=')
                 node['os.kernel_params.net.ipv4.tcp_retries2'] = getColonValue(executeSudo("sysctl net.ipv4.tcp_retries2"), '=')
+                node['os.kernel_params.net.ipv4.tcp_fin_timeout'] = getColonValue(executeSudo("sysctl net.ipv4.tcp_fin_timeout"), '=')
                 node['os.kernel_params.vm.overcommit_memory'] = getColonValue(executeSudo("sysctl vm.overcommit_memory"), '=')
+
                 node['os.thp'] = executeSudo("cat /sys/kernel/mm/transparent_hugepage/enabled")
                 node['storage.luks'] = executeSudo("grep -v -e ^# -e ^\$ /etc/crypttab | uniq -c -f2 || true")
                 node['storage.controller_max_transfer_size'] = executeSudo("files=\$(ls /sys/block/{sd,xvd,vd}*/queue/max_hw_sectors_kb 2>/dev/null); for each in \$files; do printf \"%s: %s\\n\" \$each \$(cat \$each); done |uniq -c -f1")
@@ -223,17 +225,20 @@ class ClusterAuditModule implements ExecuteModule {
             it.contains("[always]")
         }, "Disable Transparent Huge Pages.")
         recommendations += ifBuildMessage(result, "ulimit.mapr_processes", {
-            it != "unlimited" || (!(it =~ /^[0-9]+$/) || (it as int) <= 64000)
+            it != "unlimited" || (!(it =~ /^[0-9]+$/) || (it as int) < 64000)
         }, "Set MapR system user process limit to a minimum of 64000.")
         recommendations += ifBuildMessage(result, "ulimit.mapr_files", {
-            it != "unlimited" || (!(it =~ /^[0-9]+$/) || (it as int) <= 64000)
+            it != "unlimited" || (!(it =~ /^[0-9]+$/) || (it as int) < 64000)
         }, "Set MapR system user files limit to a minimum of 64000.")
         recommendations += ifBuildMessage(result, "os.kernel_params.vm.swappiness", {
-            it != "10"
-        }, "Set kernel parameter vm.swappiness=10")
+            it != "1"
+        }, "Set kernel parameter vm.swappiness=1")
         recommendations += ifBuildMessage(result, "os.kernel_params.net.ipv4.tcp_retries2", {
             it != "5"
         }, "Set kernel parameter net.ipv4.tcp_retries2=5")
+        recommendations += ifBuildMessage(result, "os.kernel_params.net.ipv4.tcp_fin_timeout", {
+            it == "60"
+        }, "Reduce the default kernel parameter net.ipv4.tcp_fin_timeout from 60 to 30 can help the cluster performing faster")
         recommendations += ifBuildMessage(result, "os.kernel_params.vm.overcommit_memory", {
             it != "0"
         }, "Set kernel parameter os.kernel_params.vm.overcommit_memory=0")
@@ -330,6 +335,7 @@ class ClusterAuditModule implements ExecuteModule {
                 "os.packages.required",
                 "os.kernel_params.vm.swappiness",
                 "os.kernel_params.net.ipv4.tcp_retries2",
+                "os.kernel_params.net.ipv4.tcp_fin_timeout",
                 "os.kernel_params.vm.overcommit_memory",
                 "os.thp",
                 "storage.controller_max_transfer_size",
