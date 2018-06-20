@@ -111,7 +111,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} /tmp"
             nodeResult['drillPath'] = execute "ls -d /opt/mapr/drill/drill-*"
             nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${ sqlPath } --force=false --outputformat=csv"
-            nodeResult['success'] = nodeResult['queryOutput'].contains("Data Engineer")
+            nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
             nodeResult
         })
         testResult
@@ -124,8 +124,8 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             def sqlPath = uploadFile("drill_people.sql", delegate)
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} /tmp"
             nodeResult['drillPath'] = execute "ls -d /opt/mapr/drill/drill-*"
-            nodeResult['queryOutput'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=maprsasl\" --run=${ sqlPath } --force=false --outputformat=csv"
-            nodeResult['success'] = nodeResult['queryOutput'].contains("Data Engineer")
+            nodeResult['output'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=maprsasl\" --run=${ sqlPath } --force=false --outputformat=csv"
+            nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
             nodeResult
         })
         testResult
