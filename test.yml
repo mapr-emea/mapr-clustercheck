@@ -10,6 +10,15 @@ modules:
     enabled: true
   ecosystem-healthcheck:
     enabled: true
+    ticketfile: /opt/mapr/conf/mapruserticket
+    username: mapr
+    password: mapr
+    tests:
+    - name: drill-jdbc-file-json-plainauth
+      drill_port: 31010
+      enabled: true
+    - name: drill-jdbc-file-json-maprsasl
+      enabled: true
   benchmark-memory:
     enabled: true
   benchmark-rawdisk:
@@ -76,12 +85,12 @@ nodes-global-config:
   - /dev/nvme1n1
   - /dev/nvme2n1
   - /dev/nvme3n1
-  ssh_user: ec2-user
+  ssh_user: root
   ssh_identity: /Users/chufe/.ssh/id_rsa
 
 nodes:
-- host: 10.0.0.63
+- host: 10.250.51.141
   roles:
   - clusterjob-execution
-- host: 10.0.0.110
-- host: 10.0.0.232
+- host: 10.250.51.142
+- host: 10.250.51.143
