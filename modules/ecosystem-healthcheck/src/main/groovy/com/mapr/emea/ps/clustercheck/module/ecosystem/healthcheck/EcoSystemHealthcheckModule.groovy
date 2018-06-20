@@ -65,7 +65,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [username: "mapr", password: "mapr", tests:defaultTestMatrix]
+        return [username: "mapr", password: "mapr", ticketfile: "/opt/mapr/conf/mapruserticket", tests:defaultTestMatrix]
     }
 
     @Override
@@ -83,10 +83,11 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
         healthcheckconfig['tests'].each { test ->
             log.info(">>>>>>> Running test '${test['name']}'")
             if(test['name'] == "drill-jdbc-file-json-plainauth" && (test['enabled'] as boolean)) {
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
-                result['drill-jdbc-file-json-plainauth'] = verifyDrillJdbcPlainAuth(packages, username, password, port)
+                result['drill-jdbc-file-json-plainauth'] = verifyDrillJdbcPlainAuth(packages, ticketfile, username, password, port)
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
@@ -102,14 +103,14 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
         return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: recommendations)
     }
 
-    def verifyDrillJdbcPlainAuth(List<Object> packages, String username, String password, int port) {
+    def verifyDrillJdbcPlainAuth(List<Object> packages, String ticketfile, String username, String password, int port) {
         def testResult = executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
             def jsonPath = uploadFile("drill_people.json", delegate)
             def sqlPath = uploadFile("drill_people.sql", delegate)
-            executeSudo "MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket hadoop fs -put -f ${jsonPath} /tmp"
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} /tmp"
             nodeResult['drillPath'] = execute "ls -d /opt/mapr/drill/drill-*"
-            nodeResult['queryOutput'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${ sqlPath } --force=false --outputformat=csv"
+            nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${ sqlPath } --force=false --outputformat=csv"
             nodeResult['success'] = nodeResult['queryOutput'].contains("Data Engineer")
             nodeResult
         })

@@ -18,6 +18,7 @@ modules:
       drill_port: 31010
       enabled: true
     - name: drill-jdbc-file-json-maprsasl
+      drill_port: 31010
       enabled: true
   benchmark-memory:
     enabled: true
