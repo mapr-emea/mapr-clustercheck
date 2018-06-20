@@ -123,7 +123,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             def sqlPath = uploadFile("drill_people.sql", delegate)
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} /tmp"
             nodeResult['drillPath'] = execute "ls -d /opt/mapr/drill/drill-*"
-            nodeResult['queryOutput'] =  executeSudo "export MAPR_TICKETFILE_LOCATION=${ticketfile};${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=maprsasl\" --run=${ sqlPath } --force=false --outputformat=csv"
+            nodeResult['queryOutput'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=maprsasl\" --run=${ sqlPath } --force=false --outputformat=csv"
             nodeResult['success'] = nodeResult['queryOutput'].contains("Data Engineer")
             nodeResult
         })
