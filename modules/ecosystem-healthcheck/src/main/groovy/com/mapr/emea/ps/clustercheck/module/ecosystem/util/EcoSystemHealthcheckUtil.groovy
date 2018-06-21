@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 @Component
 class EcoSystemHealthcheckUtil {
 
-    static final Logger log = LoggerFactory.getLogger(EcoSystemHealthcheckUtil.class);
+    static final Logger log = LoggerFactory.getLogger(EcoSystemHealthcheckUtil.class)
 
     @Autowired
     @Qualifier("ssh")
@@ -25,7 +25,7 @@ class EcoSystemHealthcheckUtil {
 
     def retrievePackages(role) {
 
-        log.info("Start : EcoSystemHealthcheckUtil : retrievePackages")
+        log.trace("Start : EcoSystemHealthcheckUtil : retrievePackages")
 
         def packages = Collections.synchronizedList([])
         ssh.runInOrder {
@@ -46,21 +46,21 @@ class EcoSystemHealthcheckUtil {
             }
         }
 
-        log.info("End : EcoSystemHealthcheckUtil : retrievePackages")
+        log.trace("End : EcoSystemHealthcheckUtil : retrievePackages")
         return packages
     }
 
     def static List<Object> findHostsWithPackage(List packages, packageName) {
-        log.info("Start : EcoSystemHealthcheckUtil : findHostsWithPackage")
+        log.trace("Start : EcoSystemHealthcheckUtil : findHostsWithPackage")
         def hostsFound = packages.findAll { it['mapr.packages'].find { it.contains(packageName) } != null }.collect { it['host'] }
 
-        log.info("End : EcoSystemHealthcheckUtil : findHostsWithPackage")
+        log.trace("End : EcoSystemHealthcheckUtil : findHostsWithPackage")
 
         return hostsFound
     }
 
     def executeSsh(List<Object> packages, String packageName, Closure closure) {
-        log.info("Start : EcoSystemHealthcheckUtil : executeSsh")
+        log.trace("Start : EcoSystemHealthcheckUtil : executeSsh")
 
         def appHosts = findHostsWithPackage(packages, packageName)
         def result = Collections.synchronizedList([])
@@ -81,12 +81,12 @@ class EcoSystemHealthcheckUtil {
             }
         }
 
-        log.info("End : EcoSystemHealthcheckUtil : executeSsh")
+        log.trace("End : EcoSystemHealthcheckUtil : executeSsh")
         result
     }
 
     def uploadFile(String fileName, delegate) {
-        log.info("Start : EcoSystemHealthcheckUtil : uploadFile")
+        log.trace("Start : EcoSystemHealthcheckUtil : uploadFile")
 
         def homePath = delegate.execute 'echo $HOME'
         delegate.execute "mkdir -p ${homePath}/.clustercheck/ecosystem-healthcheck/"
@@ -94,7 +94,7 @@ class EcoSystemHealthcheckUtil {
         delegate.put from: fileInputStream, into: "${homePath}/.clustercheck/ecosystem-healthcheck/${fileName}"
         def path = "${homePath}/.clustercheck/ecosystem-healthcheck/${fileName}"
 
-        log.info("End : EcoSystemHealthcheckUtil : uploadFile")
+        log.trace("End : EcoSystemHealthcheckUtil : uploadFile")
 
         return path
     }

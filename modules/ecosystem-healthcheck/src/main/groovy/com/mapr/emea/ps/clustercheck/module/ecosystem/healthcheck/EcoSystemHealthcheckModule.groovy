@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Qualifier
  */
 @ClusterCheckModule(name = "ecosystem-healthcheck", version = "1.0")
 class EcoSystemHealthcheckModule implements ExecuteModule {
-    static final Logger log = LoggerFactory.getLogger(EcoSystemHealthcheckModule.class);
+    static final Logger log = LoggerFactory.getLogger(EcoSystemHealthcheckModule.class)
 
     @Autowired
     @Qualifier("ssh")
@@ -92,6 +92,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
         healthcheckconfig['tests'].each { test ->
             log.info(">>>>>>> Running test '${test['name']}'")
+
             if(test['name'] == "drill-jdbc-file-json-plainauth" && (test['enabled'] as boolean)) {
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
@@ -109,6 +110,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
         }
         List recommendations = calculateRecommendations(result)
         def textReport = buildTextReport(result)
+
         log.info(">>>>> ... ecosystem-healthcheck finished")
         return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: recommendations)
     }

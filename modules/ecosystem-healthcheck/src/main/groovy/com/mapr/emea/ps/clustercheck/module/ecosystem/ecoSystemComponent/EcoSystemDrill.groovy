@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component
 @Component
 class EcoSystemDrill {
 
-    static final Logger log = LoggerFactory.getLogger(EcoSystemDrill.class);
+    static final Logger log = LoggerFactory.getLogger(EcoSystemDrill.class)
 
     @Autowired
     EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
 
     def verifyDrillJdbcPlainAuth(List<Object> packages, String ticketfile, String username, String password, int port) {
 
-        log.info("Start : EcoSystemDrill : verifyDrillJdbcPlainAuth")
+        log.trace("Start : EcoSystemDrill : verifyDrillJdbcPlainAuth")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
@@ -29,14 +29,14 @@ class EcoSystemDrill {
             nodeResult
         })
 
-        log.info("End : EcoSystemDrill : verifyDrillJdbcPlainAuth")
+        log.trace("End : EcoSystemDrill : verifyDrillJdbcPlainAuth")
 
         testResult
     }
 
     def verifyDrillJdbcMaprSasl(List<Object> packages, String ticketfile, int port) {
 
-        log.info("Start : EcoSystemDrill : verifyDrillJdbcMaprSasl")
+        log.trace("Start : EcoSystemDrill : verifyDrillJdbcMaprSasl")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
@@ -49,7 +49,7 @@ class EcoSystemDrill {
             nodeResult
         })
 
-        log.info("End : EcoSystemDrill : verifyDrillJdbcMaprSasl")
+        log.trace("End : EcoSystemDrill : verifyDrillJdbcMaprSasl")
         testResult
     }
 }
