@@ -95,4 +95,35 @@ class EcoSystemDrill {
         log.trace("End : EcoSystemDrill : verifyDrillJdbcMaprdbJsonMaprSasl")
         testResult
     }
+
+    def verifyDrillUiUnsecured(List<Object> packages, int port) {
+
+        log.trace("Start : EcoSystemDrill : verifyDrillUiUnsecured")
+
+        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
+            def nodeResult = [:]
+            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ | head -n 1"
+            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemDrill : verifyDrillUiUnsecured")
+        testResult
+    }
+
+    def verifyDrillUiSecured(List<Object> packages, String username, String password, int port) {
+
+        log.trace("Start : EcoSystemDrill : verifyDrillUiSecured")
+
+        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
+            def nodeResult = [:]
+
+            nodeResult['output'] = executeSudo "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
+            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemDrill : verifyDrillUiSecured")
+        testResult
+    }
 }

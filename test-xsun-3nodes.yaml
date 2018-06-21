@@ -1,0 +1,109 @@
+cluster_name: demo.mapr.com
+customer_name: Custom Test Environment
+output_dir: /Users/xuelansun/Git/mapr-clustercheck/build/audit-result
+mapr_user: mapr
+
+modules:
+  cluster-audit:
+    enabled: false
+  cluster-config-audit:
+    enabled: false
+  ecosystem-healthcheck:
+    enabled: true
+    ticketfile: /opt/mapr/conf/mapruserticket
+    username: mapr
+    password: mapr
+    tests:
+    - name: drill-jdbc-file-json-plainauth
+      drill_port: 31010
+      enabled: true
+    - name: drill-jdbc-file-json-maprsasl
+      drill_port: 31010
+      enabled: true
+    - name: drill-jdbc-maprdb-json-plainauth
+      drill_port: 31010
+      enabled: true
+    - name: drill-jdbc-maprdb-json-maprsasl
+      drill_port: 31010
+      enabled: true
+    - name: drill-ui-unsecured
+      drill_ui_port: 8047
+      enabled: true
+    - name: drill-ui-secured
+      drill_ui_port: 8047
+      enabled: true
+  benchmark-memory:
+    enabled: false
+  benchmark-rawdisk:
+    enabled: false
+    tests:
+    - mode: READONLY
+      data_in_mb: 2048
+  benchmark-network-iperf:
+    enabled: false
+    tests:
+    - threads: 4
+      data_per_thread: 2G
+      mode: all
+  benchmark-maprfs-dfsio:
+    enabled: false
+    role: clusterjob-execution
+    tests:
+    - dfsio_number_of_files: 5
+      dfsio_file_size_in_mb: 256
+      topology: /data
+      replication: 3
+      compression: 'off'
+    - dfsio_number_of_files: 5
+      dfsio_file_size_in_mb: 256
+      topology: /data
+      replication: 1
+      compression: 'off'
+  benchmark-maprfs-rwtest:
+    enabled: false
+    tests:
+    - volume_type: local
+      compression: 'off'
+      size_in_mb: 32
+    - volume_type: standard
+      compression: 'off'
+      size_in_mb: 32
+  benchmark-yarn-terasort-mr:
+    enabled: false
+    role: clusterjob-execution
+    tests:
+    - chunk_size_in_mb: 256
+      rows: 100000
+#      rows: 10000000000
+      rows_comment: one row has 100 byte
+      reduce_tasks_per_node: 2
+      topology: /data
+      replication: 3
+      compression: 'on'
+  benchmark-yarn-terasort-spark:
+    enabled: false
+    role: clusterjob-execution
+    tests:
+    - chunk_size_in_mb: 256
+      data_size: 1024M
+      num_executors: 3
+      executor_cores: 2
+      executor_memory: 4G
+      topology: /data
+      replication: 3
+      compression: 'on'
+
+nodes-global-config:
+  disks:
+  - /dev/xvdb
+  - /dev/xvdc
+  - /dev/xvdd
+  ssh_user: ec2-user
+  ssh_identity: /Users/xuelansun/.ssh/xsun_keypair_aws.pem
+
+nodes:
+- host: 172.31.46.37
+  roles:
+  - clusterjob-execution
+- host: 172.31.46.188
+- host: 172.31.32.43

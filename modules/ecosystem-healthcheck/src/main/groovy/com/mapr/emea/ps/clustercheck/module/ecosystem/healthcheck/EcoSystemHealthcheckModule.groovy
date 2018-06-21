@@ -41,7 +41,9 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             [name: "drill-jdbc-maprdb-json-plainauth", drill_port: 31010, enabled: false],
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: 31010, enabled: false],
             // TODO implement
-            [name: "drill-ui", drill_ui_port: 8047, enabled: false],
+            [name: "drill-ui-unsecured", drill_ui_port: 8047, enabled: false],
+            [name: "drill-ui-secured", drill_ui_port: 8047, enabled: false],
+
             [name: "maprdb-json-shell", enabled: false],
             [name: "maprdb-binary-shell" , enabled: false],
             [name: "maprlogin-auth", enabled: false],
@@ -121,6 +123,18 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
                 result['drill-jdbc-maprdb-json-maprsasl'] = drill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port)
 
+            } else if(test['name'] == "drill-ui-unsecured" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("drill_ui_port", 8047)
+                result['drill-ui-unsecured'] = drill.verifyDrillUiUnsecured(packages, port)
+
+            } else if(test['name'] == "drill-ui-secured" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("drill_ui_port", 8047)
+                def username = healthcheckconfig.getOrDefault("username", "mapr")
+                def password = healthcheckconfig.getOrDefault("password", "mapr")
+                result['drill-ui-secured'] = drill.verifyDrillUiSecured(packages, username, password, port)
+
             }
             else {
                 log.error(">>>>> ... Test with name '${test['name']}' not found!")
@@ -132,9 +146,6 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
         log.info(">>>>> ... ecosystem-healthcheck finished")
         return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: recommendations)
     }
-
-
-
 
 
     def List calculateRecommendations(def groupedResult) {
