@@ -38,9 +38,9 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     def defaultTestMatrix = [
             [name: "drill-jdbc-file-json-plainauth", drill_port: 31010, enabled: false],
             [name: "drill-jdbc-file-json-maprsasl", drill_port: 31010, enabled: false],
-            // TODO implement
             [name: "drill-jdbc-maprdb-json-plainauth", drill_port: 31010, enabled: false],
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: 31010, enabled: false],
+            // TODO implement
             [name: "drill-ui", drill_ui_port: 8047, enabled: false],
             [name: "maprdb-json-shell", enabled: false],
             [name: "maprdb-binary-shell" , enabled: false],
@@ -94,18 +94,36 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             log.info(">>>>>>> Running test '${test['name']}'")
 
             if(test['name'] == "drill-jdbc-file-json-plainauth" && (test['enabled'] as boolean)) {
+
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
                 result['drill-jdbc-file-json-plainauth'] = drill.verifyDrillJdbcPlainAuth(packages, ticketfile, username, password, port)
+
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
+
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
                 result['drill-jdbc-file-json-maprsasl'] = drill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
+
+            } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
+
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
+                def username = healthcheckconfig.getOrDefault("username", "mapr")
+                def password = healthcheckconfig.getOrDefault("password", "mapr")
+                def port = healthcheckconfig.getOrDefault("drill_port", 31010)
+                result['drill-jdbc-maprdb-json-plainauth'] = drill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, port)
+
+            } else if(test['name'] == "drill-jdbc-maprdb-json-maprsasl" && (test['enabled'] as boolean)) {
+
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
+                def port = healthcheckconfig.getOrDefault("drill_port", 31010)
+                result['drill-jdbc-maprdb-json-maprsasl'] = drill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port)
+
             }
             else {
-                log.error("       Test with name '${test['name']}' not found!")
+                log.error(">>>>> ... Test with name '${test['name']}' not found!")
             }
         }
         List recommendations = calculateRecommendations(result)
