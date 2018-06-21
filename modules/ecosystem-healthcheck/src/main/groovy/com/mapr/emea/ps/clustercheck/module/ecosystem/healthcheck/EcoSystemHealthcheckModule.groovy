@@ -4,11 +4,13 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckModule
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
+import com.mapr.emea.ps.clustercheck.module.ecosystem.util.EcoSystemHealthcheckUtil
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
+
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.core.io.ResourceLoader
 
 /**
  * Created by chufe on 22.08.17.
@@ -20,12 +22,17 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     @Autowired
     @Qualifier("ssh")
     def ssh
+
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
 
     @Autowired
-    ResourceLoader resourceLoader;
+    EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
+
+    @Autowired
+    EcoSystemDrill drill
+
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
     def defaultTestMatrix = [
@@ -77,9 +84,12 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     ClusterCheckResult execute() {
         def healthcheckconfig = globalYamlConfig.modules['ecosystem-healthcheck'] as Map<String, ?>
         def role = healthcheckconfig.getOrDefault("role", "all")
+
         log.info(">>>>> Running ecosystem-healthcheck")
+
         def result = Collections.synchronizedMap([:])
-        def packages = retrievePackages(role)
+        def packages = ecoSystemHealthcheckUtil.retrievePackages(role)
+
         healthcheckconfig['tests'].each { test ->
             log.info(">>>>>>> Running test '${test['name']}'")
             if(test['name'] == "drill-jdbc-file-json-plainauth" && (test['enabled'] as boolean)) {
@@ -87,11 +97,11 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
-                result['drill-jdbc-file-json-plainauth'] = verifyDrillJdbcPlainAuth(packages, ticketfile, username, password, port)
+                result['drill-jdbc-file-json-plainauth'] = drill.verifyDrillJdbcPlainAuth(packages, ticketfile, username, password, port)
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
-                result['drill-jdbc-file-json-maprsasl'] = verifyDrillJdbcMaprSasl(packages, ticketfile, port)
+                result['drill-jdbc-file-json-maprsasl'] = drill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
             }
             else {
                 log.error("       Test with name '${test['name']}' not found!")
@@ -103,94 +113,9 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
         return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: recommendations)
     }
 
-    def verifyDrillJdbcPlainAuth(List<Object> packages, String ticketfile, String username, String password, int port) {
-        def testResult = executeSsh(packages, "mapr-drill", {
-            def nodeResult = [:]
-            def jsonPath = uploadFile("drill_people.json", delegate)
-            def sqlPath = uploadFile("drill_people.sql", delegate)
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} /tmp"
-            nodeResult['drillPath'] = execute "ls -d /opt/mapr/drill/drill-*"
-            nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${ sqlPath } --force=false --outputformat=csv"
-            nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
-            nodeResult
-        })
-        testResult
-    }
-
-    def verifyDrillJdbcMaprSasl(List<Object> packages, String ticketfile, int port) {
-        def testResult = executeSsh(packages, "mapr-drill", {
-            def nodeResult = [:]
-            def jsonPath = uploadFile("drill_people.json", delegate)
-            def sqlPath = uploadFile("drill_people.sql", delegate)
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} /tmp"
-            nodeResult['drillPath'] = execute "ls -d /opt/mapr/drill/drill-*"
-            nodeResult['output'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=localhost:${port};auth=maprsasl\" --run=${ sqlPath } --force=false --outputformat=csv"
-            nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
-            nodeResult
-        })
-        testResult
-    }
-
-    def uploadFile(String fileName, delegate) {
-        def homePath = delegate.execute 'echo $HOME'
-        delegate.execute "mkdir -p ${homePath}/.clustercheck/ecosystem-healthcheck/"
-        def fileInputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/ecosystem/healthcheck/${fileName}").getInputStream()
-        delegate.put from: fileInputStream, into: "${homePath}/.clustercheck/ecosystem-healthcheck/${fileName}"
-        return "${homePath}/.clustercheck/ecosystem-healthcheck/${fileName}"
-    }
 
 
-    def executeSsh(List<Object> packages, String packageName, Closure closure) {
-        def appHosts = findHostsWithPackage(packages, packageName)
-        def result = Collections.synchronizedList([])
-        appHosts.each { appHost ->
-            log.info(">>>>>>> ..... testing node ${appHost}")
-            ssh.runInOrder {
-                settings {
-                    pty = true
-                    ignoreError = true
-                }
-                session(ssh.remotes.role(appHost)) {
-                    def node = [:]
-                    node['host'] = remote.host
-                    closure.delegate = delegate
-                    node += closure()
-                    result.add(node)
-                }
-            }
-        }
-        result
-    }
 
-    def List<Object> findHostsWithPackage(List packages, packageName) {
-        packages.findAll { it['mapr.packages'].find { it.contains(packageName) } != null }.collect { it['host'] }
-    }
-
-    def retrievePackages(role) {
-        def packages = Collections.synchronizedList([])
-        ssh.runInOrder {
-            settings {
-                pty = true
-                ignoreError = true
-            }
-            session(ssh.remotes.role(role)) {
-                def node = [:]
-                node['host'] = remote.host
-                def distribution = execute("[ -f /etc/system-release ] && cat /etc/system-release || cat /etc/os-release | uniq")
-                if (distribution.toLowerCase().contains("ubuntu")) {
-                    node['mapr.packages'] = executeSudo('apt list --installed | grep mapr').tokenize('\n')
-                } else {
-                    node['mapr.packages'] = executeSudo('rpm -qa | grep mapr').tokenize('\n')
-                }
-                packages.add(node)
-            }
-        }
-        return packages
-    }
-
-    def suStr(exec) {
-        return "su ${globalYamlConfig.mapr_user} -c '${exec}'"
-    }
 
     def List calculateRecommendations(def groupedResult) {
         def recommendations = []
