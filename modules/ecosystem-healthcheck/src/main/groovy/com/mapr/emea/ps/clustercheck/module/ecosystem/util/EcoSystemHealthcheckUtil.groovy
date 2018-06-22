@@ -50,7 +50,7 @@ class EcoSystemHealthcheckUtil {
         return packages
     }
 
-    def static List<Object> findHostsWithPackage(List packages, packageName) {
+    static List<Object> findHostsWithPackage(List packages, packageName) {
         log.trace("Start : EcoSystemHealthcheckUtil : findHostsWithPackage")
         def hostsFound = packages.findAll { it['mapr.packages'].find { it.contains(packageName) } != null }.collect { it['host'] }
 
