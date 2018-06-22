@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component
 class EcoSystemMaprDb {
 
     static final Logger log = LoggerFactory.getLogger(EcoSystemMaprDb.class)
+
     static final String maprFsDir = "/tmp/.clustercheck/ecosystem-healthcheck/maprdb"
     static final String maprdbJsonQueryFile = "maprdb_json_query"
     static final String maprdbJsonFile = "maprdb_people.json"
