@@ -4,6 +4,7 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckModule
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemMaprDb
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.EcoSystemHealthcheckUtil
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
 
@@ -34,7 +35,10 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
 
     @Autowired
-    EcoSystemDrill drill
+    EcoSystemDrill ecoSystemDrill
+
+    @Autowired
+    EcoSystemMaprDb ecoSystemMaprDb
 
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
@@ -45,8 +49,11 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: 31010, enabled: false],
             [name: "drill-ui-unsecured", drill_ui_port: 8047, enabled: false],
             [name: "drill-ui-secured", drill_ui_port: 8047, enabled: false],
+            [name: "maprdb-json-shell-maprsasl", enabled: false],
+            [name: "maprdb-json-shell-unsecured", enabled: false],
+
             // TODO implement
-            [name: "maprdb-json-shell", enabled: false],
+
             [name: "maprdb-binary-shell" , enabled: false],
             [name: "maprlogin-auth", enabled: false],
             [name: "maprfs" , enabled: false],
@@ -103,13 +110,13 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
-                result['drill-jdbc-file-json-plainauth'] = drill.verifyDrillJdbcPlainAuth(packages, ticketfile, username, password, port)
+                result['drill-jdbc-file-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcPlainAuth(packages, ticketfile, username, password, port)
 
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
-                result['drill-jdbc-file-json-maprsasl'] = drill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
+                result['drill-jdbc-file-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
 
@@ -117,28 +124,37 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
-                result['drill-jdbc-maprdb-json-plainauth'] = drill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, port)
+                result['drill-jdbc-maprdb-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, port)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-maprsasl" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
-                result['drill-jdbc-maprdb-json-maprsasl'] = drill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port)
+                result['drill-jdbc-maprdb-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port)
 
             } else if(test['name'] == "drill-ui-unsecured" && (test['enabled'] as boolean)) {
 
                 def port = healthcheckconfig.getOrDefault("drill_ui_port", 8047)
-                result['drill-ui-unsecured'] = drill.verifyDrillUiUnsecured(packages, port)
+                result['drill-ui-unsecured'] = ecoSystemDrill.verifyDrillUiUnsecured(packages, port)
 
             } else if(test['name'] == "drill-ui-secured" && (test['enabled'] as boolean)) {
 
                 def port = healthcheckconfig.getOrDefault("drill_ui_port", 8047)
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
-                result['drill-ui-secured'] = drill.verifyDrillUiSecured(packages, username, password, port)
+                result['drill-ui-secured'] = ecoSystemDrill.verifyDrillUiSecured(packages, username, password, port)
 
-            }
-            else {
+            } else if(test['name'] == "maprdb-json-shell-maprsasl" && (test['enabled'] as boolean)) {
+
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
+                result['maprdb-json-shell-maprsasl'] = ecoSystemMaprDb.verifyMaprdbJsonShellMaprSasl(packages, ticketfile)
+
+            }  else if(test['name'] == "maprdb-json-shell-unsecured" && (test['enabled'] as boolean)) {
+
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
+                result['maprdb-json-shell-unsecured'] = ecoSystemMaprDb.verifyMaprdbJsonShellUnsecured(packages)
+
+            } else {
                 log.error(">>>>> ... Test with name '${test['name']}' not found!")
             }
         }

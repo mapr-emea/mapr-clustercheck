@@ -31,6 +31,10 @@ modules:
       enabled: false
     - name: drill-ui-secured
       drill_ui_port: 8047
+      enabled: false
+    - name: maprdb-json-shell-maprsasl
+      enabled: true
+    - name: maprdb-json-shell-unsecured
       enabled: true
   benchmark-memory:
     enabled: false
@@ -102,6 +106,6 @@ nodes-global-config:
   ssh_identity: /Users/xuelansun/.ssh/xsun_keypair_aws.pem
 
 nodes:
-- host: 172.31.46.37
+- host: 172.31.37.104
   roles:
   - clusterjob-execution
