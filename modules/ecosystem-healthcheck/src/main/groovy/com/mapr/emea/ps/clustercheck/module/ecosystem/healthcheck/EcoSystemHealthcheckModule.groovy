@@ -40,10 +40,9 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             [name: "drill-jdbc-file-json-maprsasl", drill_port: 31010, enabled: false],
             [name: "drill-jdbc-maprdb-json-plainauth", drill_port: 31010, enabled: false],
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: 31010, enabled: false],
-            // TODO implement
             [name: "drill-ui-unsecured", drill_ui_port: 8047, enabled: false],
             [name: "drill-ui-secured", drill_ui_port: 8047, enabled: false],
-
+            // TODO implement
             [name: "maprdb-json-shell", enabled: false],
             [name: "maprdb-binary-shell" , enabled: false],
             [name: "maprlogin-auth", enabled: false],
