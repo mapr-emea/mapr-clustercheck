@@ -17,7 +17,10 @@ import org.springframework.beans.factory.annotation.Qualifier
  */
 @ClusterCheckModule(name = "ecosystem-healthcheck", version = "1.0")
 class EcoSystemHealthcheckModule implements ExecuteModule {
+    
     static final Logger log = LoggerFactory.getLogger(EcoSystemHealthcheckModule.class)
+    
+    static final String ticketFilePath = "/opt/mapr/conf/mapruserticket"
 
     @Autowired
     @Qualifier("ssh")
@@ -73,7 +76,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [username: "mapr", password: "mapr", ticketfile: "/opt/mapr/conf/mapruserticket", tests:defaultTestMatrix]
+        return [username: "mapr", password: "mapr", ticketfile: ticketFilePath, tests:defaultTestMatrix]
     }
 
     @Override
@@ -96,7 +99,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
             if(test['name'] == "drill-jdbc-file-json-plainauth" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
@@ -104,13 +107,13 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
                 result['drill-jdbc-file-json-maprsasl'] = drill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
                 def username = healthcheckconfig.getOrDefault("username", "mapr")
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
@@ -118,7 +121,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-maprsasl" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", "/opt/mapr/conf/mapruserticket")
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
                 def port = healthcheckconfig.getOrDefault("drill_port", 31010)
                 result['drill-jdbc-maprdb-json-maprsasl'] = drill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port)
 

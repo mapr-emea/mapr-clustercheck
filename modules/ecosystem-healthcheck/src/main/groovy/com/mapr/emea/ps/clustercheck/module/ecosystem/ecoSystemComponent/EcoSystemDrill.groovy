@@ -63,7 +63,7 @@ class EcoSystemDrill {
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
             def jsonPath = ecoSystemHealthcheckUtil.uploadFile("drill_people.json", delegate)
-            def sqlPath = ecoSystemHealthcheckUtil.uploadFile("drill_people_maprdb_plainauth.sql", delegate)
+            def sqlPath = ecoSystemHealthcheckUtil.uploadFile("drill_people_maprdb.sql", delegate)
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprFsDir}"
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFsDir}/drill_people.json -dst ${maprFsDir}/drill_people_maprdb_plainauth"
             nodeResult['drillPath'] = execute "ls -d /opt/mapr/drill/drill-*"
@@ -83,7 +83,7 @@ class EcoSystemDrill {
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
             def jsonPath = ecoSystemHealthcheckUtil.uploadFile("drill_people.json", delegate)
-            def sqlPath = ecoSystemHealthcheckUtil.uploadFile("drill_people_maprdb_maprsasl.sql", delegate)
+            def sqlPath = ecoSystemHealthcheckUtil.uploadFile("drill_people_maprdb.sql", delegate)
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprFsDir}"
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFsDir}/drill_people.json -dst ${maprFsDir}/drill_people_maprdb_maprsasl"
             nodeResult['drillPath'] = execute "ls -d /opt/mapr/drill/drill-*"
