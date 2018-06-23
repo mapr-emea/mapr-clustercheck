@@ -74,7 +74,7 @@ class EcoSystemDrill {
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFsDir}/${drillJsonFile} -dst ${maprFsDir}/${drillMaprdbJsonTable} -mapreduce false"
             nodeResult['drillPath'] = execute "ls -d ${drillPath}"
             nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv"
-            nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
+            nodeResult['success'] = nodeResult['output'].contains("4 rows selected")
             nodeResult
         })
 
@@ -94,7 +94,7 @@ class EcoSystemDrill {
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFsDir}/${drillJsonFile} -dst ${maprFsDir}/${drillMaprdbJsonTable} -mapreduce false"
             nodeResult['drillPath'] = execute "ls -d ${drillPath}"
             nodeResult['output'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv"
-            nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
+            nodeResult['success'] = nodeResult['output'].contains("4 rows selected")
             nodeResult
         })
 

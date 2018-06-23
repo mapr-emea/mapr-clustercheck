@@ -54,7 +54,7 @@ class EcoSystemMaprDb {
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf create -path ${maprFsDir}/test_binary -cfname cfname_test_binary"
 
             nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${maprFsDir}/test_binary"
-            nodeResult['comment'] = "Don't worry about the error :  Lookup of volume mapr.cluster.root failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
+            nodeResult['comment'] = "Don't worry if you see the error: Lookup of volume mapr.cluster.root failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
             nodeResult['success'] = nodeResult['output'].contains("cfname_test_binary")
 
             nodeResult
