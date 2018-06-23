@@ -17,10 +17,14 @@ class EcoSystemHealthcheckUtil {
     def ssh
 
     @Autowired
+    @Qualifier("globalYamlConfig")
+    Map<String, ?> globalYamlConfig
+
+    @Autowired
     ResourceLoader resourceLoader
 
-    def suStr(exec) {
-        return "su ${globalYamlConfig.mapr_user} -c '${exec}'"
+    def suStr(String ticketFile, exec) {
+        return "su ${globalYamlConfig.mapr_user} -c 'export MAPR_TICKETFILE_LOCATION=${ticketFile};${exec}'"
     }
 
     def retrievePackages(role) {

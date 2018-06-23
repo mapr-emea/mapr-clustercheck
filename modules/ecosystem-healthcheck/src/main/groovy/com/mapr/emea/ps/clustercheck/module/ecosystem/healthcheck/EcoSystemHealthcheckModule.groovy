@@ -24,10 +24,6 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     static final String ticketFilePath = "/opt/mapr/conf/mapruserticket"
 
     @Autowired
-    @Qualifier("ssh")
-    def ssh
-
-    @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
 
@@ -151,7 +147,6 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
             }  else if(test['name'] == "maprdb-json-shell-unsecured" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
                 result['maprdb-json-shell-unsecured'] = ecoSystemMaprDb.verifyMaprdbJsonShellUnsecured(packages)
 
             } else {
