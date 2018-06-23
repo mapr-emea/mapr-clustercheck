@@ -45,12 +45,11 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: 31010, enabled: false],
             [name: "drill-ui-unsecured", drill_ui_port: 8047, enabled: false],
             [name: "drill-ui-secured", drill_ui_port: 8047, enabled: false],
-            [name: "maprdb-json-shell-maprsasl", enabled: false],
-            [name: "maprdb-json-shell-unsecured", enabled: false],
+            [name: "maprdb-json-shell", enabled: false],
+            [name: "maprdb-binary-shell" , enabled: false],
 
             // TODO implement
 
-            [name: "maprdb-binary-shell" , enabled: false],
             [name: "maprlogin-auth", enabled: false],
             [name: "maprfs" , enabled: false],
             [name: "mapr-streams" , enabled: false],
@@ -98,6 +97,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
         def packages = ecoSystemHealthcheckUtil.retrievePackages(role)
 
         healthcheckconfig['tests'].each { test ->
+
             log.info(">>>>>>> Running test '${test['name']}'")
 
             if(test['name'] == "drill-jdbc-file-json-plainauth" && (test['enabled'] as boolean)) {
@@ -140,23 +140,26 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
                 def password = healthcheckconfig.getOrDefault("password", "mapr")
                 result['drill-ui-secured'] = ecoSystemDrill.verifyDrillUiSecured(packages, username, password, port)
 
-            } else if(test['name'] == "maprdb-json-shell-maprsasl" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "maprdb-json-shell" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
-                result['maprdb-json-shell-maprsasl'] = ecoSystemMaprDb.verifyMaprdbJsonShellMaprSasl(packages, ticketfile)
+                result['maprdb-json-shell'] = ecoSystemMaprDb.verifyMaprdbJsonShell(packages, ticketfile)
 
-            }  else if(test['name'] == "maprdb-json-shell-unsecured" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "maprdb-binary-shell" && (test['enabled'] as boolean)) {
 
-                result['maprdb-json-shell-unsecured'] = ecoSystemMaprDb.verifyMaprdbJsonShellUnsecured(packages)
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", ticketFilePath)
+                result['maprdb-binary-shell'] = ecoSystemMaprDb.verifyMaprdbBinaryShell(packages, ticketfile)
 
             } else {
                 log.error(">>>>> ... Test with name '${test['name']}' not found!")
             }
         }
+
         List recommendations = calculateRecommendations(result)
         def textReport = buildTextReport(result)
 
         log.info(">>>>> ... ecosystem-healthcheck finished")
+
         return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: recommendations)
     }
 

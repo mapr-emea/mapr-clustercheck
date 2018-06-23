@@ -16,7 +16,7 @@ modules:
     tests:
     - name: drill-jdbc-file-json-plainauth
       drill_port: 31010
-      enabled: true
+      enabled: false
     - name: drill-jdbc-file-json-maprsasl
       drill_port: 31010
       enabled: false
@@ -26,15 +26,15 @@ modules:
     - name: drill-jdbc-maprdb-json-maprsasl
       drill_port: 31010
       enabled: false
-    - name: drill-ui-unsecured
-      drill_ui_port: 8047
-      enabled: false
     - name: drill-ui-secured
       drill_ui_port: 8047
       enabled: false
-    - name: maprdb-json-shell-maprsasl
+    - name: drill-ui-unsecured
+      drill_ui_port: 8047
+      enabled: false
+    - name: maprdb-json-shell
       enabled: true
-    - name: maprdb-json-shell-unsecured
+    - name: maprdb-binary-shell
       enabled: true
   benchmark-memory:
     enabled: false
@@ -106,6 +106,6 @@ nodes-global-config:
   ssh_identity: /Users/xuelansun/.ssh/xsun_keypair_aws.pem
 
 nodes:
-- host: 172.31.46.37
+- host: 172.31.32.43
   roles:
   - clusterjob-execution
