@@ -11,12 +11,12 @@ class EcoSystemDrill {
 
     static final Logger log = LoggerFactory.getLogger(EcoSystemDrill.class)
 
-    static final String maprFsDir = "/tmp/.clustercheck/ecosystem-healthcheck/drill"
-    static final String drillJsonFile = "drill_people.json"
-    static final String drillSqlFile = "drill_people.sql"
-    static final String drillMaprdbSqlFile = "drill_people_maprdb.sql"
-    static final String drillMaprdbJsonTable = "drill_people_maprdb"
-    static final String drillPath = "/opt/mapr/drill/drill-*"
+    static final String DIR_MAPR_FS = "/tmp/.clustercheck/ecosystem-healthcheck/drill"
+    static final String FILE_DRILL_JSON = "drill_people.json"
+    static final String FILE_DRILL_QUERY = "drill_people.sql"
+    static final String FILE_DRILL_MAPR_DB_QUERY = "drill_people_maprdb.sql"
+    static final String TB_DRILL_MAPR_DB_JSON = "drill_people_maprdb"
+    static final String PATH_DRILL = "/opt/mapr/drill/drill-*"
     
     @Autowired
     EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
@@ -27,11 +27,11 @@ class EcoSystemDrill {
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
-            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(drillJsonFile, delegate)
-            def sqlPath = ecoSystemHealthcheckUtil.uploadFile(drillSqlFile, delegate)
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprFsDir}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${maprFsDir}"
-            nodeResult['drillPath'] = execute "ls -d ${drillPath}"
+            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
+            def sqlPath = ecoSystemHealthcheckUtil.uploadFile(FILE_DRILL_QUERY, delegate)
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS}"
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS}"
+            nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
             nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv"
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
             nodeResult
@@ -48,11 +48,11 @@ class EcoSystemDrill {
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
-            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(drillJsonFile, delegate)
-            def sqlPath = ecoSystemHealthcheckUtil.uploadFile(drillSqlFile, delegate)
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprFsDir}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${maprFsDir}"
-            nodeResult['drillPath'] = execute "ls -d ${drillPath}"
+            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
+            def sqlPath = ecoSystemHealthcheckUtil.uploadFile(FILE_DRILL_QUERY, delegate)
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS}"
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS}"
+            nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
             nodeResult['output'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv"
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
             nodeResult
@@ -68,11 +68,11 @@ class EcoSystemDrill {
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
-            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(drillJsonFile, delegate)
-            def sqlPath = ecoSystemHealthcheckUtil.uploadFile(drillMaprdbSqlFile, delegate)
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprFsDir}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFsDir}/${drillJsonFile} -dst ${maprFsDir}/${drillMaprdbJsonTable} -mapreduce false"
-            nodeResult['drillPath'] = execute "ls -d ${drillPath}"
+            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
+            def sqlPath = ecoSystemHealthcheckUtil.uploadFile(FILE_DRILL_MAPR_DB_QUERY, delegate)
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS}"
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${DIR_MAPR_FS}/${FILE_DRILL_JSON} -dst ${DIR_MAPR_FS}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
+            nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
             nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv"
             nodeResult['success'] = nodeResult['output'].contains("4 rows selected")
             nodeResult
@@ -88,11 +88,11 @@ class EcoSystemDrill {
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-drill", {
             def nodeResult = [:]
-            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(drillJsonFile, delegate)
-            def sqlPath = ecoSystemHealthcheckUtil.uploadFile(drillMaprdbSqlFile, delegate)
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprFsDir}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFsDir}/${drillJsonFile} -dst ${maprFsDir}/${drillMaprdbJsonTable} -mapreduce false"
-            nodeResult['drillPath'] = execute "ls -d ${drillPath}"
+            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
+            def sqlPath = ecoSystemHealthcheckUtil.uploadFile(FILE_DRILL_MAPR_DB_QUERY, delegate)
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS}"
+            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${DIR_MAPR_FS}/${FILE_DRILL_JSON} -dst ${DIR_MAPR_FS}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
+            nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
             nodeResult['output'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv"
             nodeResult['success'] = nodeResult['output'].contains("4 rows selected")
             nodeResult

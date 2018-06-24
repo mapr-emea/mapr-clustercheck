@@ -12,6 +12,10 @@ class EcoSystemHealthcheckUtil {
 
     static final Logger log = LoggerFactory.getLogger(EcoSystemHealthcheckUtil.class)
 
+    static final String PATH_ECO_SYS = ".clustercheck/ecosystem-healthcheck"
+
+    static final String PATH_CLASSPATH = "/com/mapr/emea/ps/clustercheck/module/ecosystem/healthcheck"
+
     @Autowired
     @Qualifier("ssh")
     def ssh
@@ -93,10 +97,10 @@ class EcoSystemHealthcheckUtil {
         log.trace("Start : EcoSystemHealthcheckUtil : uploadFile")
 
         def homePath = delegate.execute 'echo $HOME'
-        delegate.execute "mkdir -p ${homePath}/.clustercheck/ecosystem-healthcheck/"
-        def fileInputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/ecosystem/healthcheck/${fileName}").getInputStream()
-        delegate.put from: fileInputStream, into: "${homePath}/.clustercheck/ecosystem-healthcheck/${fileName}"
-        def path = "${homePath}/.clustercheck/ecosystem-healthcheck/${fileName}"
+        delegate.execute "mkdir -p ${homePath}/${PATH_ECO_SYS}/"
+        def fileInputStream = resourceLoader.getResource("classpath:${PATH_CLASSPATH}/${fileName}").getInputStream()
+        delegate.put from: fileInputStream, into: "${homePath}/${PATH_ECO_SYS}/${fileName}"
+        def path = "${homePath}/${PATH_ECO_SYS}/${fileName}"
 
         log.trace("End : EcoSystemHealthcheckUtil : uploadFile")
 
