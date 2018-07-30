@@ -22,18 +22,13 @@ modules:
       data_per_thread: 2G
       mode: all
   benchmark-maprfs-dfsio:
-    enabled: false
+    enabled: true
     role: clusterjob-execution
     tests:
     - dfsio_number_of_files: 5
-      dfsio_file_size_in_mb: 256
+      dfsio_file_size_in_mb: 32
       topology: /data
       replication: 3
-      compression: 'off'
-    - dfsio_number_of_files: 5
-      dfsio_file_size_in_mb: 256
-      topology: /data
-      replication: 1
       compression: 'off'
   benchmark-maprfs-rwtest:
     enabled: false
@@ -74,12 +69,12 @@ nodes-global-config:
   - /dev/nvme1n1
   - /dev/nvme2n1
   - /dev/nvme3n1
-  ssh_user: ec2-user
+  ssh_user: root
   ssh_identity: /Users/chufe/.ssh/id_rsa
 
 nodes:
-- host: 10.0.0.63
+- host: 10.250.51.141
   roles:
   - clusterjob-execution
-- host: 10.0.0.110
-- host: 10.0.0.232
+- host: 10.250.51.142
+- host: 10.250.51.143

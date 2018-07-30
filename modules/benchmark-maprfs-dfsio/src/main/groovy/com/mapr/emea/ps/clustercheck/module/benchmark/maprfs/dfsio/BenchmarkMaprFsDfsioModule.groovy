@@ -171,6 +171,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
       -Dmapreduce.reduce.speculative=false \\
       -Dtest.build.data=/${volumeName}/TestDFSIO \\
       -write -nrFiles ${numberOfFiles} \\
+      -resFile /tmp/TestDFSIO_results.log \\
       -fileSize ${fileSizeInMB}  -bufferSize 65536
 """)
                 def endWrite = System.currentTimeMillis()
@@ -184,6 +185,7 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
       -Dmapreduce.reduce.speculative=false \\
       -Dtest.build.data=/${volumeName}/TestDFSIO \\
       -read -nrFiles ${numberOfFiles} \\
+      -resFile /tmp/TestDFSIO_results.log \\
       -fileSize ${fileSizeInMB}  -bufferSize 65536
 """)
                 def endRead = System.currentTimeMillis()
@@ -226,6 +228,9 @@ class BenchmarkMaprFsDfsioModule implements ExecuteModule {
 
     def getDoubleValueFromTokens(tokens, description) {
         def line = tokens.find { it.contains(description) }
+        if(!line) {
+            return "failed"
+        }
         return Double.valueOf(line.tokenize(" ")[-1])
     }
 }
