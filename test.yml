@@ -14,7 +14,7 @@ modules:
     enabled: true
     tests:
     - mode: READONLY
-      data_in_mb: 2048
+      data_in_mb: 256
   benchmark-network-iperf:
     enabled: true
     tests:
@@ -31,7 +31,7 @@ modules:
       replication: 3
       compression: 'off'
   benchmark-maprfs-rwtest:
-    enabled: false
+    enabled: true
     tests:
     - volume_type: local
       compression: 'off'
@@ -69,12 +69,20 @@ nodes-global-config:
   - /dev/nvme1n1
   - /dev/nvme2n1
   - /dev/nvme3n1
-  ssh_user: root
+  ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
 
 nodes:
-- host: 10.250.51.141
+#- host: 10.250.51.141
+#  roles:
+#  - clusterjob-execution
+#- host: 10.250.51.142
+#- host: 10.250.51.143
+- host: 10.0.0.41
+  disks:
+  - /dev/nvme1n1
   roles:
   - clusterjob-execution
-- host: 10.250.51.142
-- host: 10.250.51.143
+- host: 10.0.0.46
+  disks:
+  - /dev/nvme2n1
