@@ -151,7 +151,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
                 result['maprdb-binary-shell'] = ecoSystemMaprDb.verifyMaprdbBinaryShell(packages, ticketfile)
 
             } else {
-                log.error(">>>>> ... Test with name '${test['name']}' not found!")
+                log.info(">>>>> ... Test '${test['name']}' not found!")
             }
         }
 

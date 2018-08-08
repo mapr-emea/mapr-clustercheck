@@ -31,6 +31,11 @@ class EcoSystemHealthcheckUtil {
         return "su ${globalYamlConfig.mapr_user} -c 'export MAPR_TICKETFILE_LOCATION=${ticketFile};${exec}'"
     }
 
+    /**
+     * Retrieve MapR Packages installed
+     * @param role
+     * @return
+     */
     def retrievePackages(role) {
 
         log.trace("Start : EcoSystemHealthcheckUtil : retrievePackages")
@@ -58,6 +63,12 @@ class EcoSystemHealthcheckUtil {
         return packages
     }
 
+    /**
+     * Find hosts with package installed
+     * @param packages
+     * @param packageName
+     * @return
+     */
     static List<Object> findHostsWithPackage(List packages, packageName) {
         log.trace("Start : EcoSystemHealthcheckUtil : findHostsWithPackage")
         def hostsFound = packages.findAll { it['mapr.packages'].find { it.contains(packageName) } != null }.collect { it['host'] }
@@ -67,6 +78,13 @@ class EcoSystemHealthcheckUtil {
         return hostsFound
     }
 
+    /**
+     * Execute commands remotely, remote hosts are detected automatically by checking packageName
+     * @param packages
+     * @param packageName
+     * @param closure
+     * @return
+     */
     def executeSsh(List<Object> packages, String packageName, Closure closure) {
         log.trace("Start : EcoSystemHealthcheckUtil : executeSsh")
 
@@ -93,6 +111,12 @@ class EcoSystemHealthcheckUtil {
         result
     }
 
+    /**
+     * Upload local file to remote
+     * @param fileName
+     * @param delegate
+     * @return
+     */
     def uploadFile(String fileName, delegate) {
         log.trace("Start : EcoSystemHealthcheckUtil : uploadFile")
 
@@ -106,4 +130,45 @@ class EcoSystemHealthcheckUtil {
 
         return path
     }
+
+    /**
+     * Upload remote file to MapR-FS
+     * @param ticketfile
+     * @param fileName
+     * @param maprfspath
+     * @param delegate
+     * @return
+     */
+    def uploadRemoteFileToMaprfs(String ticketfile, String fileName, String maprfspath, delegate){
+        log.trace("Start : EcoSystemHealthcheckUtil : uploadRemoteFileToMaprfs")
+
+        delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put ${fileName} ${maprfspath}"
+
+        log.trace("End : EcoSystemHealthcheckUtil : uploadRemoteFileToMaprfs")
+
+        return maprfspath
+    }
+
+    /**
+     * Remove MapR-FS file/directory if exists
+     * @param ticketfile
+     * @param fileName
+     * @param delegate
+     * @return
+     */
+    def removeMaprfsFileIfExist(String ticketfile, String fileName, delegate){
+        log.trace("Start : EcoSystemHealthcheckUtil : removeMaprfsFileIfExist")
+
+        def result = delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -ls ${fileName}"
+
+        if(result.contains("No such file or directory")){
+            log.info("${fileName} doesn't exist.")
+        } else {
+            log.debug("${fileName} exists, will be removed.")
+            delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r ${fileName}"
+        }
+
+        log.trace("End : EcoSystemHealthcheckUtil : removeMaprfsFileIfExist")
+    }
+
 }

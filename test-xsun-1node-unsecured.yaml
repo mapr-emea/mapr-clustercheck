@@ -106,6 +106,6 @@ nodes-global-config:
   ssh_identity: /Users/xuelansun/.ssh/xsun_keypair_aws.pem
 
 nodes:
-- host: 172.31.37.104
+- host: 172.31.39.78
   roles:
   - clusterjob-execution
