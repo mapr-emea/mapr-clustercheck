@@ -420,7 +420,7 @@ for i in \$disklist; do
 done
 wait
 sleep 3
-for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(basename \$i)-dd.log; done
+for i in \$disklist; do echo "\$i "; grep -E 'MB/s|GB/s' ${homePath}/.clustercheck/\$(basename \$i)-dd.log; done
 """.getBytes())
 
 
@@ -448,7 +448,14 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
                                 def data = lines[dataIdx + 1].replaceAll("\\(.*?\\)", "").tokenize(',')
                                 res['readBytes'] = data[0].trim().tokenize(' ')[0] as Long
                                 res['timeInSeconds'] = data[1].trim().tokenize(' ')[0] as Double
-                                res['throughputInMBperSecond'] = data[2].trim().tokenize(' ')[0] as Double
+
+                                if(data[2].trim().tokenize(' ')[1].equals("GB/s")){
+                                    //When the unit is GB/s
+                                    res['throughputInMBperSecond'] = (data[2].trim().tokenize(' ')[0] as Double) * 1000
+                                } else {
+                                    res['throughputInMBperSecond'] = data[2].trim().tokenize(' ')[0] as Double
+                                }
+
                                 return res
                             }
                             node['host'] = remote.host
