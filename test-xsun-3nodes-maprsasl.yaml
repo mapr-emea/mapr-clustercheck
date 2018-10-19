@@ -29,12 +29,16 @@ modules:
     - name: drill-ui-insecure
       drill_ui_port: 8047
       enabled: true
-    - name: drill-ui-secured-pam
+    - name: drill-ui-secure-pam
       drill_ui_port: 8047
       enabled: true
     - name: maprdb-json-shell
       enabled: true
     - name: maprdb-binary-shell
+      enabled: true
+    - name: mcs-ui-secure-pam
+      enabled: true
+    - name: mcs-ui-insecure-ssl
       enabled: true
   benchmark-memory:
     enabled: false

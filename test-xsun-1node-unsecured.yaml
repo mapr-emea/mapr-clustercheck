@@ -26,7 +26,7 @@ modules:
     - name: drill-jdbc-maprdb-json-maprsasl
       drill_port: 31010
       enabled: false
-    - name: drill-ui-secured-pam
+    - name: drill-ui-secure-pam
       drill_ui_port: 8047
       enabled: false
     - name: drill-ui-insecure

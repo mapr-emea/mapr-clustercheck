@@ -11,7 +11,7 @@
 
 * drill-ui-insecure
 
-* drill-ui-secured-pam
+* drill-ui-secure-pam
 
 * maprdb-json-shell
 

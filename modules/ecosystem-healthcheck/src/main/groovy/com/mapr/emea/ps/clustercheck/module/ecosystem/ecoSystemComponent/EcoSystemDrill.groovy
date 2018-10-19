@@ -173,9 +173,9 @@ class EcoSystemDrill {
      * @param port
      * @return
      */
-    def verifyDrillUiinsecure(List<Object> packages, int port) {
+    def verifyDrillUiInsecure(List<Object> packages, int port) {
 
-        log.trace("Start : EcoSystemDrill : verifyDrillUiinsecure")
+        log.trace("Start : EcoSystemDrill : verifyDrillUiInsecure")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
@@ -184,7 +184,7 @@ class EcoSystemDrill {
             nodeResult
         })
 
-        log.trace("End : EcoSystemDrill : verifyDrillUiinsecure")
+        log.trace("End : EcoSystemDrill : verifyDrillUiInsecure")
         testResult
     }
 
@@ -196,9 +196,9 @@ class EcoSystemDrill {
      * @param port
      * @return
      */
-    def verifyDrillUiSecured(List<Object> packages, String username, String password, int port) {
+    def verifyDrillUiSecure(List<Object> packages, String username, String password, int port) {
 
-        log.trace("Start : EcoSystemDrill : verifyDrillUiSecured")
+        log.trace("Start : EcoSystemDrill : verifyDrillUiSecure")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
@@ -208,7 +208,7 @@ class EcoSystemDrill {
             nodeResult
         })
 
-        log.trace("End : EcoSystemDrill : verifyDrillUiSecured")
+        log.trace("End : EcoSystemDrill : verifyDrillUiSecure")
         testResult
     }
 }
