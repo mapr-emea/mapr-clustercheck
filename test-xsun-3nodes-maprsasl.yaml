@@ -1,4 +1,4 @@
-cluster_name: demo.mapr.com
+cluster_name: mapr6.0.1-centos7.5
 customer_name: Custom Test Environment
 output_dir: /Users/xuelansun/Git/mapr-clustercheck/build/audit-result
 mapr_user: mapr
@@ -12,9 +12,9 @@ modules:
     enabled: true
     ticketfile: /opt/mapr/conf/mapruserticket
     username: mapr
-    password: mapr
+    password: mapr123
     tests:
-    - name: drill-jdbc-file-json-plainauth
+    - name: drill-jdbc-jsonfile-plainauth
       drill_port: 31010
       enabled: true
     - name: drill-jdbc-file-json-maprsasl
@@ -26,10 +26,10 @@ modules:
     - name: drill-jdbc-maprdb-json-maprsasl
       drill_port: 31010
       enabled: true
-    - name: drill-ui-unsecured
+    - name: drill-ui-insecure
       drill_ui_port: 8047
       enabled: true
-    - name: drill-ui-secured
+    - name: drill-ui-secured-pam
       drill_ui_port: 8047
       enabled: true
     - name: maprdb-json-shell
@@ -102,12 +102,12 @@ nodes-global-config:
   - /dev/xvdb
   - /dev/xvdc
   - /dev/xvdd
-  ssh_user: ec2-user
-  ssh_identity: /Users/xuelansun/.ssh/xsun_keypair_aws.pem
+  ssh_user: centos
+  ssh_identity: /Users/xuelansun/.ssh/xsun-keypair-eu-west-2.pem
 
 nodes:
-- host: 172.31.46.37
+- host: 10.0.0.85
   roles:
   - clusterjob-execution
-- host: 172.31.46.188
-- host: 172.31.32.43
+- host: 10.0.0.157
+- host: 10.0.0.186

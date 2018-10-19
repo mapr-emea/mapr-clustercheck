@@ -11,6 +11,7 @@ class EcoSystemMaprDb {
 
     static final Logger log = LoggerFactory.getLogger(EcoSystemMaprDb.class)
 
+    static final String PACKAGE_NAME = "mapr-core"
     static final String DIR_MAPR_FS_MAPRDB = "/tmp/.clustercheck/ecosystem-healthcheck/maprdb"
     static final String FILE_MAPR_DB_JSON_QUERY = "maprdb_json_query"
     static final String FILE_MAPR_DB_JSON = "maprdb_people.json"
@@ -21,11 +22,18 @@ class EcoSystemMaprDb {
     @Autowired
     EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
 
+    /**
+     * Verify MapRDB Json, Using mapr dbshell utility
+     * https://mapr.com/docs/home/MapR-DB/JSON_DB/getting_started_json_ojai_using_maprdb_shell.html
+     * @param packages
+     * @param ticketfile
+     * @return
+     */
     def verifyMaprdbJsonShell(List<Object> packages, String ticketfile) {
 
         log.trace("Start : EcoSystemMaprDb : verifyMaprdbJsonShell")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-core", {
+        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
             def jsonPath = ecoSystemHealthcheckUtil.uploadFile("maprdb_people.json", delegate)
             def queryPath = ecoSystemHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON_QUERY, delegate)
@@ -48,11 +56,17 @@ class EcoSystemMaprDb {
         testResult
     }
 
+    /**
+     * Verify MapRDB Binary, Using maprcli utility
+     * @param packages
+     * @param ticketfile
+     * @return
+     */
     def verifyMaprdbBinaryShell(List<Object> packages, String ticketfile) {
 
         log.trace("Start : EcoSystemMaprDb : verifyMaprdbBinaryShell")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, "mapr-core", {
+        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
             ecoSystemHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)

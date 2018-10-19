@@ -8,25 +8,13 @@ modules:
     enabled: true
   cluster-config-audit:
     enabled: true
-  ecosystem-healthcheck:
-    enabled: true
-    ticketfile: /opt/mapr/conf/mapruserticket
-    username: mapr
-    password: mapr
-    tests:
-    - name: drill-jdbc-file-json-plainauth
-      drill_port: 31010
-      enabled: true
-    - name: drill-jdbc-file-json-maprsasl
-      drill_port: 31010
-      enabled: true
   benchmark-memory:
     enabled: true
   benchmark-rawdisk:
     enabled: true
     tests:
     - mode: READONLY
-      data_in_mb: 2048
+      data_in_mb: 256
   benchmark-network-iperf:
     enabled: true
     tests:
@@ -34,21 +22,16 @@ modules:
       data_per_thread: 2G
       mode: all
   benchmark-maprfs-dfsio:
-    enabled: false
+    enabled: true
     role: clusterjob-execution
     tests:
     - dfsio_number_of_files: 5
-      dfsio_file_size_in_mb: 256
+      dfsio_file_size_in_mb: 32
       topology: /data
       replication: 3
       compression: 'off'
-    - dfsio_number_of_files: 5
-      dfsio_file_size_in_mb: 256
-      topology: /data
-      replication: 1
-      compression: 'off'
   benchmark-maprfs-rwtest:
-    enabled: false
+    enabled: true
     tests:
     - volume_type: local
       compression: 'off'
@@ -86,12 +69,20 @@ nodes-global-config:
   - /dev/nvme1n1
   - /dev/nvme2n1
   - /dev/nvme3n1
-  ssh_user: root
+  ssh_user: ec2-user
   ssh_identity: /Users/chufe/.ssh/id_rsa
 
 nodes:
-- host: 10.250.51.141
+#- host: 10.250.51.141
+#  roles:
+#  - clusterjob-execution
+#- host: 10.250.51.142
+#- host: 10.250.51.143
+- host: 10.0.0.41
+  disks:
+  - /dev/nvme1n1
   roles:
   - clusterjob-execution
-- host: 10.250.51.142
-- host: 10.250.51.143
+- host: 10.0.0.46
+  disks:
+  - /dev/nvme2n1

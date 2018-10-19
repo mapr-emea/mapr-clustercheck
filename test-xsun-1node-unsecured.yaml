@@ -14,7 +14,7 @@ modules:
     username: mapr
     password: mapr
     tests:
-    - name: drill-jdbc-file-json-plainauth
+    - name: drill-jdbc-jsonfile-plainauth
       drill_port: 31010
       enabled: true
     - name: drill-jdbc-file-json-maprsasl
@@ -26,10 +26,10 @@ modules:
     - name: drill-jdbc-maprdb-json-maprsasl
       drill_port: 31010
       enabled: false
-    - name: drill-ui-secured
+    - name: drill-ui-secured-pam
       drill_ui_port: 8047
       enabled: false
-    - name: drill-ui-unsecured
+    - name: drill-ui-insecure
       drill_ui_port: 8047
       enabled: true
     - name: maprdb-json-shell

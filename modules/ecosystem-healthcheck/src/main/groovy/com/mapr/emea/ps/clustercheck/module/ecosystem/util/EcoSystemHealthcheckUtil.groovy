@@ -71,6 +71,7 @@ class EcoSystemHealthcheckUtil {
      */
     static List<Object> findHostsWithPackage(List packages, packageName) {
         log.trace("Start : EcoSystemHealthcheckUtil : findHostsWithPackage")
+
         def hostsFound = packages.findAll { it['mapr.packages'].find { it.contains(packageName) } != null }.collect { it['host'] }
 
         log.trace("End : EcoSystemHealthcheckUtil : findHostsWithPackage")
@@ -89,6 +90,9 @@ class EcoSystemHealthcheckUtil {
         log.trace("Start : EcoSystemHealthcheckUtil : executeSsh")
 
         def appHosts = findHostsWithPackage(packages, packageName)
+
+        log.debug("Found ${packageName} installed on nodes : ${appHosts}")
+
         def result = Collections.synchronizedList([])
         appHosts.each { appHost ->
             log.info(">>>>>>> ..... testing node ${appHost}")
@@ -159,10 +163,12 @@ class EcoSystemHealthcheckUtil {
     def removeMaprfsFileIfExist(String ticketfile, String fileName, delegate){
         log.trace("Start : EcoSystemHealthcheckUtil : removeMaprfsFileIfExist")
 
+        log.info("Testing existence of MapR-FS directory: ${fileName} ... Error with status 1 when it doesn't exist.")
+
         def result = delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -ls ${fileName}"
 
         if(result.contains("No such file or directory")){
-            log.info("${fileName} doesn't exist.")
+            log.debug("${fileName} doesn't exist.")
         } else {
             log.debug("${fileName} exists, will be removed.")
             delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r ${fileName}"
