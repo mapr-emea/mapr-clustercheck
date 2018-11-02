@@ -267,7 +267,7 @@ sleep 3
                         execute "chmod 777 ${tmpModule}"
                         put from: writeBashScript, into: "${tmpModule}/rwtestwrite_standard_write"
 //                        executeSudo suStr("cp /tmp/rwtestwrite_standard_write ${homePath}/.clustercheck/rwtestwrite_standard_write")
-                        executeSudo suStr("chmod +x ${tmpModule}/rwtestwrite_standard_write")
+                        execute "chmod +x ${tmpModule}/rwtestwrite_standard_write"
                         def writeResult = executeSudo suStr("${tmpModule}/rwtestwrite_standard_write")
 
 
@@ -282,7 +282,7 @@ sleep 3
 
                         put from: readBashScript, into: "${tmpModule}/rwtestread_standard_read"
 //                        executeSudo suStr("cp /tmp/rwtestread_standard_read ${homePath}/.clustercheck/rwtestread_standard_read")
-                        executeSudo suStr("chmod +x ${tmpModule}/rwtestread_standard_read")
+                        execute "chmod +x ${tmpModule}/rwtestread_standard_read"
                         def readResult = executeSudo suStr("${tmpModule}/rwtestread_standard_read")
                         // Delete volume
                         executeSudo suStr("maprcli volume unmount -name ${volumeName} | xargs echo"
