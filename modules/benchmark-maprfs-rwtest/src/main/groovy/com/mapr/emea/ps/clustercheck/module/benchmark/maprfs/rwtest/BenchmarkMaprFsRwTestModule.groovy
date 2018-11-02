@@ -159,7 +159,8 @@ wait
 sleep 3 
 """.getBytes())
                             def tmpModule = "${tmpPath}/benchmark-maprfs-rwtest"
-                            executeSudo suStr("chmod 777 -p ${tmpModule}")
+                            execute "mkdir -p ${tmpModule}"
+                            execute "chmod 777 ${tmpModule}"
                             put from: writeBashScript, into: "${tmpModule}/rwtestread_local_write"
 //                            executeSudo suStr("cp /tmp/rwtestread_local_write ${homePath}/.clustercheck/rwtestread_local_write")
                             executeSudo suStr("chmod +x ${tmpModule}/rwtestread_local_write")
@@ -262,8 +263,8 @@ wait
 sleep 3 
 """.getBytes())
                         def tmpModule = "${tmpPath}/benchmark-maprfs-rwtest"
-                        executeSudo suStr("mkdir -p ${tmpModule}")
-                        executeSudo suStr("chmod 777 -p ${tmpModule}")
+                        execute "mkdir -p ${tmpModule}"
+                        execute "chmod 777 ${tmpModule}"
                         put from: writeBashScript, into: "${tmpModule}/rwtestwrite_standard_write"
 //                        executeSudo suStr("cp /tmp/rwtestwrite_standard_write ${homePath}/.clustercheck/rwtestwrite_standard_write")
                         executeSudo suStr("chmod +x ${tmpModule}/rwtestwrite_standard_write")
