@@ -129,7 +129,7 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
                 execute "chmod 777 ${tmpModule}"
                 put from: inputStream, into: "${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar"
                 sparkTeraJar = "${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar"
-                executeSudo("chmod 755 ${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar")
+                execute "chmod 755 ${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar"
             }
         }
         return sparkTeraJar
