@@ -25,7 +25,9 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
-
+    @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath;
     @Autowired
     ResourceLoader resourceLoader;
 
@@ -122,11 +124,12 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
         ssh.run {
             session(ssh.remotes.role(role)) {
                 def inputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/benchmark/yarn/terasort/spark/spark-2.1-terasort-1.1-SNAPSHOT.jar").getInputStream()
-                put from: inputStream, into: "/tmp/spark-2.1-terasort-1.1-SNAPSHOT.jar"
-                def homePath = executeSudo(suStr("echo \$HOME"))
-                executeSudo(suStr("mkdir -p ${homePath}/.clustercheck"))
-                executeSudo(suStr("cp /tmp/spark-2.1-terasort-1.1-SNAPSHOT.jar ${homePath}/.clustercheck/spark-2.1-terasort-1.1-SNAPSHOT.jar"))
-                sparkTeraJar = "${homePath}/.clustercheck/spark-2.1-terasort-1.1-SNAPSHOT.jar"
+                def tmpModule = "${tmpPath}/benchmark-yarn-terasort-spark"
+                execute "mkdir -p ${tmpModule}"
+                execute "chmod 777 ${tmpModule}"
+                put from: inputStream, into: "${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar"
+                sparkTeraJar = "${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar"
+                executeSudo("chmod 755 ${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar")
             }
         }
         return sparkTeraJar

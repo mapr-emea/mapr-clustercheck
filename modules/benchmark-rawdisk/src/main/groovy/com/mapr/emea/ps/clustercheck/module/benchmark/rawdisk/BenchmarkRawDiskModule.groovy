@@ -25,7 +25,9 @@ class BenchmarkRawDiskModule implements ExecuteModule {
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
-
+    @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath;
     @Autowired
     ResourceLoader resourceLoader;
 
@@ -240,7 +242,8 @@ class BenchmarkRawDiskModule implements ExecuteModule {
                             pty = true
                         }
                         session(ssh.remotes.role(currentNode.host)) {
-                            def homePath = execute 'echo $HOME'
+                            def tmpModule = "${tmpPath}/benchmark-rawdisk"
+                            execute "mkdir -p ${tmpModule}"
 
                             def node = [:]
                             def wardenStatus = executeSudo("service mapr-warden status | xargs echo")
@@ -263,21 +266,20 @@ size=${dataInMB}
 
 iozopts="-I -r 1M -s \${size}M -k 10 -+n -i 0 -i 1 -i 2"
 for disk in \$disklist; do
-  iozlog=${homePath}/.clustercheck/\$(basename \$disk)-iozone.log
-  ${homePath}/.clustercheck/iozone \$iozopts -f \$disk > \$iozlog &
+  iozlog=${tmpModule}/\$(basename \$disk)-iozone.log
+  ${tmpModule}/iozone \$iozopts -f \$disk > \$iozlog &
   sleep 2 #Some disk controllers lockup without a delay
 done
 wait
 """.getBytes())
 
 
-                            execute("mkdir -p ${homePath}/.clustercheck")
-                            put from: bashScript, into: "/tmp/benchmark-rawdisk-destroy"
-                            execute("cp /tmp/benchmark-rawdisk-destroy ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
-                            execute("chmod +x ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
+                            put from: bashScript, into: "${tmpModule}/benchmark-rawdisk-destroy"
+//                            execute("cp /tmp/benchmark-rawdisk-destroy ${homePath}/.clustercheck/benchmark-rawdisk-destroy")
+                            execute("chmod +x ${tmpModule}/benchmark-rawdisk-destroy")
                             sleep(1000)
 
-                            def readResult = executeSudo("${homePath}/.clustercheck/benchmark-rawdisk-destroy")
+                            def readResult = executeSudo("${tmpModule}/benchmark-rawdisk-destroy")
                             if (readResult.contains("Invalid argument")) {
                                 node['error'] = "Cannot read disk: " + readResult
                                 tests.add(node)
@@ -285,7 +287,7 @@ wait
                             }
                             def diskTests = disks.collect { disk ->
                                 def diskBasename = FilenameUtils.getBaseName(disk)
-                                def content = executeSudo("cat ${homePath}/.clustercheck/${diskBasename}-iozone.log")
+                                def content = executeSudo("cat ${tmpModule}/${diskBasename}-iozone.log")
                                 def tmpTokens = content.tokenize('\n').find {
                                     it =~ /^[\d ]*$/
                                 }
@@ -405,7 +407,8 @@ wait
                             pty = true
                         }
                         session(ssh.remotes.role(currentNode.host)) {
-                            def homePath = execute 'echo $HOME'
+                            def tmpModule = "${tmpPath}/benchmark-rawdisk"
+                            execute "mkdir -p ${tmpModule}"
 
                             def node = [:]
                             def disks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks'])
@@ -416,20 +419,19 @@ size=${dataInMB}
 ddopts="of=/dev/null iflag=direct bs=1M count=\$size"
 for i in \$disklist; do
 #    dd if=\$i \$ddopts |& tee \$(basename \$i)-dd.log &
-    dd if=\$i \$ddopts |& tee ${homePath}/.clustercheck/\$(basename \$i)-dd.log &
+    dd if=\$i \$ddopts |& tee ${tmpModule}/\$(basename \$i)-dd.log &
 done
 wait
 sleep 3
-for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(basename \$i)-dd.log; done
+for i in \$disklist; do echo "\$i "; grep 'MB/s' ${tmpModule}/\$(basename \$i)-dd.log; done
 """.getBytes())
 
 
-                            execute("mkdir -p ${homePath}/.clustercheck")
-                            put from: bashScript, into: "/tmp/benchmark-rawdisk-readonly"
-                            execute("cp /tmp/benchmark-rawdisk-readonly ${homePath}/.clustercheck/benchmark-rawdisk-readonly")
-                            execute("chmod +x ${homePath}/.clustercheck/benchmark-rawdisk-readonly")
+                            put from: bashScript, into: "${tmpModule}/benchmark-rawdisk-readonly"
+//                            execute("cp /tmp/benchmark-rawdisk-readonly ${homePath}/.clustercheck/benchmark-rawdisk-readonly")
+                            execute("chmod +x ${tmpModule}/benchmark-rawdisk-readonly")
                             sleep(1000)
-                            def readResult = executeSudo("${homePath}/.clustercheck/benchmark-rawdisk-readonly")
+                            def readResult = executeSudo("${tmpModule}/benchmark-rawdisk-readonly")
                             if (readResult.contains("failed to open")) {
                                 node['host'] = remote.host
                                 node['error'] = readResult
@@ -493,11 +495,11 @@ for i in \$disklist; do echo "\$i "; grep 'MB/s' ${homePath}/.clustercheck/\$(ba
         log.info(">>>>> Copy ${tool} to remote hosts")
         ssh.run {
             session(ssh.remotes.role(role)) {
-                def homePath = execute 'echo $HOME'
-                execute "mkdir -p ${homePath}/.clustercheck"
+                def tmpModule = "${tmpPath}/benchmark-rawdisk"
+                execute "mkdir -p ${tmpModule}"
                 def toolInputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/benchmark/rawdisk/" + tool).getInputStream()
-                put from: toolInputStream, into: "${homePath}/.clustercheck/" + tool
-                execute "chmod +x ${homePath}/.clustercheck/" + tool
+                put from: toolInputStream, into: "${tmpModule}/" + tool
+                execute "chmod +x ${tmpModule}/" + tool
             }
         }
     }

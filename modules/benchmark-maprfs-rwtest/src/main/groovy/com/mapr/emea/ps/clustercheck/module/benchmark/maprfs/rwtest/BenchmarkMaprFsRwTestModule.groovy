@@ -36,6 +36,9 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
+    @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath;
 
     @Autowired
     ResourceLoader resourceLoader;
@@ -146,7 +149,7 @@ class BenchmarkMaprFsRwTestModule implements ExecuteModule {
                             executeSudo suStr("hadoop fs -chmod 777 /${volumeName}")
                             executeSudo suStr("hadoop mfs -setcompression ${compression} /${volumeName}")
                             // Run Write test
-                            def homePath = executeSudo suStr("echo \$HOME")
+//                            def homePath = executeSudo suStr("echo \$HOME")
                             def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${numberOfDisks}); do 
@@ -155,12 +158,12 @@ done
 wait 
 sleep 3 
 """.getBytes())
-
-                            executeSudo suStr("mkdir -p ${homePath}/.clustercheck")
-                            put from: writeBashScript, into: "/tmp/rwtestread_local_write"
-                            executeSudo suStr("cp /tmp/rwtestread_local_write ${homePath}/.clustercheck/rwtestread_local_write")
-                            executeSudo suStr("chmod +x ${homePath}/.clustercheck/rwtestread_local_write")
-                            def writeResult = executeSudo suStr("${homePath}/.clustercheck/rwtestread_local_write")
+                            def tmpModule = "${tmpPath}/benchmark-maprfs-rwtest"
+                            executeSudo suStr("chmod 777 -p ${tmpModule}")
+                            put from: writeBashScript, into: "${tmpModule}/rwtestread_local_write"
+//                            executeSudo suStr("cp /tmp/rwtestread_local_write ${homePath}/.clustercheck/rwtestread_local_write")
+                            executeSudo suStr("chmod +x ${tmpModule}/rwtestread_local_write")
+                            def writeResult = executeSudo suStr("${tmpModule}/rwtestread_local_write")
 
 
                             def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
@@ -172,10 +175,10 @@ wait
 sleep 3 
 """.getBytes())
 
-                            put from: readBashScript, into: "/tmp/rwtestread_local_read"
-                            executeSudo suStr("cp /tmp/rwtestread_local_read ${homePath}/.clustercheck/rwtestread_local_read")
-                            executeSudo suStr("chmod +x ${homePath}/.clustercheck/rwtestread_local_read")
-                            def readResult = executeSudo suStr("${homePath}/.clustercheck/rwtestread_local_read")
+                            put from: readBashScript, into: "${tmpModule}/rwtestread_local_read"
+//                            executeSudo suStr("cp /tmp/rwtestread_local_read ${homePath}/.clustercheck/rwtestread_local_read")
+                            executeSudo suStr("chmod +x ${tmpModule}/rwtestread_local_read")
+                            def readResult = executeSudo suStr("${tmpModule}/rwtestread_local_read")
 
                             // Delete volume
                             executeSudo suStr("maprcli volume unmount -name ${volumeName} | xargs echo")
@@ -249,7 +252,7 @@ sleep 3
                         executeSudo suStr("hadoop mfs -setcompression ${compression} /${volumeName}")
 
                         // Run Write test
-                        def homePath = executeSudo suStr("echo \$HOME")
+//                        def homePath = executeSudo suStr("echo \$HOME")
                         def writeBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
 
 for i in \$(seq 1 ${threads}); do 
@@ -258,12 +261,13 @@ done
 wait 
 sleep 3 
 """.getBytes())
-
-                        executeSudo suStr("mkdir -p ${homePath}/.clustercheck")
-                        put from: writeBashScript, into: "/tmp/rwtestwrite_standard_write"
-                        executeSudo suStr("cp /tmp/rwtestwrite_standard_write ${homePath}/.clustercheck/rwtestwrite_standard_write")
-                        executeSudo suStr("chmod +x ${homePath}/.clustercheck/rwtestwrite_standard_write")
-                        def writeResult = executeSudo suStr("${homePath}/.clustercheck/rwtestwrite_standard_write")
+                        def tmpModule = "${tmpPath}/benchmark-maprfs-rwtest"
+                        executeSudo suStr("mkdir -p ${tmpModule}")
+                        executeSudo suStr("chmod 777 -p ${tmpModule}")
+                        put from: writeBashScript, into: "${tmpModule}/rwtestwrite_standard_write"
+//                        executeSudo suStr("cp /tmp/rwtestwrite_standard_write ${homePath}/.clustercheck/rwtestwrite_standard_write")
+                        executeSudo suStr("chmod +x ${tmpModule}/rwtestwrite_standard_write")
+                        def writeResult = executeSudo suStr("${tmpModule}/rwtestwrite_standard_write")
 
 
                         def readBashScript = new ByteArrayInputStream("""#!/usr/bin/env bash
@@ -275,10 +279,10 @@ wait
 sleep 3 
 """.getBytes())
 
-                        put from: readBashScript, into: "/tmp/rwtestread_standard_read"
-                        executeSudo suStr("cp /tmp/rwtestread_standard_read ${homePath}/.clustercheck/rwtestread_standard_read")
-                        executeSudo suStr("chmod +x ${homePath}/.clustercheck/rwtestread_standard_read")
-                        def readResult = executeSudo suStr("${homePath}/.clustercheck/rwtestread_standard_read")
+                        put from: readBashScript, into: "${tmpModule}/rwtestread_standard_read"
+//                        executeSudo suStr("cp /tmp/rwtestread_standard_read ${homePath}/.clustercheck/rwtestread_standard_read")
+                        executeSudo suStr("chmod +x ${tmpModule}/rwtestread_standard_read")
+                        def readResult = executeSudo suStr("${tmpModule}/rwtestread_standard_read")
                         // Delete volume
                         executeSudo suStr("maprcli volume unmount -name ${volumeName} | xargs echo"
                         )// xargs echo removes return code

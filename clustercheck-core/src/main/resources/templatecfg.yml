@@ -2,6 +2,8 @@ cluster_name: demo.mapr.com
 customer_name: Your company name
 output_dir: /path/for/results
 mapr_user: mapr
+# it must be possible to execute binaries, should also not be an NFS mount pointin to same dir
+local_tmp_dir: /tmp/.clustercheck
 
 nodes-global-config:
   disks:
