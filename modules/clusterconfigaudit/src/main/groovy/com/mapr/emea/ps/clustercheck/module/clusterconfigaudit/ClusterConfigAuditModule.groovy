@@ -59,6 +59,10 @@ class ClusterConfigAuditModule implements ExecuteModule {
                 } else {
                     node['mapr.packages'] = executeSudo('rpm -qa | grep mapr').tokenize('\n')
                 }
+                def maprcli_alarm_output = executeSudo(suStr("maprcli alarm list | tail -n +2 | awk '\"'\"'{print \$(NF-1)}'\"'\"'"))
+                if(maprcli_alarm_output.toLowerCase().contains("alarm")){
+                    node['mapr.cluster.alarms'] = maprcli_alarm_output.tokenize('\n')
+                }
                 node['mapr.cldb.key.md5sum'] = executeSudo('md5sum /opt/mapr/conf/cldb.key || true').trim()
                 node['mapr.clusterid'] = executeSudo('cat /opt/mapr/conf/clusterid || true').trim()
                 node['mapr.ssl_truststore'] = collectMaprSslTruststore(exec)
@@ -80,6 +84,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
                 node['hbase.env'] = collectHbaseEnv(exec)
                 node['httpfs.site'] = collectHttpfsSiteProperties(exec)
                 node['httpfs.env'] = collectHttpfsEnv(exec)
+
                 result.add(node)
             }
         }
@@ -122,6 +127,9 @@ class ClusterConfigAuditModule implements ExecuteModule {
         recommendations += ifBuildMessage(groupedResult, "yarn.site", {
             !it.containsKey("yarn.nodemanager.local-dirs")
         }, "Consider setting the YARN NodeManager local dir to MapR-FS: https://maprdocs.mapr.com/home/Spark/ConfigureSparkwithNMLocalDirMapR-FS.html")
+        recommendations += ifBuildMessage(groupedResult, "mapr.cluster.alarms", {
+            it
+        }, "Please clear the alarms.")
         recommendations
     }
 
@@ -135,6 +143,7 @@ class ClusterConfigAuditModule implements ExecuteModule {
         text += buildTextSslReportElement(result, "mapr.ssl_keystore", "MapR /opt/mapr/conf/ssl_keystore")
         text += buildTextStoragePoolReportElement(result, "mapr.storage_pools", "MapR Storage Pools")
         text += buildTextReportElement(result, "mapr.packages", "Installed MapR packages")
+        text += buildTextReportElement(result, "mapr.cluster.alarms", "MapR cluster alarms raised")
         text += buildTextReportElement(result, "mfs.conf", "MapR /opt/mapr/conf/mfs.conf")
         text += buildTextReportElement(result, "cldb.conf", "MapR /opt/mapr/conf/cldb.conf")
         text += buildTextReportElement(result, "zoo.cfg", "Zookeeper configuration zoo.cfg")
@@ -529,5 +538,9 @@ class ClusterConfigAuditModule implements ExecuteModule {
         return collectTextFile("/opt/mapr/hive/hive-*/conf/hive-env.sh", execute)
         //    }
         //    return ["Hive is not installed"]
+    }
+
+    def suStr(exec) {
+        return "su ${globalYamlConfig.mapr_user} -c 'export MAPR_TICKETFILE_LOCATION=/opt/mapr/conf/mapruserticket;${exec}'"
     }
 }
