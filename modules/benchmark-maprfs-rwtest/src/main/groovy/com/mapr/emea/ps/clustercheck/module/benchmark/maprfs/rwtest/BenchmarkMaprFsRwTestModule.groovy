@@ -163,7 +163,7 @@ sleep 3
                             execute "chmod 777 ${tmpModule}"
                             put from: writeBashScript, into: "${tmpModule}/rwtestread_local_write"
 //                            executeSudo suStr("cp /tmp/rwtestread_local_write ${homePath}/.clustercheck/rwtestread_local_write")
-                            executeSudo suStr("chmod +x ${tmpModule}/rwtestread_local_write")
+                            execute "chmod +x ${tmpModule}/rwtestread_local_write"
                             def writeResult = executeSudo suStr("${tmpModule}/rwtestread_local_write")
 
 
@@ -178,7 +178,7 @@ sleep 3
 
                             put from: readBashScript, into: "${tmpModule}/rwtestread_local_read"
 //                            executeSudo suStr("cp /tmp/rwtestread_local_read ${homePath}/.clustercheck/rwtestread_local_read")
-                            executeSudo suStr("chmod +x ${tmpModule}/rwtestread_local_read")
+                            execute "chmod +x ${tmpModule}/rwtestread_local_read"
                             def readResult = executeSudo suStr("${tmpModule}/rwtestread_local_read")
 
                             // Delete volume
