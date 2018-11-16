@@ -107,8 +107,8 @@ class ClusterAuditModule implements ExecuteModule {
                 node['memory.swap_free'] = getColonProperty(memory, "SwapFree")
                 node['memory.hugepage_total'] = getColonProperty(memory, "HugePages_Total")
                 node['memory.hugepage_free'] = getColonProperty(memory, "HugePages_Free")
-                node['memory.dimm_slots'] = executeSudo('dmidecode -t memory |grep -c \'^[[:space:]]*Locator:\'')
-                node['memory.dimm_count'] = executeSudo('dmidecode -t memory | grep -c \'^[[:space:]]Size: [0-9][0-9]*\'')
+                node['memory.dimm_slots'] = executeSudo('dmidecode -t memory |grep -c \'^[[:space:]]*Locator:\' || true')
+                node['memory.dimm_count'] = executeSudo('dmidecode -t memory | grep -c \'^[[:space:]]Size: [0-9][0-9]*\' || true')
                 node['memory.dimm_info'] = executeSudo('dmidecode -t memory | awk \'/Memory Device$/,/^$/ {print}\'')
 
                 // NIC / Ethernet
