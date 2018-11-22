@@ -15,7 +15,7 @@ import org.springframework.core.io.ResourceLoader
 /**
  * Created by chufe on 22.08.17.
  */
-@ClusterCheckModule(name = "benchmark-rawdisk", version = "1.0")
+@ClusterCheckModule(name = "benchmark-rawdisk", version = "1.0.1")
 class BenchmarkRawDiskModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(BenchmarkRawDiskModule.class);
 
