@@ -1,6 +1,6 @@
 cluster_name: demo.mapr.com
 customer_name: Custom Test Environment
-output_dir: /Users/chufe/Documents/workspaces/mapr-clustercheck/audit
+output_dir: C:\\Projects\\clusteraudits\\test
 mapr_user: mapr
 
 modules:
@@ -13,7 +13,7 @@ modules:
   benchmark-rawdisk:
     enabled: true
     tests:
-    - mode: READONLY
+    - mode: DESTROY
       data_in_mb: 256
   benchmark-network-iperf:
     enabled: true
@@ -70,7 +70,7 @@ nodes-global-config:
   - /dev/nvme2n1
   - /dev/nvme3n1
   ssh_user: ec2-user
-  ssh_identity: /Users/chufe/.ssh/id_rsa
+  ssh_identity: C:\\Users\\Carsten Hufe\\id_rsa
 
 nodes:
 #- host: 10.250.51.141
@@ -78,11 +78,6 @@ nodes:
 #  - clusterjob-execution
 #- host: 10.250.51.142
 #- host: 10.250.51.143
-- host: 10.0.0.41
-  disks:
-  - /dev/nvme1n1
+- host: 10.0.0.101
   roles:
   - clusterjob-execution
-- host: 10.0.0.46
-  disks:
-  - /dev/nvme2n1

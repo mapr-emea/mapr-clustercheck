@@ -48,7 +48,74 @@ class BenchmarkRawDiskModule implements ExecuteModule {
                 throw new ModuleValidationException("Only mode 'READONLY' and 'DESTROY' is allowed.")
             }
         }
+
+        def numberOfDestructiveTests = moduleConfig.tests.findAll { it.mode == "DESTROY" }
+        if (numberOfDestructiveTests.size() > 0) {
+            def role = moduleConfig.getOrDefault("role", "all")
+            checkForLsofAvailability(role)
+            checkForUsedDisks(role)
+        }
+        // check that unused disk match with disks in list
         return []
+    }
+
+    def checkForUsedDisks(role) {
+        copyToolToRemoteHost(role, "find_unused_disks.sh")
+        def usedDisksErrors = Collections.synchronizedList([])
+        def nodes = globalYamlConfig.nodes.findAll { role == "all" || it.roles.contains(role) }
+
+        GParsPool.withPool {
+            nodes.eachParallel { currentNode ->
+                log.info(">>>>> ...... on node ${currentNode.host}")
+                ssh.run {
+                    settings {
+                        pty = true
+                    }
+                    session(ssh.remotes.role(currentNode.host)) {
+                        def tmpModule = "${tmpPath}/benchmark-rawdisk"
+                        def unusedDisksString = executeSudo("${tmpModule}/find_unused_disks.sh").trim()
+                        def unusedDisks = unusedDisksString.tokenize(' ') as Set
+                        def definedDisks = currentNode.getOrDefault('disks', globalYamlConfig['nodes-global-config']['disks']) as Set
+                        definedDisks.removeAll(unusedDisks)
+                        if(definedDisks.size() > 0) {
+                            // Used disks are in list
+                            usedDisksErrors << "Node ${currentNode.host} has disks in test which are in use: ${definedDisks.join(' ')}"
+                        }
+                    }
+                }
+            }
+        }
+        if(usedDisksErrors.size() > 0) {
+            throw new ModuleValidationException("There are used disks in destructive mode:\n${usedDisksErrors.join('\n')}")
+        }
+    }
+
+    def checkForLsofAvailability(role) {
+        def nodes = Collections.synchronizedList([])
+        ssh.run {
+            settings {
+                timeoutSec = 10
+                pty = true
+            }
+            session(ssh.remotes.role(role)) {
+                def distribution = execute("[ -f /etc/system-release ] && cat /etc/system-release || cat /etc/os-release | uniq")
+                if (distribution.toLowerCase().contains("ubuntu")) {
+                    def result = execute("dpkg -l lsof > /dev/null || true").trim()
+                    if (result) {
+                        nodes << remote.host
+                    }
+
+                } else {
+                    def result = execute("rpm -q lsof | grep 'is not installed' || true").trim()
+                    if (result) {
+                        nodes << remote.host
+                    }
+                }
+            }
+        }
+        if(nodes.size() > 0) {
+            throw new ModuleValidationException("lsof is required on following nodes: ${nodes.join(' ')}")
+        }
     }
 
     @Override
@@ -246,13 +313,13 @@ class BenchmarkRawDiskModule implements ExecuteModule {
                             execute "mkdir -p ${tmpModule}"
 
                             def node = [:]
-                            def wardenStatus = executeSudo("service mapr-warden status | xargs echo")
+//                            def wardenStatus = executeSudo("service mapr-warden status | xargs echo")
                             node['host'] = remote.host
-                            if (!wardenStatus.contains("could not be found")) {
-                                node['error'] = "Node has a mapr-warden service available. For safety reasons, destructive tests will not run on nodes with MapR's Warden being installed."
-                                tests.add(node)
-                                return
-                            }
+//                            if (!wardenStatus.contains("could not be found")) {
+//                                node['error'] = "Node has a mapr-warden service available. For safety reasons, destructive tests will not run on nodes with MapR's Warden being installed."
+//                                tests.add(node)
+//                                return
+//                            }
                             def iozoneStatus = executeSudo("pgrep iozone; echo \$?")
                             if (iozoneStatus.trim() == "0") {
                                 node['error'] = "Seems that IOzone is still running."
@@ -289,7 +356,7 @@ wait
                                 def diskBasename = FilenameUtils.getBaseName(disk)
                                 def content = executeSudo("cat ${tmpModule}/${diskBasename}-iozone.log")
                                 def tmpTokens = content.tokenize('\n').find {
-                                    it =~ /^[\d ]*$/
+                                    it.trim() =~ /^[\d].*$/
                                 }
                                 if(!tmpTokens) {
                                     return [disk                    : disk,
