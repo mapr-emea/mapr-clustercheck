@@ -66,9 +66,10 @@ modules:
 
 nodes-global-config:
   disks:
-  - /dev/nvme1n1
-  - /dev/nvme2n1
-  - /dev/nvme3n1
+  - /dev/hda
+  - /dev/xvdd
+  - /dev/xvdb
+  - /dev/xvdc
   ssh_user: ec2-user
   ssh_identity: C:\\Users\\Carsten Hufe\\id_rsa
 
@@ -78,6 +79,6 @@ nodes:
 #  - clusterjob-execution
 #- host: 10.250.51.142
 #- host: 10.250.51.143
-- host: 10.0.0.101
+- host: 10.0.0.191
   roles:
   - clusterjob-execution
