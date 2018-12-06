@@ -30,27 +30,23 @@ find_unused_disks() {
          lsof $dev && continue
       fi
       ## Survived all filters, add device to the list of unused disks!!
-      disklist="$disklist $dev"
+      disklist="$disklist $dev "
    done
 
    for d in $mdisks; do #Remove devices used by /dev/md*
 #      echo Removing MDisk from list: $d
-      disklist=${disklist/$d/}
+      disklist=${disklist/$d }
    done
 
-   [[ -n "$DBG" ]] && echo VG check loop
-   #awkcmd='$6=="lvm"{sub(/[0-9]+/,"",$8); print "/dev/"$8}'
-   awkcmd='$2=="lvm" || $2=="part" {print "/dev/"$3}'
+   #Remove devices used by LVM or mounted partitions
+   [[ -n "$DBG" ]] && echo LVM checks
+   awkcmd='$2=="lvm" {print "/dev/"$3; print "/dev/mapper/"$1}; '
+   awkcmd+=' $2=="part" {print "/dev/"$3; print "/dev/"$1}'
    lvmdisks=$(lsblk -ln -o NAME,TYPE,PKNAME,MOUNTPOINT |awk "$awkcmd" |sort -u)
-   for d in $lvmdisks; do #Remove devices used by LVM or mounted partitions
+   for d in $lvmdisks; do
 #      echo Removing LVM disk from list: $d
-      disklist=${disklist/$d/}
+      disklist=${disklist/$d }
    done
-   #pvsdisks=$(pvs | awk '$1 ~ /\/dev/{sub("[0-9]+$","",$1); print $1}')
-   #for d in $pvsdisks; do #Remove devices used by VG
-   #   echo Removing VG disk from list: $d
-   #   disklist=${disklist/$d/}
-   #done
 
    # Remove /dev/mapper duplicates from $disklist
    for i in $disklist; do
@@ -59,9 +55,10 @@ find_unused_disks() {
       #/dev/mapper underlying device
       dupdev=$(lsblk | grep -B2 $(basename $i) |awk '/disk/{print "/dev/"$1}')
       #strip underlying device used by mapper from disklist
-      disklist=${disklist/$dupdev}
-      #disklist=${disklist/$i} #strip mapper device
+      disklist=${disklist/$dupdev }
+      #disklist=${disklist/$i } #strip mapper device
    done
+
    # Remove /dev/secvm/dev duplicates from $disklist (Vormetric)
    for i in $disklist; do
       [[ "$i" != /dev/secvm/dev/* ]] && continue
@@ -69,9 +66,11 @@ find_unused_disks() {
       #/dev/secvm/dev underlying device
       dupdev=$(lsblk | grep -B2 $(basename $i) |awk '/disk/{print "/dev/"$1}')
       #strip underlying device used by secvm(Vormetric) from disklist
-      disklist=${disklist/$dupdev}
-      #disklist=${disklist/$i} #strip secvm(Vormetric) device
+      disklist=${disklist/$dupdev }
+      #disklist=${disklist/$i } #strip secvm(Vormetric) device
    done
+   [[ -n "$DBG" ]] && { set +x; echo DiskList: $disklist; }
+   [[ -n "$DBG" ]] && read -p "Press enter to continue or ctrl-c to abort"
    echo $disklist
 }
 
