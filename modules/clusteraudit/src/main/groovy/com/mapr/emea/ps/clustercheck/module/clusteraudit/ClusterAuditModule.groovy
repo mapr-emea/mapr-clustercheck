@@ -128,7 +128,8 @@ class ClusterAuditModule implements ExecuteModule {
                 node['os.distribution'] = distribution
                 node['os.kernel'] = execute("uname -srvmo | fmt")
                 node['os.time'] = execute("date")
-                node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG' || true"), "LANG=")
+                node['os.locale'] = getColonValueFromLines(executeSudo("locale | grep LANG || true"), "LANG=")
+            //    node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG' || true"), "LANG=")
                 if (distribution.toLowerCase().contains("ubuntu") || distribution.toLowerCase().contains("sles")) {
                     node['os.umask'] = executeSudo("su -c umask")
                 }
