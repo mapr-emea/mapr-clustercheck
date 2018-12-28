@@ -12,30 +12,91 @@ modules:
     enabled: true
     ticketfile: /opt/mapr/conf/mapruserticket
     username: mapr
-    password: mapr
+    password: mapr123
     tests:
+    - name: maprfs
+      ticketfile: /opt/mapr/conf/mapruserticket
+      enabled: false
+    - name: maprdb-json-shell
+      enabled: false
+    - name: maprdb-binary-shell
+      enabled: false
+    - name: mcs-ui-secure-pam
+      username: mapr
+      password: mapr
+      mcs_ui_port: 8443
+      enabled: true
+    - name: mcs-ui-secure-ssl
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      mcs_ui_port: 8443
+      enabled: true
+    - name: mcs-ui-insecure
+      mcs_ui_port: 8443
+      enabled: true
     - name: drill-jdbc-jsonfile-plainauth
       drill_port: 31010
-      enabled: true
+      enabled: false
     - name: drill-jdbc-file-json-maprsasl
       drill_port: 31010
       enabled: false
     - name: drill-jdbc-maprdb-json-plainauth
       drill_port: 31010
-      enabled: true
+      enabled: false
     - name: drill-jdbc-maprdb-json-maprsasl
       drill_port: 31010
+      enabled: false
+    - name: drill-ui-insecure
+      drill_ui_port: 8047
       enabled: false
     - name: drill-ui-secure-pam
       drill_ui_port: 8047
       enabled: false
-    - name: drill-ui-insecure
-      drill_ui_port: 8047
-      enabled: true
-    - name: maprdb-json-shell
-      enabled: true
-    - name: maprdb-binary-shell
-      enabled: true
+    - name: maprlogin-auth
+      enabled: false
+    - name: mapr-streams
+      enabled: false
+    - name: kafka-rest-plainauth
+      enabled: false
+    - name: kafka-rest-maprsasl
+      enabled: false
+    - name: httpfs-maprsasl
+      enabled: false
+    - name: httpfs-plainauth
+      enabled: false
+    - name: hue-plainauth
+      enabled: false
+    - name: yarn-resourcemanager-ui-plainauth
+      enabled: false
+    - name: yarn-resourcemanager-ui-maprsasl
+      enabled: false
+    - name: yarn-resourcemanager-maprsasl
+      enabled: false
+    - name: hive-server-plainauth
+      enabled: false
+    - name: hive-server-maprsasl
+      enabled: false
+    - name: hive-metastore-maprsasl
+      enabled: false
+    - name: spark-yarn
+      enabled: false
+    - name: spark-historyserver-ui
+      enabled: false
+    - name: sqoop1
+      enabled: false
+    - name: sqoop2
+      enabled: false
+    - name: elasticsearch
+      enabled: false
+    - name: kibana-ui
+      enabled: false
+    - name: opentsdb
+      enabled: false
+    - name: grafana-ui
+      enabled: false
+    - name: oozie-client
+      enabled: false
+    - name: oozie-ui
+      enabled: false
   benchmark-memory:
     enabled: false
   benchmark-rawdisk:
@@ -78,7 +139,6 @@ modules:
     tests:
     - chunk_size_in_mb: 256
       rows: 100000
-#      rows: 10000000000
       rows_comment: one row has 100 byte
       reduce_tasks_per_node: 2
       topology: /data
@@ -99,13 +159,12 @@ modules:
 
 nodes-global-config:
   disks:
-  - /dev/xvdb
-  - /dev/xvdc
-  - /dev/xvdd
   ssh_user: ec2-user
-  ssh_identity: /Users/xuelansun/.ssh/xsun_keypair_aws.pem
+  ssh_identity: /Users/xuelansun/.ssh/xsun-keypair-eu-west-2.pem
 
 nodes:
-- host: 172.31.39.78
-  roles:
-  - clusterjob-execution
+- host: ip-10-0-0-18.eu-west-2.compute.internal
+- host: ip-10-0-0-83.eu-west-2.compute.internal
+- host: ip-10-0-0-155.eu-west-2.compute.internal
+- host: ip-10-0-0-193.eu-west-2.compute.internal
+- host: ip-10-0-0-210.eu-west-2.compute.internal

@@ -1,4 +1,4 @@
-package com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent
+package com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent
 
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.EcoSystemHealthcheckUtil
 import org.slf4j.Logger
@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class EcoSystemMaprDb {
+class CoreMaprDb {
 
-    static final Logger log = LoggerFactory.getLogger(EcoSystemMaprDb.class)
+    static final Logger log = LoggerFactory.getLogger(CoreMaprDb.class)
 
     static final String PACKAGE_NAME = "mapr-core"
     static final String DIR_MAPR_FS_MAPRDB = "/tmp/.clustercheck/ecosystem-healthcheck/maprdb"
@@ -31,11 +31,12 @@ class EcoSystemMaprDb {
      */
     def verifyMaprdbJsonShell(List<Object> packages, String ticketfile) {
 
-        log.trace("Start : EcoSystemMaprDb : verifyMaprdbJsonShell")
+        log.trace("Start : CoreMaprDb : verifyMaprdbJsonShell")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+
             def nodeResult = [:]
-            def jsonPath = ecoSystemHealthcheckUtil.uploadFile("maprdb_people.json", delegate)
+            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON, delegate)
             def queryPath = ecoSystemHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON_QUERY, delegate)
 
             ecoSystemHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
@@ -52,7 +53,7 @@ class EcoSystemMaprDb {
             nodeResult
         })
 
-        log.trace("End : EcoSystemMaprDb : verifyMaprdbJsonShell")
+        log.trace("End : CoreMaprDb : verifyMaprdbJsonShell")
         testResult
     }
 
@@ -64,9 +65,10 @@ class EcoSystemMaprDb {
      */
     def verifyMaprdbBinaryShell(List<Object> packages, String ticketfile) {
 
-        log.trace("Start : EcoSystemMaprDb : verifyMaprdbBinaryShell")
+        log.trace("Start : CoreMaprDb : verifyMaprdbBinaryShell")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+
             def nodeResult = [:]
 
             ecoSystemHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
@@ -84,7 +86,7 @@ class EcoSystemMaprDb {
             nodeResult
         })
 
-        log.trace("End : EcoSystemMaprDb : verifyMaprdbBinaryShell")
+        log.trace("End : CoreMaprDb : verifyMaprdbBinaryShell")
         testResult
     }
 

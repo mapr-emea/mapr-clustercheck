@@ -32,7 +32,7 @@ class EcoSystemHealthcheckUtil {
     }
 
     /**
-     * Retrieve MapR Packages installed
+     * Retrieve nodes where MapR Packages installed
      * @param role
      * @return
      */
@@ -168,7 +168,7 @@ class EcoSystemHealthcheckUtil {
         def result = delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -ls ${fileName}"
 
         if(result.contains("No such file or directory")){
-            log.debug("${fileName} doesn't exist.")
+            log.debug("MapR-FS file/directory : ${fileName} doesn't exist.")
         } else {
             log.debug("${fileName} exists, will be removed.")
             delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r ${fileName}"
