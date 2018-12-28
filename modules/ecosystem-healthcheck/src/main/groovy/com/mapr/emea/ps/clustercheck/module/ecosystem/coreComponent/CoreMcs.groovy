@@ -16,6 +16,14 @@ class CoreMcs {
     @Autowired
     EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
 
+    /**
+     * Verify MCS, Secure (PAM) Mode
+     * @param packages
+     * @param username
+     * @param password
+     * @param port
+     * @return
+     */
     def verifyMcsUiSecurePAM(List<Object> packages, String username, String password, int port) {
 
         log.trace("Start : CoreMcs : verifyMcsUiSecurePAM")
@@ -32,6 +40,13 @@ class CoreMcs {
         testResult
     }
 
+    /**
+     * Verify MCS, Secure (SSL) Mode
+     * @param packages
+     * @param certificate
+     * @param port
+     * @return
+     */
     def verifyMcsUiSecureSSL(List<Object> packages, String certificate, int port) {
 
         log.trace("Start : CoreMcs : verifyMcsUiSecureSSL")
@@ -48,6 +63,12 @@ class CoreMcs {
         testResult
     }
 
+    /**
+     * Verify MCS, Insecure Mode
+     * @param packages
+     * @param port
+     * @return
+     */
     def verifyMcsUiInSecure(List<Object> packages, int port) {
 
         log.trace("Start : CoreMcs : verifyMcsUiInSecure")

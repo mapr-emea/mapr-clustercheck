@@ -57,16 +57,18 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     def defaultTestMatrix = [
             [name: "maprfs", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "maprdb-json-shell", enabled: false],
-            [name: "maprdb-binary-shell" , enabled: false],
-            [name: "mcs-ui-secure-pam" , username: DEFAULT_MAPR_USERNAME, password:DEFAULT_MAPR_USERNAME, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
-            [name: "mcs-ui-secure-ssl" , certificate: PATH_SSL_CERTIFICATE_FILE, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
-            [name: "mcs-ui-insecure" , mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],  //TODO test
+            [name: "maprdb-binary-shell", enabled: false],
+            [name: "mcs-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password:DEFAULT_MAPR_USERNAME, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
+            [name: "mcs-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
+            [name: "mcs-ui-insecure", mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],  //TODO test
             [name: "drill-jdbc-jsonfile-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-file-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
-            [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
-            [name: "drill-ui-secure-pam", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
+            [name: "drill-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
+            [name: "drill-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password:DEFAULT_MAPR_PASSWORD, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
+            [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
+
 
             // TODO implement
 
@@ -180,17 +182,23 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
                 def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
                 result['drill-jdbc-maprdb-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port)
 
-            } else if(test['name'] == "drill-ui-insecure" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "drill-ui-secure-ssl" && (test['enabled'] as boolean)) {
 
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
                 def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
-                result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUiInsecure(packages, port)
+                result['drill-ui-secure-ssl'] = ecoSystemDrill.verifyDrillUISecureSSL(packages, certificate, port)
 
             } else if(test['name'] == "drill-ui-secure-pam" && (test['enabled'] as boolean)) {
 
                 def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
                 def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                result['drill-ui-secure-pam'] = ecoSystemDrill.verifyDrillUiSecure(packages, username, password, port)
+                result['drill-ui-secure-pam'] = ecoSystemDrill.verifyDrillUISecurePAM(packages, username, password, port)
+
+            } else if(test['name'] == "drill-ui-insecure" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
+                result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUIInsecure(packages, port)
 
             } else {
                 log.info(">>>>> ... Test '${test['name']}' not found!")

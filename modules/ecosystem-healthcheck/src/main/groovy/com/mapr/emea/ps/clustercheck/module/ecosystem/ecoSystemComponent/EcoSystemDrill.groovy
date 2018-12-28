@@ -168,25 +168,27 @@ class EcoSystemDrill {
     }
 
     /**
-     * Verifying Drill web UI, insecure mode
+     *  Verifying Drill web UI, secure (SSL) mode
      * @param packages
+     * @param certificate
      * @param port
-     * @return
      */
-    def verifyDrillUiInsecure(List<Object> packages, int port) {
-
-        log.trace("Start : EcoSystemDrill : verifyDrillUiInsecure")
+    def verifyDrillUISecureSSL(List<Object> packages, String certificate, int port) {
+        log.trace("Start : EcoSystemDrill : verifyDrillUISecureSSL")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
-            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ | head -n 1"
+
+            nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
             nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
-        log.trace("End : EcoSystemDrill : verifyDrillUiInsecure")
+        log.trace("End : EcoSystemDrill : verifyDrillUISecureSSL")
+
         testResult
     }
+
 
     /**
      * Verifying Drill web UI, secured mode (PAM)
@@ -196,9 +198,9 @@ class EcoSystemDrill {
      * @param port
      * @return
      */
-    def verifyDrillUiSecure(List<Object> packages, String username, String password, int port) {
+    def verifyDrillUISecurePAM(List<Object> packages, String username, String password, int port) {
 
-        log.trace("Start : EcoSystemDrill : verifyDrillUiSecure")
+        log.trace("Start : EcoSystemDrill : verifyDrillUISecurePAM")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
@@ -208,7 +210,31 @@ class EcoSystemDrill {
             nodeResult
         })
 
-        log.trace("End : EcoSystemDrill : verifyDrillUiSecure")
+        log.trace("End : EcoSystemDrill : verifyDrillUISecurePAM")
+
         testResult
     }
+
+    /**
+     * Verifying Drill web UI, insecure mode
+     * @param packages
+     * @param port
+     * @return
+     */
+    def verifyDrillUIInsecure(List<Object> packages, int port) {
+
+        log.trace("Start : EcoSystemDrill : verifyDrillUIInsecure")
+
+        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+            def nodeResult = [:]
+            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ | head -n 1"
+            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemDrill : verifyDrillUIInsecure")
+
+        testResult
+    }
+
 }
