@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class CoreMaprDb {
+class CoreMapRDB {
 
-    static final Logger log = LoggerFactory.getLogger(CoreMaprDb.class)
+    static final Logger log = LoggerFactory.getLogger(CoreMapRDB.class)
 
     static final String PACKAGE_NAME = "mapr-core"
     static final String DIR_MAPR_FS_MAPRDB = "/tmp/.clustercheck/ecosystem-healthcheck/maprdb"
@@ -29,9 +29,9 @@ class CoreMaprDb {
      * @param ticketfile
      * @return
      */
-    def verifyMaprdbJsonShell(List<Object> packages, String ticketfile) {
+    def verifyMapRDBJsonShell(List<Object> packages, String ticketfile) {
 
-        log.trace("Start : CoreMaprDb : verifyMaprdbJsonShell")
+        log.trace("Start : CoreMapRDB : verifyMapRDBJsonShell")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
 
@@ -53,7 +53,7 @@ class CoreMaprDb {
             nodeResult
         })
 
-        log.trace("End : CoreMaprDb : verifyMaprdbJsonShell")
+        log.trace("End : CoreMapRDB : verifyMapRDBJsonShell")
         testResult
     }
 
@@ -63,9 +63,9 @@ class CoreMaprDb {
      * @param ticketfile
      * @return
      */
-    def verifyMaprdbBinaryShell(List<Object> packages, String ticketfile) {
+    def verifyMapRDBBinaryShell(List<Object> packages, String ticketfile) {
 
-        log.trace("Start : CoreMaprDb : verifyMaprdbBinaryShell")
+        log.trace("Start : CoreMapRDB : verifyMapRDBBinaryShell")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
 
@@ -86,7 +86,7 @@ class CoreMaprDb {
             nodeResult
         })
 
-        log.trace("End : CoreMaprDb : verifyMaprdbBinaryShell")
+        log.trace("End : CoreMapRDB : verifyMapRDBBinaryShell")
         testResult
     }
 

@@ -4,7 +4,8 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckModule
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
-import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMaprDb
+import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRDB
+import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRStreams
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.EcoSystemHealthcheckUtil
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
@@ -44,7 +45,10 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     CoreMfs coreMfs
 
     @Autowired
-    CoreMaprDb coreMaprDb
+    CoreMapRDB coreMapRDB
+
+    @Autowired
+    CoreMapRStreams coreMapRStreams
 
     @Autowired
     CoreMcs coreMcs
@@ -58,6 +62,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             [name: "maprfs", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "maprdb-json-shell", enabled: false],
             [name: "maprdb-binary-shell", enabled: false],
+            [name: "mapr-streams", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "mcs-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password:DEFAULT_MAPR_USERNAME, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
             [name: "mcs-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
             [name: "mcs-ui-insecure", mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],  //TODO test
@@ -71,9 +76,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
 
             // TODO implement
-
             [name: "maprlogin-auth", enabled: false],
-            [name: "mapr-streams" , enabled: false],
             [name: "kafka-rest-plainauth" , enabled: false],
             [name: "kafka-rest-maprsasl" , enabled: false],
             [name: "httpfs-maprsasl" , enabled: false],
@@ -129,12 +132,17 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "maprdb-json-shell" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                result['maprdb-json-shell'] = coreMaprDb.verifyMaprdbJsonShell(packages, ticketfile)
+                result['maprdb-json-shell'] = coreMapRDB.verifyMapRDBJsonShell(packages, ticketfile)
 
             } else if(test['name'] == "maprdb-binary-shell" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                result['maprdb-binary-shell'] = coreMaprDb.verifyMaprdbBinaryShell(packages, ticketfile)
+                result['maprdb-binary-shell'] = coreMapRDB.verifyMapRDBBinaryShell(packages, ticketfile)
+
+            } else if(test['name'] == "mapr-streams" && (test['enabled'] as boolean)) {
+
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                result['mapr-streams'] = coreMapRStreams.verifyMapRStreams(packages, ticketfile)
 
             } else if(test['name'] == "mcs-ui-secure-pam" && (test['enabled'] as boolean)) {
 
