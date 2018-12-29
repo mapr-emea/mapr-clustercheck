@@ -8,9 +8,9 @@ import org.springframework.core.io.ResourceLoader
 import org.springframework.stereotype.Component
 
 @Component
-class EcoSystemHealthcheckUtil {
+class MapRComponentHealthcheckUtil {
 
-    static final Logger log = LoggerFactory.getLogger(EcoSystemHealthcheckUtil.class)
+    static final Logger log = LoggerFactory.getLogger(MapRComponentHealthcheckUtil.class)
 
     static final String PATH_ECO_SYS = ".clustercheck/ecosystem-healthcheck"
 
@@ -38,7 +38,7 @@ class EcoSystemHealthcheckUtil {
      */
     def retrievePackages(role) {
 
-        log.trace("Start : EcoSystemHealthcheckUtil : retrievePackages")
+        log.trace("Start : MapRComponentHealthcheckUtil : retrievePackages")
 
         def packages = Collections.synchronizedList([])
         ssh.runInOrder {
@@ -59,7 +59,7 @@ class EcoSystemHealthcheckUtil {
             }
         }
 
-        log.trace("End : EcoSystemHealthcheckUtil : retrievePackages")
+        log.trace("End : MapRComponentHealthcheckUtil : retrievePackages")
         return packages
     }
 
@@ -70,11 +70,11 @@ class EcoSystemHealthcheckUtil {
      * @return
      */
     static List<Object> findHostsWithPackage(List packages, packageName) {
-        log.trace("Start : EcoSystemHealthcheckUtil : findHostsWithPackage")
+        log.trace("Start : MapRComponentHealthcheckUtil : findHostsWithPackage")
 
         def hostsFound = packages.findAll { it['mapr.packages'].find { it.contains(packageName) } != null }.collect { it['host'] }
 
-        log.trace("End : EcoSystemHealthcheckUtil : findHostsWithPackage")
+        log.trace("End : MapRComponentHealthcheckUtil : findHostsWithPackage")
 
         return hostsFound
     }
@@ -87,7 +87,7 @@ class EcoSystemHealthcheckUtil {
      * @return
      */
     def executeSsh(List<Object> packages, String packageName, Closure closure) {
-        log.trace("Start : EcoSystemHealthcheckUtil : executeSsh")
+        log.trace("Start : MapRComponentHealthcheckUtil : executeSsh")
 
         def appHosts = findHostsWithPackage(packages, packageName)
 
@@ -111,7 +111,7 @@ class EcoSystemHealthcheckUtil {
             }
         }
 
-        log.trace("End : EcoSystemHealthcheckUtil : executeSsh")
+        log.trace("End : MapRComponentHealthcheckUtil : executeSsh")
         result
     }
 
@@ -122,7 +122,7 @@ class EcoSystemHealthcheckUtil {
      * @return
      */
     def uploadFile(String fileName, delegate) {
-        log.trace("Start : EcoSystemHealthcheckUtil : uploadFile")
+        log.trace("Start : MapRComponentHealthcheckUtil : uploadFile")
 
         def homePath = delegate.execute 'echo $HOME'
         delegate.execute "mkdir -p ${homePath}/${PATH_ECO_SYS}/"
@@ -130,7 +130,7 @@ class EcoSystemHealthcheckUtil {
         delegate.put from: fileInputStream, into: "${homePath}/${PATH_ECO_SYS}/${fileName}"
         def path = "${homePath}/${PATH_ECO_SYS}/${fileName}"
 
-        log.trace("End : EcoSystemHealthcheckUtil : uploadFile")
+        log.trace("End : MapRComponentHealthcheckUtil : uploadFile")
 
         return path
     }
@@ -144,11 +144,11 @@ class EcoSystemHealthcheckUtil {
      * @return
      */
     def uploadRemoteFileToMaprfs(String ticketfile, String fileName, String maprfspath, delegate){
-        log.trace("Start : EcoSystemHealthcheckUtil : uploadRemoteFileToMaprfs")
+        log.trace("Start : MapRComponentHealthcheckUtil : uploadRemoteFileToMaprfs")
 
         delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put ${fileName} ${maprfspath}"
 
-        log.trace("End : EcoSystemHealthcheckUtil : uploadRemoteFileToMaprfs")
+        log.trace("End : MapRComponentHealthcheckUtil : uploadRemoteFileToMaprfs")
 
         return maprfspath
     }
@@ -161,7 +161,7 @@ class EcoSystemHealthcheckUtil {
      * @return
      */
     def removeMaprfsFileIfExist(String ticketfile, String fileName, delegate){
-        log.trace("Start : EcoSystemHealthcheckUtil : removeMaprfsFileIfExist")
+        log.trace("Start : MapRComponentHealthcheckUtil : removeMaprfsFileIfExist")
 
         log.info("Testing existence of MapR-FS directory: ${fileName} ... Error with status 1 when it doesn't exist.")
 
@@ -174,7 +174,7 @@ class EcoSystemHealthcheckUtil {
             delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r ${fileName}"
         }
 
-        log.trace("End : EcoSystemHealthcheckUtil : removeMaprfsFileIfExist")
+        log.trace("End : MapRComponentHealthcheckUtil : removeMaprfsFileIfExist")
     }
 
 }

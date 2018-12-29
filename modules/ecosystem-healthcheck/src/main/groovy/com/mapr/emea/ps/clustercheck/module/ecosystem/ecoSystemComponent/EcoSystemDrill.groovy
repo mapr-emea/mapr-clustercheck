@@ -1,6 +1,6 @@
 package com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent
 
-import com.mapr.emea.ps.clustercheck.module.ecosystem.util.EcoSystemHealthcheckUtil
+import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,7 +20,7 @@ class EcoSystemDrill {
     static final String PATH_DRILL = "/opt/mapr/drill/drill-*"
 
     @Autowired
-    EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
 
     /**
      * Verify Drill JDBC Driver, Connecting to a Drillbit, Querying a Json File, Using Plain Authentication (PAM)

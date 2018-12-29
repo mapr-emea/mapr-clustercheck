@@ -1,6 +1,6 @@
 package com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent
 
-import com.mapr.emea.ps.clustercheck.module.ecosystem.util.EcoSystemHealthcheckUtil
+import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,7 +14,7 @@ class CoreMcs {
     static final String PACKAGE_NAME = "mapr-webserver"
 
     @Autowired
-    EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
 
     /**
      * Verify MCS, Secure (PAM) Mode

@@ -7,28 +7,32 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class CoreMfs {
-    static final Logger log = LoggerFactory.getLogger(CoreMfs.class)
+class CoreMapRLogin {
+
+    static final Logger log = LoggerFactory.getLogger(CoreMapRLogin.class)
 
     static final String PACKAGE_NAME = "mapr-core"
 
     @Autowired
     MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
 
-    def verifyMaprFs(List<Object> packages, String ticketfile) {
-
-        log.trace("Start : CoreMfs : verifyMaprFs")
+    def verifyMapRLoginPassword(List<Object> packages, String username, String password) {
+        log.trace("Start : CoreMapRLogin : verifyMapRLoginPassword")
 
         def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
-
             def nodeResult = [:]
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -ls /user"
-            nodeResult['success'] = nodeResult['output'].contains("mapr")
 
+            def uid = executeSudo("su - ${username} -c 'id -u ${username}'")
+
+            def ticketFile = "/tmp/maprticket_${uid}"
+
+            nodeResult['output'] = executeSudo("su - ${username} -c 'echo ${password} | maprlogin password'")
+
+            nodeResult['success'] = nodeResult['output'].contains(ticketFile)
             nodeResult
         })
 
-        log.trace("End : CoreMfs : verifyMaprFs")
+        log.trace("End : CoreMapRLogin : verifyMapRLoginPassword")
 
         testResult
     }

@@ -1,6 +1,6 @@
 package com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent
 
-import com.mapr.emea.ps.clustercheck.module.ecosystem.util.EcoSystemHealthcheckUtil
+import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,7 +20,7 @@ class CoreMapRStreams {
     static final String TOPIC_NAME = "test_mapr_stream_topic1"
 
     @Autowired
-    EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
 
 
     def verifyMapRStreams(List<Object> packages, String ticketfile) {

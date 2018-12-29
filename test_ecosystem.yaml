@@ -23,10 +23,10 @@ modules:
       enabled: false
     - name: mapr-streams
       ticketfile: /opt/mapr/conf/mapruserticket
-      enabled: true
+      enabled: false
     - name: mcs-ui-secure-pam
       username: mapr
-      password: mapr
+      password: mapr123
       mcs_ui_port: 8443
       enabled: false
     - name: mcs-ui-secure-ssl
@@ -35,6 +35,10 @@ modules:
       enabled: false
     - name: mcs-ui-insecure
       mcs_ui_port: 8443
+      enabled: false
+    - name: maprlogin-password
+      username: mapr
+      password: mapr123
       enabled: false
     - name: drill-jdbc-jsonfile-plainauth
       drill_port: 31010
@@ -59,8 +63,6 @@ modules:
       enabled: false
     - name: drill-ui-insecure
       drill_ui_port: 8047
-      enabled: false
-    - name: maprlogin-auth
       enabled: false
     - name: mapr-streams
       enabled: false

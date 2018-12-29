@@ -5,14 +5,16 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRDB
+import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRLogin
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRStreams
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMfs
-import com.mapr.emea.ps.clustercheck.module.ecosystem.util.EcoSystemHealthcheckUtil
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMcs
+import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 
@@ -20,9 +22,9 @@ import org.springframework.beans.factory.annotation.Qualifier
  * Created by chufe on 22.08.17.
  */
 @ClusterCheckModule(name = "ecosystem-healthcheck", version = "1.0")
-class EcoSystemHealthcheckModule implements ExecuteModule {
+class MapRComponentHealthcheckModule implements ExecuteModule {
     
-    static final Logger log = LoggerFactory.getLogger(EcoSystemHealthcheckModule.class)
+    static final Logger log = LoggerFactory.getLogger(MapRComponentHealthcheckModule.class)
     
     static final String PATH_TICKET_FILE = "/opt/mapr/conf/mapruserticket"
     static final String PATH_SSL_CERTIFICATE_FILE = "/opt/mapr/conf/ssl_truststore.pem"
@@ -39,7 +41,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     Map<String, ?> globalYamlConfig
 
     @Autowired
-    EcoSystemHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
 
     @Autowired
     CoreMfs coreMfs
@@ -54,6 +56,9 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
     CoreMcs coreMcs
 
     @Autowired
+    CoreMapRLogin coreMapRLogin
+
+    @Autowired
     EcoSystemDrill ecoSystemDrill
 
 
@@ -63,20 +68,20 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
             [name: "maprdb-json-shell", enabled: false],
             [name: "maprdb-binary-shell", enabled: false],
             [name: "mapr-streams", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
-            [name: "mcs-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password:DEFAULT_MAPR_USERNAME, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
+            [name: "mcs-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
             [name: "mcs-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
             [name: "mcs-ui-insecure", mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],  //TODO test
+            [name: "maprlogin-password", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, enabled: false],
             [name: "drill-jdbc-jsonfile-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-file-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
-            [name: "drill-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password:DEFAULT_MAPR_PASSWORD, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
+            [name: "drill-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
 
 
             // TODO implement
-            [name: "maprlogin-auth", enabled: false],
             [name: "kafka-rest-plainauth" , enabled: false],
             [name: "kafka-rest-maprsasl" , enabled: false],
             [name: "httpfs-maprsasl" , enabled: false],
@@ -112,6 +117,9 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
     @Override
     ClusterCheckResult execute() {
+
+        log.trace("Start : MapRComponentHealthcheckModule : ClusterCheckResult")
+
         def healthcheckconfig = globalYamlConfig.modules['ecosystem-healthcheck'] as Map<String, ?>
         def role = healthcheckconfig.getOrDefault("role", "all")
 
@@ -161,6 +169,12 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
 
                 def port = healthcheckconfig.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
                 result['mcs-ui-insecure'] = coreMcs.verifyMcsUiInSecure(packages, port)
+
+            } else if(test['name'] == "maprlogin-password" && (test['enabled'] as boolean)) {
+
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                result['maprlogin-password'] = coreMapRLogin.verifyMapRLoginPassword(packages, username, password)
 
             } else if(test['name'] == "drill-jdbc-jsonfile-plainauth" && (test['enabled'] as boolean)) {
 
@@ -217,6 +231,7 @@ class EcoSystemHealthcheckModule implements ExecuteModule {
         def textReport = buildTextReport(result)
 
         log.info(">>>>> ... ecosystem-healthcheck finished")
+        log.trace("End : MapRComponentHealthcheckModule : ClusterCheckResult")
 
         return new ClusterCheckResult(reportJson: result, reportText: textReport, recommendations: recommendations)
     }
