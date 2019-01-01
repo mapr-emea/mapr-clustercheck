@@ -14,7 +14,7 @@ class CoreMcs {
     static final String PACKAGE_NAME = "mapr-webserver"
 
     @Autowired
-    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
      * Verify MCS, Secure (PAM) Mode
@@ -28,7 +28,7 @@ class CoreMcs {
 
         log.trace("Start : CoreMcs : verifyMcsUiSecurePAM")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/app/mcs/#/ | head -n 1"
@@ -51,7 +51,7 @@ class CoreMcs {
 
         log.trace("Start : CoreMcs : verifyMcsUiSecureSSL")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} https://${remote.host}:${port}/app/mcs/#/  | head -n 1"
@@ -73,7 +73,7 @@ class CoreMcs {
 
         log.trace("Start : CoreMcs : verifyMcsUiInSecure")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/app/mcs/#/ | head -n 1"

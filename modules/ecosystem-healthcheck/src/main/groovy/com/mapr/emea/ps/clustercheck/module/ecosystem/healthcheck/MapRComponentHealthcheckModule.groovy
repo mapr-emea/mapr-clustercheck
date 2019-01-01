@@ -10,6 +10,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRStre
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMcs
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemKafkaRest
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
 
 import org.slf4j.Logger
@@ -35,13 +36,14 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_DRILL_PORT = 31010
     static final Integer DEFAULT_DRILL_UI_PORT = 8047
     static final Integer DEFAULT_MCS_UI_PORT = 8443
+    static final Integer DEFAULT_KAFKA_REST_PORT = 8082
 
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
 
     @Autowired
-    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     @Autowired
     CoreMfs coreMfs
@@ -61,6 +63,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Autowired
     EcoSystemDrill ecoSystemDrill
 
+    @Autowired
+    EcoSystemKafkaRest ecoSystemKafkaRest
+
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
     def defaultTestMatrix = [
@@ -79,11 +84,12 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "drill-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
+            [name: "kafka-rest-auth", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "mapr-data-access-gateway" , enabled: false],
 
 
             // TODO implement
-            [name: "kafka-rest-plainauth" , enabled: false],
-            [name: "kafka-rest-maprsasl" , enabled: false],
+            [name: "kafka-connect-maprsasl" , enabled: false],
             [name: "httpfs-maprsasl" , enabled: false],
             [name: "httpfs-plainauth" , enabled: false],
             [name: "hue-plainauth", enabled: false],
@@ -126,7 +132,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
         log.info(">>>>> Running ecosystem-healthcheck")
 
         def result = Collections.synchronizedMap([:])
-        def packages = ecoSystemHealthcheckUtil.retrievePackages(role)
+        def packages = mapRComponentHealthcheckUtil.retrievePackages(role)
 
         healthcheckconfig['tests'].each { test ->
 
@@ -221,6 +227,15 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
                 def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUIInsecure(packages, port)
+
+            } else if(test['name'] == "kafka-rest-auth" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['kafka-rest-aut'] = ecoSystemKafkaRest.verifySimpleAuth(packages, username, password, certificate, port)
 
             } else {
                 log.info(">>>>> ... Test '${test['name']}' not found!")

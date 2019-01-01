@@ -20,14 +20,14 @@ class CoreMapRStreams {
     static final String TOPIC_NAME = "test_mapr_stream_topic1"
 
     @Autowired
-    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
 
     def verifyMapRStreams(List<Object> packages, String ticketfile) {
 
         log.trace("Start : CoreMapRStreams : verifyMapRStreams")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
 
             def nodeResult = [:]
 
@@ -50,7 +50,7 @@ class CoreMapRStreams {
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream delete -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}"
 
             //Delete the test directory
-            ecoSystemHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRSTREAMS, delegate)
+            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRSTREAMS, delegate)
 
             nodeResult
         })

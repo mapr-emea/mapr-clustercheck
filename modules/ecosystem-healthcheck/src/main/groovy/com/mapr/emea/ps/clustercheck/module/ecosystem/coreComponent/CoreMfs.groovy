@@ -13,13 +13,13 @@ class CoreMfs {
     static final String PACKAGE_NAME = "mapr-core"
 
     @Autowired
-    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     def verifyMaprFs(List<Object> packages, String ticketfile) {
 
         log.trace("Start : CoreMfs : verifyMaprFs")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
 
             def nodeResult = [:]
             nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -ls /user"

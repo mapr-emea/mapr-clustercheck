@@ -20,7 +20,7 @@ class CoreMapRDB {
     static final String CF_MAPR_DB_BINARY = "cfname_test_binary"
 
     @Autowired
-    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
      * Verify MapRDB Json, Using mapr dbshell utility
@@ -33,13 +33,13 @@ class CoreMapRDB {
 
         log.trace("Start : CoreMapRDB : verifyMapRDBJsonShell")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
 
             def nodeResult = [:]
-            def jsonPath = ecoSystemHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON, delegate)
-            def queryPath = ecoSystemHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON_QUERY, delegate)
+            def jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON, delegate)
+            def queryPath = mapRComponentHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON_QUERY, delegate)
 
-            ecoSystemHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
+            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
 
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_MAPRDB}"
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS_MAPRDB}"
@@ -48,7 +48,7 @@ class CoreMapRDB {
             nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell script ${queryPath}"
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
 
-            ecoSystemHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
+            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
 
             nodeResult
         })
@@ -67,11 +67,11 @@ class CoreMapRDB {
 
         log.trace("Start : CoreMapRDB : verifyMapRDBBinaryShell")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
 
             def nodeResult = [:]
 
-            ecoSystemHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
+            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
 
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_MAPRDB}"
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table create -path ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}"
@@ -81,7 +81,7 @@ class CoreMapRDB {
             nodeResult['comment'] = "Don't worry if you see the error: Lookup of volume mapr.cluster.root failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
             nodeResult['success'] = nodeResult['output'].contains(CF_MAPR_DB_BINARY)
 
-            ecoSystemHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
+            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
 
             nodeResult
         })

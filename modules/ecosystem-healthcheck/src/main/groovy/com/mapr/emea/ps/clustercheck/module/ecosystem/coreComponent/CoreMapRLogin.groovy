@@ -14,12 +14,12 @@ class CoreMapRLogin {
     static final String PACKAGE_NAME = "mapr-core"
 
     @Autowired
-    MapRComponentHealthcheckUtil ecoSystemHealthcheckUtil
+    MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     def verifyMapRLoginPassword(List<Object> packages, String username, String password) {
         log.trace("Start : CoreMapRLogin : verifyMapRLoginPassword")
 
-        def testResult = ecoSystemHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
             def uid = executeSudo("su - ${username} -c 'id -u ${username}'")
