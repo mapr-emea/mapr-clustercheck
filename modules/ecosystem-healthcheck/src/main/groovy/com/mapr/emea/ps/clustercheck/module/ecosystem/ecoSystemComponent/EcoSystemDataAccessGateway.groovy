@@ -7,17 +7,17 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class EcoSystemKafkaRest {
+class EcoSystemDataAccessGateway {
 
     static final Logger log = LoggerFactory.getLogger(EcoSystemDrill.class)
 
-    static final String PACKAGE_NAME = "mapr-kafka-rest"
+    static final String PACKAGE_NAME = "mapr-data-access-gateway"
 
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
-     * Verify Kafka REST Gateway, REST Client Authentication with SSL and Pam (Pam is mandatory)
+     * Verify MapR Data Access Gateway, REST Client Authentication with SSL and Pam (Pam is mandatory)
      * @param packages
      * @param username
      * @param password
@@ -25,42 +25,43 @@ class EcoSystemKafkaRest {
      * @param port
      * @return
      */
-    def verifyAuthPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyRESTAuthPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
 
-        log.trace("Start : EcoSystemKafkaRest : verifyAuthPamSSL")
+        log.trace("Start : EcoSystemDataAccessGateway : verifyRESTAuthPamSSL")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is -u ${username}:${password} --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
+            nodeResult['output'] = executeSudo "curl -Is -u ${username}:${password} --cacert ${certificate} https://${remote.host}:${port}/app/swagger/ | head -n 1"
             nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
-        log.trace("End : EcoSystemKafkaRest : verifyAuthPamSSL")
+        log.trace("End : EcoSystemDataAccessGateway : verifyRESTAuthPamSSL")
 
         testResult
+
     }
 
     /**
-     * Verify Kafka REST Gateway, REST Client in insecure mode
+     * Verify MapR Data Access Gateway, REST Client in insecure mode
      * @param packages
      * @param port
      * @return
      */
-    def verifyAuthInsecure(List<Object> packages, int port) {
+    def verifyRESTAuthInsecure(List<Object> packages, int port) {
 
-        log.trace("Start : EcoSystemKafkaRest : verifyAuthInsecure")
+        log.trace("Start : EcoSystemDataAccessGateway : verifyRESTAuthInsecure")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ | head -n 1"
+            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/app/swagger/ | head -n 1"
             nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
-        log.trace("End : EcoSystemKafkaRest : verifyAuthInsecure")
+        log.trace("End : EcoSystemDataAccessGateway : verifyRESTAuthInsecure")
 
         testResult
     }

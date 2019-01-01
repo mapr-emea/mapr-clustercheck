@@ -64,13 +64,35 @@ modules:
     - name: drill-ui-insecure
       drill_ui_port: 8047
       enabled: false
-    - name: mapr-streams
-      enabled: false
-    - name: kafka-rest-auth
+    - name: kafka-rest-auth-pam-ssl
       username: mapr
       password: mapr123
       certificate: /opt/mapr/conf/ssl_truststore.pem
       kafka_rest_port: 8082
+      enabled: true
+    - name: kafka-rest-auth-insecure
+      kafka_rest_port: 8082
+      enabled: false
+    - name: data-access-gateway-rest-auth-pam-ssl
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      data_access_gateway_rest_port: 8243
+      enabled: true
+    - name: data-access-gateway-rest-auth-insecure
+      data_access_gateway_rest_port: 8243
+      enabled: false
+    - name: kafka-rest-api-ssl-pam
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      kafka_rest_port: 8082
+      enabled: false
+    - name: data-access-gateway-rest-api-pam-ssl
+      enabled: false
+    - name: data-access-gateway-grpc
+      enabled: false
+    - name: kafka-connect-maprsasl
       enabled: false
     - name: httpfs-maprsasl
       enabled: false

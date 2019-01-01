@@ -8,6 +8,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRDB
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRLogin
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRStreams
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMfs
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDataAccessGateway
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMcs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemKafkaRest
@@ -37,6 +38,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_DRILL_UI_PORT = 8047
     static final Integer DEFAULT_MCS_UI_PORT = 8443
     static final Integer DEFAULT_KAFKA_REST_PORT = 8082
+    static final Integer DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT = 8243
 
     @Autowired
     @Qualifier("globalYamlConfig")
@@ -66,6 +68,10 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Autowired
     EcoSystemKafkaRest ecoSystemKafkaRest
 
+    @Autowired
+    EcoSystemDataAccessGateway ecoSystemDataAccessGateway
+
+
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
     def defaultTestMatrix = [
@@ -84,11 +90,15 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "drill-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
-            [name: "kafka-rest-auth", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
-            [name: "mapr-data-access-gateway" , enabled: false],
-
+            [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
+            [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
+            [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
 
             // TODO implement
+            [name: "kafka-rest-api-ssl-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
+            [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
             [name: "kafka-connect-maprsasl" , enabled: false],
             [name: "httpfs-maprsasl" , enabled: false],
             [name: "httpfs-plainauth" , enabled: false],
@@ -228,14 +238,35 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUIInsecure(packages, port)
 
-            } else if(test['name'] == "kafka-rest-auth" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+
+                result['kafka-rest-auth-insecure'] = ecoSystemKafkaRest.verifyAuthInsecure(packages, port)
+
+            } else if(test['name'] == "kafka-rest-auth-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = healthcheckconfig.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
                 def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
                 def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
                 def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
-                result['kafka-rest-aut'] = ecoSystemKafkaRest.verifySimpleAuth(packages, username, password, certificate, port)
+                result['kafka-rest-auth-pam-ssl'] = ecoSystemKafkaRest.verifyAuthPamSSL(packages, username, password, certificate, port)
+
+            } else if(test['name'] == "data-access-gateway-rest-auth-insecure" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
+
+                result['data-access-gateway-rest-auth-insecure'] = ecoSystemDataAccessGateway.verifyRESTAuthInsecure(packages, port)
+
+            } else if(test['name'] == "data-access-gateway-rest-auth-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['data-access-gateway-rest-auth-pam-ssl'] = ecoSystemDataAccessGateway.verifyRESTAuthPamSSL(packages, username, password, certificate, port)
 
             } else {
                 log.info(">>>>> ... Test '${test['name']}' not found!")
