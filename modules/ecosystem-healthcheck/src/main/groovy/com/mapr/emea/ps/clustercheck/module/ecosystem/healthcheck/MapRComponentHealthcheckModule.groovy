@@ -11,6 +11,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDataAccessGateway
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMcs
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHttpfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemKafkaRest
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
 
@@ -39,6 +40,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_MCS_UI_PORT = 8443
     static final Integer DEFAULT_KAFKA_REST_PORT = 8082
     static final Integer DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT = 8243
+    static final Integer DEFAULT_HTTPFS_PORT = 14000
 
     @Autowired
     @Qualifier("globalYamlConfig")
@@ -71,6 +73,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Autowired
     EcoSystemDataAccessGateway ecoSystemDataAccessGateway
 
+    @Autowired
+    EcoSystemHttpfs ecoSystemHttpfs
+
 
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
@@ -94,14 +99,17 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
+            [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
+            [name: "httpfs-auth-insecure" , enabled: false],  //TODO test
 
             // TODO implement
+            [name: "mapr-cmd-maprcli-api", enabled: false], // https://mapr.com/docs/home/ReferenceGuide/maprcli-REST-API-Syntax.html
+            [name: "mapr-cmd-rest-api", enabled: false],
             [name: "kafka-rest-api-ssl-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
             [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
             [name: "kafka-connect-maprsasl" , enabled: false],
-            [name: "httpfs-maprsasl" , enabled: false],
-            [name: "httpfs-plainauth" , enabled: false],
+            [name: "httpfs-auth-certificate-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false], //TODO https://mapr.com/docs/home/HttpFS/SSLSecurityforHttpFS.html
             [name: "hue-plainauth", enabled: false],
             [name: "yarn-resourcemanager-ui-plainauth", enabled: false],
             [name: "yarn-resourcemanager-ui-maprsasl", enabled: false],
@@ -267,6 +275,21 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['data-access-gateway-rest-auth-pam-ssl'] = ecoSystemDataAccessGateway.verifyRESTAuthPamSSL(packages, username, password, certificate, port)
+
+            } else if(test['name'] == "httpfs-auth-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['httpfs-auth-pam-ssl'] = ecoSystemHttpfs.verifyAuthPamSSL(packages, username, password, certificate, port)
+
+            } else if(test['name'] == "httpfs-auth-insecure" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
+
+                result['httpfs-auth-insecure'] = ecoSystemHttpfs.verifyAuthInsecure(packages, port)
 
             } else {
                 log.info(">>>>> ... Test '${test['name']}' not found!")

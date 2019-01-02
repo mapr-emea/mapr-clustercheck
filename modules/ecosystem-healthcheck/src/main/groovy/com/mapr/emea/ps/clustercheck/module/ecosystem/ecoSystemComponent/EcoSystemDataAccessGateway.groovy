@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 @Component
 class EcoSystemDataAccessGateway {
 
-    static final Logger log = LoggerFactory.getLogger(EcoSystemDrill.class)
+    static final Logger log = LoggerFactory.getLogger(EcoSystemDataAccessGateway.class)
 
     static final String PACKAGE_NAME = "mapr-data-access-gateway"
 

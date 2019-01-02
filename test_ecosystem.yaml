@@ -69,7 +69,7 @@ modules:
       password: mapr123
       certificate: /opt/mapr/conf/ssl_truststore.pem
       kafka_rest_port: 8082
-      enabled: true
+      enabled: false
     - name: kafka-rest-auth-insecure
       kafka_rest_port: 8082
       enabled: false
@@ -78,7 +78,7 @@ modules:
       password: mapr123
       certificate: /opt/mapr/conf/ssl_truststore.pem
       data_access_gateway_rest_port: 8243
-      enabled: true
+      enabled: false
     - name: data-access-gateway-rest-auth-insecure
       data_access_gateway_rest_port: 8243
       enabled: false
@@ -87,6 +87,14 @@ modules:
       password: mapr123
       certificate: /opt/mapr/conf/ssl_truststore.pem
       kafka_rest_port: 8082
+      enabled: false
+    - name: httpfs-auth-pam-ssl
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      httpfs_port: 14000
+      enabled: false
+    - name: httpfs-auth-insecure
       enabled: false
     - name: data-access-gateway-rest-api-pam-ssl
       enabled: false

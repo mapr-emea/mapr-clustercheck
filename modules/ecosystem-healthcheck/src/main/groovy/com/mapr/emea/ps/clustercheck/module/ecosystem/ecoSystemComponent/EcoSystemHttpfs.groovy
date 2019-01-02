@@ -7,17 +7,17 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class EcoSystemKafkaRest {
+class EcoSystemHttpfs {
 
-    static final Logger log = LoggerFactory.getLogger(EcoSystemKafkaRest.class)
+    static final Logger log = LoggerFactory.getLogger(EcoSystemHttpfs.class)
 
-    static final String PACKAGE_NAME = "mapr-kafka-rest"
+    static final String PACKAGE_NAME = "mapr-httpfs"
 
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
-     * Verify Kafka REST Gateway, REST Client Authentication with SSL and Pam (Pam is mandatory)
+     * Verify HTTPFS Authentication with Pam and SSL (Pam is mandatory)
      * @param packages
      * @param username
      * @param password
@@ -27,41 +27,43 @@ class EcoSystemKafkaRest {
      */
     def verifyAuthPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
 
-        log.trace("Start : EcoSystemKafkaRest : verifyAuthPamSSL")
+        log.trace("Start : EcoSystemHttpfs : verifyAuthPamSSL")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is -u ${username}:${password} --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
+            nodeResult['output'] = executeSudo "curl -Is -u ${username}:${password} --cacert ${certificate} \"https://${remote.host}:${port}/webhdfs/v1/?op=GETHOMEDIRECTORY\" | head -n 1"
             nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
-        log.trace("End : EcoSystemKafkaRest : verifyAuthPamSSL")
+        log.trace("End : EcoSystemHttpfs : verifyAuthPamSSL")
 
         testResult
+
     }
 
     /**
-     * Verify Kafka REST Gateway, REST Client in insecure mode
+     * Verify HTTPFS Authentication in Insecure mode
      * @param packages
      * @param port
      * @return
      */
     def verifyAuthInsecure(List<Object> packages, int port) {
 
-        log.trace("Start : EcoSystemKafkaRest : verifyAuthInsecure")
+        log.trace("Start : EcoSystemHttpfs : verifyAuthInsecure")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ | head -n 1"
+            nodeResult['output'] = executeSudo "curl -Is \"http://mapr:mapr@${remote.host}:${port}/webhdfs/v1/?op=GETHOMEDIRECTORY\" | head -n 1"
             nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
-        log.trace("End : EcoSystemKafkaRest : verifyAuthInsecure")
+        log.trace("End : EcoSystemHttpfs : verifyAuthInsecure")
 
         testResult
+
     }
 }
