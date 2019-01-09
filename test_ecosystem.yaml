@@ -64,6 +64,30 @@ modules:
     - name: drill-ui-insecure
       drill_ui_port: 8047
       enabled: false
+    - name: yarn-resourcemanager-ui-pam-ssl
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      resource_manager_secure_port: 8090
+      enabled: false
+    - name: yarn-nodemanager-ui-pam-ssl
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      node_manager_secure_port: 8044
+      enabled: false
+    - name: yarn-command-maprsasl
+      ticketfile: /opt/mapr/conf/mapruserticket
+      enabled: false
+    - name: yarn-historyserver-ui-pam-ssl
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      yarn_history_server_secure_port: 19890
+      enabled: true
+    - name: yarn-historyserver-ui-insecure
+      yarn_history_server_insecure_port: 19888
+      enabled: false
     - name: kafka-rest-auth-pam-ssl
       username: mapr
       password: mapr123
@@ -82,12 +106,6 @@ modules:
     - name: data-access-gateway-rest-auth-insecure
       data_access_gateway_rest_port: 8243
       enabled: false
-    - name: kafka-rest-api-ssl-pam
-      username: mapr
-      password: mapr123
-      certificate: /opt/mapr/conf/ssl_truststore.pem
-      kafka_rest_port: 8082
-      enabled: false
     - name: httpfs-auth-pam-ssl
       username: mapr
       password: mapr123
@@ -96,15 +114,25 @@ modules:
       enabled: false
     - name: httpfs-auth-insecure
       enabled: false
+    - name: mapr-cmd-maprcli-api
+      enabled: false
+    - name: mapr-cmd-rest-api
+      enabled: false
+    - name: kafka-rest-api-ssl-pam
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      kafka_rest_port: 8082
+      enabled: false
     - name: data-access-gateway-rest-api-pam-ssl
       enabled: false
     - name: data-access-gateway-grpc
       enabled: false
     - name: kafka-connect-maprsasl
       enabled: false
-    - name: httpfs-maprsasl
-      enabled: false
-    - name: httpfs-plainauth
+    - name: httpfs-auth-certificate-ssl
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      httpfs_port: 14000
       enabled: false
     - name: hue-plainauth
       enabled: false

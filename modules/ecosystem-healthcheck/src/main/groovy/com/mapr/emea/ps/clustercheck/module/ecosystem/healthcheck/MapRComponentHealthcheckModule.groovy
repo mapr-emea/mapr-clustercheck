@@ -13,6 +13,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSyst
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMcs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHttpfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemKafkaRest
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemYarn
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
 
 import org.slf4j.Logger
@@ -37,6 +38,14 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
     static final Integer DEFAULT_DRILL_PORT = 31010
     static final Integer DEFAULT_DRILL_UI_PORT = 8047
+    static final Integer DEFAULT_RESOURCEMANAGER_SECURE_PORT = 8090
+    static final Integer DEFAULT_RESOURCEMANAGER_INSECURE_PORT = 8088
+    static final Integer DEFAULT_NODEMANAGER_SECURE_PORT = 8044
+    static final Integer DEFAULT_NODEMANAGER_INSECURE_PORT = 8042
+    static final Integer DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT = 19890
+    static final Integer DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT = 19888
+
+
     static final Integer DEFAULT_MCS_UI_PORT = 8443
     static final Integer DEFAULT_KAFKA_REST_PORT = 8082
     static final Integer DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT = 8243
@@ -68,6 +77,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     EcoSystemDrill ecoSystemDrill
 
     @Autowired
+    EcoSystemYarn ecoSystemYarn
+
+    @Autowired
     EcoSystemKafkaRest ecoSystemKafkaRest
 
     @Autowired
@@ -95,14 +107,26 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "drill-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
+            [name: "yarn-resourcemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
+            [name: "yarn-nodemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
+            [name: "yarn-resourcemanager-ui-insecure", resource_manager_insecure_port: DEFAULT_RESOURCEMANAGER_INSECURE_PORT, enabled: false], //TODO test
+            [name: "yarn-nodemanager-ui-insecure", node_manager_insecure_port: DEFAULT_NODEMANAGER_INSECURE_PORT, enabled: false], //TODO test
+            [name: "yarn-command-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
+            [name: "yarn-historyserver-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
+            [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false], //TODO test
             [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
             [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
-            [name: "httpfs-auth-insecure" , enabled: false],  //TODO test
+            [name: "httpfs-auth-insecure," , enabled: false],  //TODO test
+            [name: "hue-plainauth", enabled: false],
+
 
             // TODO implement
+            // TODO How to simplify the template?
+            [name: "yarn-command-insecure", enabled: false],
+            [name: "yarn-timelineserver-ui", enabled: false],
             [name: "mapr-cmd-maprcli-api", enabled: false], // https://mapr.com/docs/home/ReferenceGuide/maprcli-REST-API-Syntax.html
             [name: "mapr-cmd-rest-api", enabled: false],
             [name: "kafka-rest-api-ssl-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
@@ -110,14 +134,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
             [name: "kafka-connect-maprsasl" , enabled: false],
             [name: "httpfs-auth-certificate-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false], //TODO https://mapr.com/docs/home/HttpFS/SSLSecurityforHttpFS.html
-            [name: "hue-plainauth", enabled: false],
-            [name: "yarn-resourcemanager-ui-plainauth", enabled: false],
-            [name: "yarn-resourcemanager-ui-maprsasl", enabled: false],
-            [name: "yarn-resourcemanager-maprsasl", enabled: false],
             [name: "hive-server-plainauth", enabled: false],
             [name: "hive-server-maprsasl" , enabled: false],
             [name: "hive-metastore-maprsasl" , enabled: false],
-            [name: "spark-yarn" , enabled: false],
+            [name: "spark-yarn-maprsasl" , enabled: false],
+            [name: "spark-standalone" , enabled: false],
             [name: "spark-historyserver-ui", enabled: false],
             [name: "sqoop1", enabled: false],
             [name: "sqoop2", enabled: false],
@@ -245,6 +266,57 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
                 def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUIInsecure(packages, port)
+
+            } else if(test['name'] == "yarn-resourcemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("resource_manager_secure_port", DEFAULT_RESOURCEMANAGER_SECURE_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['yarn-resourcemanager-ui-pam-ssl'] = ecoSystemYarn.verifyResourceManagerUIPamSSL(packages, username, password, certificate, port)
+
+            } else if(test['name'] == "yarn-nodemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("node_manager_secure_port", DEFAULT_NODEMANAGER_SECURE_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['yarn-nodemanager-ui-pam-ssl'] = ecoSystemYarn.verifyNodeManagerUIPamSSL(packages, username, password, certificate, port)
+
+            } else if(test['name'] == "yarn-resourcemanager-ui-insecure" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("resource_manager_insecure_port", DEFAULT_RESOURCEMANAGER_INSECURE_PORT)
+
+                result['yarn-resourcemanager-ui-insecure'] = ecoSystemYarn.verifyRsourceManagerUIInSecure(packages, port)
+
+            } else if(test['name'] == "yarn-nodemanager-ui-insecure" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("node_manager_insecure_port", DEFAULT_NODEMANAGER_INSECURE_PORT)
+
+                result['yarn-nodemanager-ui-insecure'] = ecoSystemYarn.verifyNodeManagerUIInSecure(packages, port)
+
+            } else if(test['name'] == "yarn-command-maprsasl" && (test['enabled'] as boolean)) {
+
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+
+                result['yarn-command-maprsasl'] = ecoSystemYarn.verifyYarnCommandMapRSasl(packages, ticketfile)
+
+            } else if(test['name'] == "yarn-historyserver-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("yarn_history_server_secure_port", DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['yarn-historyserver-ui-pam-ssl'] = ecoSystemYarn.verifyYarnHistoryServerPamSSL(packages, username, password, certificate, port)
+
+            }  else if(test['name'] == "yarn-historyserver-ui-insecure" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("yarn_history_server_insecure_port", DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT)
+
+                result['yarn-historyserver-ui-insecure'] = ecoSystemYarn.verifyYarnHistoryServerInsecure(packages, port)
 
             } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
 
