@@ -131,8 +131,8 @@ class EcoSystemYarn {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HADOOP_CORE, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} yarn application -list"
-            nodeResult['success'] = nodeResult['output'].contains("Total number of applications")
+            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} yarn application -list; echo \$?"
+            nodeResult['success'] = nodeResult['output'].contains("Total number of applications") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             nodeResult
         })

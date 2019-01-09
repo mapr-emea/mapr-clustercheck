@@ -22,8 +22,8 @@ class CoreMfs {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
 
             def nodeResult = [:]
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -ls /user"
-            nodeResult['success'] = nodeResult['output'].contains("mapr")
+            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -ls /user; echo \$?"
+            nodeResult['success'] = nodeResult['output'].contains("mapr") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             nodeResult
         })

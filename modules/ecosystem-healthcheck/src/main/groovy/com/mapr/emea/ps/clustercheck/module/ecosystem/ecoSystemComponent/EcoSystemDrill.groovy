@@ -117,8 +117,8 @@ class EcoSystemDrill {
 
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${DIR_MAPR_FS_DRILL}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
             nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
-            nodeResult['output'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv"
-            nodeResult['success'] = nodeResult['output'].contains("4 rows selected")
+            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
+            nodeResult['success'] = nodeResult['output'].contains("4 rows selected") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
@@ -155,8 +155,8 @@ class EcoSystemDrill {
 
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${DIR_MAPR_FS_DRILL}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
             nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
-            nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv"
-            nodeResult['success'] = nodeResult['output'].contains("4 rows selected")
+            nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
+            nodeResult['success'] = nodeResult['output'].contains("4 rows selected") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 

@@ -5,8 +5,8 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRDB
-import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRLogin
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRStreams
+import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRTool
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDataAccessGateway
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
@@ -71,7 +71,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     CoreMcs coreMcs
 
     @Autowired
-    CoreMapRLogin coreMapRLogin
+    CoreMapRTool coreMapRTool
 
     @Autowired
     EcoSystemDrill ecoSystemDrill
@@ -100,7 +100,8 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "mcs-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
             [name: "mcs-ui-insecure", mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],  //TODO test
             [name: "maprlogin-password", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, enabled: false],
-            [name: "drill-jdbc-jsonfile-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
+            [name: "mapr-maprcli-api-sasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
+            [name: "drill-jdbc-jsonfile-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false], //TODO need to optimized the packages check
             [name: "drill-jdbc-file-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
@@ -127,8 +128,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             // TODO How to simplify the template?
             [name: "yarn-command-insecure", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
-            [name: "mapr-cmd-maprcli-api", enabled: false], // https://mapr.com/docs/home/ReferenceGuide/maprcli-REST-API-Syntax.html
-            [name: "mapr-cmd-rest-api", enabled: false],
             [name: "kafka-rest-api-ssl-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
             [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
@@ -215,11 +214,16 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def port = healthcheckconfig.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
                 result['mcs-ui-insecure'] = coreMcs.verifyMcsUiInSecure(packages, port)
 
+            } else if(test['name'] == "mapr-maprcli-api-sasl" && (test['enabled'] as boolean)) {
+
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                result['mapr-maprcli-api-sasl'] = coreMapRTool.verifyMapRCliApiSasl(packages, ticketfile)
+
             } else if(test['name'] == "maprlogin-password" && (test['enabled'] as boolean)) {
 
                 def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
                 def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                result['maprlogin-password'] = coreMapRLogin.verifyMapRLoginPassword(packages, username, password)
+                result['maprlogin-password'] = coreMapRTool.verifyMapRLoginPassword(packages, username, password)
 
             } else if(test['name'] == "drill-jdbc-jsonfile-plainauth" && (test['enabled'] as boolean)) {
 

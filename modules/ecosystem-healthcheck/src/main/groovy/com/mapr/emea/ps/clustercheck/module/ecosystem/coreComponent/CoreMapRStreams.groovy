@@ -40,11 +40,11 @@ class CoreMapRStreams {
             //Create a test topic in the stream
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic create -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME} -topic ${TOPIC_NAME}"
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic list -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME} "
+            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic list -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}; echo \$?"
 
             nodeResult['comment'] = "Don't worry if you see the error: Lookup of volume mapr.** failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
 
-            nodeResult['success'] = nodeResult['output'].contains(TOPIC_NAME)
+            nodeResult['success'] = nodeResult['output'].contains(TOPIC_NAME) && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             //Delete the test stream
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream delete -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}"

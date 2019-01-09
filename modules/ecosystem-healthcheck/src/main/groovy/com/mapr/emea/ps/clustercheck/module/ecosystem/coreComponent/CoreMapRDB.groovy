@@ -45,8 +45,8 @@ class CoreMapRDB {
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS_MAPRDB}"
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${DIR_MAPR_FS_MAPRDB}/${FILE_MAPR_DB_JSON} -dst ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_JSON} -mapreduce false"
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell script ${queryPath}"
-            nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
+            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell script ${queryPath}; echo \$?"
+            nodeResult['success'] = nodeResult['output'].contains("Data Engineer") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
 
@@ -77,9 +77,9 @@ class CoreMapRDB {
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table create -path ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}"
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf create -path ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY} -cfname ${CF_MAPR_DB_BINARY}"
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}"
+            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}; echo \$?"
             nodeResult['comment'] = "Don't worry if you see the error: Lookup of volume mapr.cluster.root failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
-            nodeResult['success'] = nodeResult['output'].contains(CF_MAPR_DB_BINARY)
+            nodeResult['success'] = nodeResult['output'].contains(CF_MAPR_DB_BINARY) && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
 
