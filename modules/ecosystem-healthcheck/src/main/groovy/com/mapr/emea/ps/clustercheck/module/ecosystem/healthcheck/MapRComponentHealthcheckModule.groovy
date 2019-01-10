@@ -32,6 +32,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(MapRComponentHealthcheckModule.class)
     
     static final String PATH_TICKET_FILE = "/opt/mapr/conf/mapruserticket"
+    static final String DEFAULT_MAPR_SSL_TRUSTSTORE_FILE = "/opt/mapr/conf/ssl_truststore"
     static final String PATH_SSL_CERTIFICATE_FILE = "/opt/mapr/conf/ssl_truststore.pem"
 
     static final String DEFAULT_MAPR_USERNAME = "mapr"
@@ -122,8 +123,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "yarn-historyserver-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
             [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false], //TODO test
             [name: "hive-server-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
-            [name: "hive-client-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
-            [name: "hive-beeline-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
+            [name: "hive-client-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
+            [name: "hive-beeline-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],//TODO hive to test with different version
+            [name: "hive-beeline-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO hive to test with different version
+            [name: "hive-beeline-maprsasl-pam", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO hive to test with different version
+            [name: "hive-beeline-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, ssl_truststore_file: DEFAULT_MAPR_SSL_TRUSTSTORE_FILE, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
             [name: "hive-webhcat-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
             [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
@@ -138,8 +142,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             // TODO How to simplify the template?
             [name: "yarn-command-insecure", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
-            [name: "hive-beeline-pam", enabled: false],
-            [name: "hive-beeline-pam-ssl", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
             [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
             [name: "kafka-connect-maprsasl" , enabled: false],
@@ -340,10 +342,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             } else if(test['name'] == "hive-client-maprsasl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
 
-                result['hive-client-maprsasl'] = ecoSystemHive.verifyHiveClientMapRSasl(packages, ticketfile, port)
+                result['hive-client-maprsasl'] = ecoSystemHive.verifyHiveClientMapRSasl(packages, ticketfile)
 
             } else if(test['name'] == "hive-beeline-maprsasl" && (test['enabled'] as boolean)) {
 
@@ -351,6 +352,32 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
 
                 result['hive-beeline-maprsasl'] = ecoSystemHive.verifyHiveBeelineMapRSasl(packages, ticketfile, port)
+
+            } else if(test['name'] == "hive-beeline-pam" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+
+                result['hive-beeline-pam'] = ecoSystemHive.verifyHiveBeelinePam(packages, username, password, port)
+
+            } else if(test['name'] == "hive-beeline-maprsasl-pam" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+
+                result['hive-beeline-maprsasl-pam'] = ecoSystemHive.verifyHiveBeelineMapRSaslPam(packages, ticketfile, username, password, port)
+
+            } else if(test['name'] == "hive-beeline-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def truststore = healthcheckconfig.getOrDefault("ssl_truststore_file", DEFAULT_MAPR_SSL_TRUSTSTORE_FILE)
+
+                result['hive-beeline-pam-ssl'] = ecoSystemHive.verifyHiveBeelinePamSSL(packages, truststore, username, password, port)
 
             } else if(test['name'] == "hive-webhcat-pam-ssl" && (test['enabled'] as boolean)) {
 

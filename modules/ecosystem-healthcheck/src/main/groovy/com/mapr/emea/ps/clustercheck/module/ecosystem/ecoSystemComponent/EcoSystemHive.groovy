@@ -51,7 +51,7 @@ class EcoSystemHive {
      * @param port
      * @return
      */
-    def verifyHiveClientMapRSasl(List<Object> packages, String ticketfile, int port) {
+    def verifyHiveClientMapRSasl(List<Object> packages, String ticketfile) {
 
         log.trace("Start : EcoSystemHive : verifyHiveClientMapRSasl")
 
@@ -70,7 +70,7 @@ class EcoSystemHive {
     }
 
     /**
-     *  Verify Hive Server / Metastore connection using Beeline client with MapR-SASL
+     * Verify Hive Server / Metastore connection using Beeline client with MapR-SASL
      * @param packages
      * @param ticketfile
      * @param port
@@ -87,7 +87,7 @@ class EcoSystemHive {
 
             hiveServerHosts.each {
                 nodeResult['HiveServer-' + it] = [:]
-                nodeResult['HiveServer-' + it]['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:10000/default;auth=maprsasl;\" -e \"show databases;\"; echo \$?"
+                nodeResult['HiveServer-' + it]['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;auth=maprsasl;\" -e \"show databases;\"; echo \$?"
                 nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
             }
 
@@ -95,6 +95,101 @@ class EcoSystemHive {
         })
 
         log.trace("End : EcoSystemHive : verifyHiveBeelineMapRSasl")
+
+        testResult
+    }
+
+    /**
+     * Verify Hive Server / Metastore connection using Beeline client with PAM
+     * @param packages
+     * @param username
+     * @param password
+     * @param port
+     * @return
+     */
+    def verifyHiveBeelinePam(List<Object> packages, String username, String password, int port) {
+
+        log.trace("Start : EcoSystemHive : verifyHiveBeelinePam")
+
+        def hiveServerHosts = mapRComponentHealthcheckUtil.findHostsWithPackage(packages, PACKAGE_NAME_HIVE_SERVER2)
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_CLIENT, {
+            def nodeResult = [:]
+
+            hiveServerHosts.each {
+                nodeResult['HiveServer-' + it] = [:]
+                nodeResult['HiveServer-' + it]['output'] = executeSudo "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;user=${username};password=${password}\" -e \"show databases;\"; echo \$?"
+                nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+            }
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemHive : verifyHiveBeelinePam")
+
+        testResult
+    }
+
+    /**
+     * Verify Hive Server / Metastore connection using Beeline client with MapRSASL and PAM
+     * @param packages
+     * @param ticketfile
+     * @param username
+     * @param password
+     * @param port
+     * @return
+     */
+    def verifyHiveBeelineMapRSaslPam(List<Object> packages, String ticketfile, String username, String password, int port) {
+
+        log.trace("Start : EcoSystemHive : verifyHiveBeelineMapRSaslPam")
+
+        def hiveServerHosts = mapRComponentHealthcheckUtil.findHostsWithPackage(packages, PACKAGE_NAME_HIVE_SERVER2)
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_CLIENT, {
+            def nodeResult = [:]
+
+            hiveServerHosts.each {
+                nodeResult['HiveServer-' + it] = [:]
+                nodeResult['HiveServer-' + it]['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;auth=maprsasl;user=${username};password=${password}\" -e \"show databases;\"; echo \$?"
+                nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+            }
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemHive : verifyHiveBeelineMapRSaslPam")
+
+        testResult
+    }
+
+    /**
+     * Verify Hive Server / Metastore connection using Beeline client with PAM and SSL
+     * @param packages
+     * @param truststore
+     * @param username
+     * @param password
+     * @param port
+     * @return
+     */
+    def verifyHiveBeelinePamSSL(List<Object> packages, String truststore, String username, String password, int port) {
+
+        log.trace("Start : EcoSystemHive : verifyHiveBeelinePamSSL")
+
+        def hiveServerHosts = mapRComponentHealthcheckUtil.findHostsWithPackage(packages, PACKAGE_NAME_HIVE_SERVER2)
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_CLIENT, {
+            def nodeResult = [:]
+
+            hiveServerHosts.each {
+                nodeResult['HiveServer-' + it] = [:]
+                nodeResult['HiveServer-' + it]['output'] = execute "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;ssl=true;sslTrustStore=${truststore};user=${username};password=${password}\" -e \"show databases;\"; echo \$?"
+                nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+            }
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemHive : verifyHiveBeelinePamSSL")
 
         testResult
     }

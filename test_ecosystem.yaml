@@ -105,10 +105,26 @@ modules:
       enabled: false
     - name: hive-client-maprsasl
       ticketfile: /opt/mapr/conf/mapruserticket
-      hive_server_port: 10000
       enabled: false
     - name: hive-beeline-maprsasl
       ticketfile: /opt/mapr/conf/mapruserticket
+      hive_server_port: 10000
+      enabled: false
+    - name: hive-beeline-pam
+      username: mapr
+      password: mapr123
+      hive_server_port: 10000
+      enabled: true
+    - name: hive-beeline-maprsasl-pam
+      ticketfile: /opt/mapr/conf/mapruserticket
+      username: mapr
+      password: mapr123
+      hive_server_port: 10000
+      enabled: true
+    - name: hive-beeline-pam-ssl
+      username: mapr
+      password: mapr123
+      ssl_truststore_file: /opt/mapr/conf/ssl_truststore
       hive_server_port: 10000
       enabled: false
     - name: hive-webhcat-pam-ssl
@@ -116,7 +132,7 @@ modules:
       password: mapr123
       certificate: /opt/mapr/conf/ssl_truststore.pem
       hive_webhcat_api_port: 50111
-      enabled: true
+      enabled: false
     - name: kafka-rest-auth-pam-ssl
       username: mapr
       password: mapr123
@@ -149,29 +165,11 @@ modules:
       enabled: false
     - name: yarn-timelineserver-ui
       enabled: false
-    - name: mapr-cmd-rest-api
-      enabled: false
-    - name: kafka-rest-api-ssl-pam
-      username: mapr
-      password: mapr123
-      certificate: /opt/mapr/conf/ssl_truststore.pem
-      kafka_rest_port: 8082
-      enabled: false
     - name: data-access-gateway-rest-api-pam-ssl
       enabled: false
     - name: data-access-gateway-grpc
       enabled: false
     - name: kafka-connect-maprsasl
-      enabled: false
-    - name: httpfs-auth-certificate-ssl
-      certificate: /opt/mapr/conf/ssl_truststore.pem
-      httpfs_port: 14000
-      enabled: false
-    - name: hive-server-plainauth
-      enabled: false
-    - name: hive-server-maprsasl
-      enabled: false
-    - name: hive-metastore-maprsasl
       enabled: false
     - name: spark-yarn-maprsasl
       enabled: false
