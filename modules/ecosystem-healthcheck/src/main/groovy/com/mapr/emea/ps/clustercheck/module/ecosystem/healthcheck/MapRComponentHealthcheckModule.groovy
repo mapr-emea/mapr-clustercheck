@@ -11,6 +11,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDataAccessGateway
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemDrill
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMcs
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHive
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHttpfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemKafkaRest
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemYarn
@@ -44,7 +45,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_NODEMANAGER_INSECURE_PORT = 8042
     static final Integer DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT = 19890
     static final Integer DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT = 19888
-
+    static final Integer DEFAULT_HIVE_SERVER_PORT = 10000
+    static final Integer DEFAULT_HIVE_SERVER_UI_PORT = 10002
+    static final Integer DEFAULT_HIVE_WEBHCAT_API_PORT = 50111
 
     static final Integer DEFAULT_MCS_UI_PORT = 8443
     static final Integer DEFAULT_KAFKA_REST_PORT = 8082
@@ -78,6 +81,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
     @Autowired
     EcoSystemYarn ecoSystemYarn
+
+    @Autowired
+    EcoSystemHive ecoSystemHive
 
     @Autowired
     EcoSystemKafkaRest ecoSystemKafkaRest
@@ -115,6 +121,10 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "yarn-command-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "yarn-historyserver-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
             [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false], //TODO test
+            [name: "hive-server-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
+            [name: "hive-client-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
+            [name: "hive-beeline-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
+            [name: "hive-webhcat-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
             [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
@@ -128,14 +138,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             // TODO How to simplify the template?
             [name: "yarn-command-insecure", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
-            [name: "kafka-rest-api-ssl-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "hive-beeline-pam", enabled: false],
+            [name: "hive-beeline-pam-ssl", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
             [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
             [name: "kafka-connect-maprsasl" , enabled: false],
-            [name: "httpfs-auth-certificate-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false], //TODO https://mapr.com/docs/home/HttpFS/SSLSecurityforHttpFS.html
-            [name: "hive-server-plainauth", enabled: false],
-            [name: "hive-server-maprsasl" , enabled: false],
-            [name: "hive-metastore-maprsasl" , enabled: false],
             [name: "spark-yarn-maprsasl" , enabled: false],
             [name: "spark-standalone" , enabled: false],
             [name: "spark-historyserver-ui", enabled: false],
@@ -321,6 +328,38 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def port = healthcheckconfig.getOrDefault("yarn_history_server_insecure_port", DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT)
 
                 result['yarn-historyserver-ui-insecure'] = ecoSystemYarn.verifyYarnHistoryServerInsecure(packages, port)
+
+            } else if(test['name'] == "hive-server-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("hive_server_ui_port", DEFAULT_HIVE_SERVER_UI_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['hive-server-ui-pam-ssl'] = ecoSystemHive.verifyHiveServerUIPamSSL(packages, username, password, certificate, port)
+
+            } else if(test['name'] == "hive-client-maprsasl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+
+                result['hive-client-maprsasl'] = ecoSystemHive.verifyHiveClientMapRSasl(packages, ticketfile, port)
+
+            } else if(test['name'] == "hive-beeline-maprsasl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+
+                result['hive-beeline-maprsasl'] = ecoSystemHive.verifyHiveBeelineMapRSasl(packages, ticketfile, port)
+
+            } else if(test['name'] == "hive-webhcat-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("hive_webhcat_api_port", DEFAULT_HIVE_WEBHCAT_API_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['hive-webhcat-pam-ssl'] = ecoSystemHive.verifyHiveWebHcatPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
 

@@ -42,7 +42,7 @@ modules:
       enabled: false
     - name: mapr-maprcli-api-sasl
       ticketfile: /opt/mapr/conf/mapruserticket
-      enabled: true
+      enabled: false
     - name: drill-jdbc-jsonfile-plainauth
       drill_port: 31010
       enabled: false
@@ -97,6 +97,26 @@ modules:
     - name: yarn-historyserver-ui-insecure
       yarn_history_server_insecure_port: 19888
       enabled: false
+    - name: hive-server-ui-pam-ssl
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      hive_server_ui_port: 10002
+      enabled: false
+    - name: hive-client-maprsasl
+      ticketfile: /opt/mapr/conf/mapruserticket
+      hive_server_port: 10000
+      enabled: false
+    - name: hive-beeline-maprsasl
+      ticketfile: /opt/mapr/conf/mapruserticket
+      hive_server_port: 10000
+      enabled: false
+    - name: hive-webhcat-pam-ssl
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      hive_webhcat_api_port: 50111
+      enabled: true
     - name: kafka-rest-auth-pam-ssl
       username: mapr
       password: mapr123

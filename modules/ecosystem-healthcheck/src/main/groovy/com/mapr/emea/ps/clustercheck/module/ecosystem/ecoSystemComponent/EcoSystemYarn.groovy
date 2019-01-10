@@ -119,7 +119,7 @@ class EcoSystemYarn {
     }
 
     /**
-     * Verify Yarn, submitting a MapReduce Job, with Pi example
+     * Verify Yarn, submitting a MapReduce Job, Pi example, using MapR-SASL
      * @param packages
      * @param ticketfile
      * @return

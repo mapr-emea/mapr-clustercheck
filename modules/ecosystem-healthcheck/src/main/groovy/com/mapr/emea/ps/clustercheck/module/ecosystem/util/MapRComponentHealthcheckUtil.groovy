@@ -64,12 +64,12 @@ class MapRComponentHealthcheckUtil {
     }
 
     /**
-     * Find hosts with package installed
+     * Find hosts with package installed //TODO find exact package installed, instead of using "contains" (in case of drill...etc.)
      * @param packages
      * @param packageName
      * @return
      */
-    static List<Object> findHostsWithPackage(List packages, packageName) {
+    static List<Object> findHostsWithPackage(List<Object> packages, String packageName) {
         log.trace("Start : MapRComponentHealthcheckUtil : findHostsWithPackage")
 
         def hostsFound = packages.findAll { it['mapr.packages'].find { it.contains(packageName) } != null }.collect { it['host'] }
