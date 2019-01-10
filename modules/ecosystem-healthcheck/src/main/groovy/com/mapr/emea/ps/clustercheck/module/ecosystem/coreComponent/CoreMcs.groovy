@@ -32,7 +32,7 @@ class CoreMcs {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/app/mcs/#/ | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -55,7 +55,7 @@ class CoreMcs {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} https://${remote.host}:${port}/app/mcs/#/  | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -77,7 +77,7 @@ class CoreMcs {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/app/mcs/#/ | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 

@@ -14,6 +14,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMcs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHive
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHttpfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemKafkaRest
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemSpyglass
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemYarn
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
 
@@ -49,11 +50,12 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_HIVE_SERVER_PORT = 10000
     static final Integer DEFAULT_HIVE_SERVER_UI_PORT = 10002
     static final Integer DEFAULT_HIVE_WEBHCAT_API_PORT = 50111
-
     static final Integer DEFAULT_MCS_UI_PORT = 8443
     static final Integer DEFAULT_KAFKA_REST_PORT = 8082
     static final Integer DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT = 8243
     static final Integer DEFAULT_HTTPFS_PORT = 14000
+    static final Integer DEFAULT_OPENTSDB_API_PORT = 4242
+    static final Integer DEFAULT_GRAFANA_UI_PORT = 3000
 
     @Autowired
     @Qualifier("globalYamlConfig")
@@ -95,6 +97,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Autowired
     EcoSystemHttpfs ecoSystemHttpfs
 
+    @Autowired
+    EcoSystemSpyglass ecoSystemSpyglass
+
 
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
@@ -134,9 +139,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
             [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
-            [name: "httpfs-auth-insecure," , enabled: false],  //TODO test
-            [name: "hue-plainauth", enabled: false],
-
+            [name: "httpfs-auth-insecure,", httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],  //TODO test
+            [name: "opentsdb-api", opentsdb_api_port: DEFAULT_OPENTSDB_API_PORT, enabled: false],
+            [name: "grafana-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, grafana_ui_port: DEFAULT_GRAFANA_UI_PORT, enabled: false],
 
             // TODO implement
             // TODO How to simplify the template?
@@ -148,12 +153,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "spark-yarn-maprsasl" , enabled: false],
             [name: "spark-standalone" , enabled: false],
             [name: "spark-historyserver-ui", enabled: false],
+            [name: "hue-plainauth", enabled: false],
             [name: "sqoop1", enabled: false],
             [name: "sqoop2", enabled: false],
             [name: "elasticsearch", enabled: false],
             [name: "kibana-ui", enabled: false],
-            [name: "opentsdb", enabled: false],
-            [name: "grafana-ui", enabled: false],
             [name: "oozie-client", enabled: false],
             [name: "oozie-ui", enabled: false],
     ]
@@ -429,9 +433,23 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             } else if(test['name'] == "httpfs-auth-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
+                def port = healthcheckconfig.getOrDefault("httpfs_port", DEFAULT_HTTPFS_PORT)
 
                 result['httpfs-auth-insecure'] = ecoSystemHttpfs.verifyAuthInsecure(packages, port)
+
+            } else if(test['name'] == "opentsdb-api" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("opentsdb_api_port", DEFAULT_OPENTSDB_API_PORT)
+
+                result['opentsdb-api'] = ecoSystemSpyglass.verifyOpentsdbAPI(packages, port)
+
+            } else if(test['name'] == "grafana-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("grafana_ui_port", DEFAULT_GRAFANA_UI_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                result['grafana-ui-pam-ssl'] = ecoSystemSpyglass.verifyGrafanaUIPamSSL(packages, username, password, certificate, port)
 
             } else {
                 log.info(">>>>> ... Test '${test['name']}' not found!")

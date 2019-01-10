@@ -114,13 +114,13 @@ modules:
       username: mapr
       password: mapr123
       hive_server_port: 10000
-      enabled: true
+      enabled: false
     - name: hive-beeline-maprsasl-pam
       ticketfile: /opt/mapr/conf/mapruserticket
       username: mapr
       password: mapr123
       hive_server_port: 10000
-      enabled: true
+      enabled: false
     - name: hive-beeline-pam-ssl
       username: mapr
       password: mapr123
@@ -158,8 +158,16 @@ modules:
       httpfs_port: 14000
       enabled: false
     - name: httpfs-auth-insecure,
+      httpfs_port: 14000
       enabled: false
-    - name: hue-plainauth
+    - name: opentsdb-api
+      opentsdb_api_port: 4242
+      enabled: false
+    - name: grafana-ui-pam-ssl
+      username: mapr
+      password: mapr123
+      certificate: /opt/mapr/conf/ssl_truststore.pem
+      grafana_ui_port: 3000
       enabled: false
     - name: yarn-command-insecure
       enabled: false
@@ -177,6 +185,8 @@ modules:
       enabled: false
     - name: spark-historyserver-ui
       enabled: false
+    - name: hue-plainauth
+      enabled: false
     - name: sqoop1
       enabled: false
     - name: sqoop2
@@ -184,10 +194,6 @@ modules:
     - name: elasticsearch
       enabled: false
     - name: kibana-ui
-      enabled: false
-    - name: opentsdb
-      enabled: false
-    - name: grafana-ui
       enabled: false
     - name: oozie-client
       enabled: false

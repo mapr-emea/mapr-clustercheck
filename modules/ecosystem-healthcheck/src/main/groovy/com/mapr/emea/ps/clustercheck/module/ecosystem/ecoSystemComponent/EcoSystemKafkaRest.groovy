@@ -33,7 +33,7 @@ class EcoSystemKafkaRest {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is -u ${username}:${password} --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -56,7 +56,7 @@ class EcoSystemKafkaRest {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 

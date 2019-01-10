@@ -35,7 +35,7 @@ class EcoSystemHive {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/hiveserver2.jsp | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -211,7 +211,7 @@ class EcoSystemHive {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/templeton/v1/status?user.name=${username} | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult['comment'] = "Only one WebHcat is running, the others are standby."
             nodeResult
         })

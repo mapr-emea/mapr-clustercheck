@@ -36,7 +36,7 @@ class EcoSystemYarn {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/ws/v1/cluster/info | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult['comment'] = "Only one Resourcemanger is running, the others are standby."
             nodeResult
         })
@@ -63,7 +63,7 @@ class EcoSystemYarn {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/ws/v1/node | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -86,7 +86,7 @@ class EcoSystemYarn {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ws/v1/cluster/info | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -109,7 +109,7 @@ class EcoSystemYarn {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ws/v1/node | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -159,7 +159,7 @@ class EcoSystemYarn {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -X post -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/jobhistory | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -182,7 +182,7 @@ class EcoSystemYarn {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -X post -Is http://${remote.host}:${port}/jobhistory | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 

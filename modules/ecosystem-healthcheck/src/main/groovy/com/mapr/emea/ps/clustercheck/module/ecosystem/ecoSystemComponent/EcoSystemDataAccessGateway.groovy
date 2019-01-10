@@ -33,7 +33,7 @@ class EcoSystemDataAccessGateway {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is -u ${username}:${password} --cacert ${certificate} https://${remote.host}:${port}/app/swagger/ | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
@@ -57,7 +57,7 @@ class EcoSystemDataAccessGateway {
             def nodeResult = [:]
 
             nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/app/swagger/ | head -n 1"
-            nodeResult['success'] = nodeResult['output'].contains("HTTP/1.1 200 OK")
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult
         })
 
