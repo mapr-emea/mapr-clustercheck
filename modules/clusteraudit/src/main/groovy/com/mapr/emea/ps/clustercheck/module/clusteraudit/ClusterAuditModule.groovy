@@ -217,6 +217,9 @@ class ClusterAuditModule implements ExecuteModule {
                 node['dns.lookup'] = execute("host -W 10 " + node['hostname'] + " || true")
                 node['dns.reverse'] = execute("host -W 10 " + node['ip'] + " || true")
 
+                node['configured.domain.name'] = execute("hostname -d")
+
+
                 nodes.add(node)
             }
         }
@@ -260,6 +263,9 @@ class ClusterAuditModule implements ExecuteModule {
         recommendations += ifBuildMessage(result, "dns.reverse", {
             !it.contains("domain name pointer")
         }, "Reverse DNS lookup for host does not work.")
+        recommendations += ifBuildMessage(result, "configured.domain.name", {
+            !it
+        }, "When enable security using configure.sh without -certdomain option, domain name should be configured, otherwise certificate generation will fail.")
 
         def textReport = buildTextReport(result)
 
