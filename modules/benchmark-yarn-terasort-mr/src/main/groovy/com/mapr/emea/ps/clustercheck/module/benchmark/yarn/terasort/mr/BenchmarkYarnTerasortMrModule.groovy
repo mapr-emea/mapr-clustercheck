@@ -31,7 +31,7 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", tests: [["chunk_size_in_mb": 256, "rows": 10000000000, "rows_comment": "one row has 100 byte", reduce_tasks_per_node: 2, "topology": "/data", replication: 3, compression: "on"]]]
+        return [role: "clusterjob-execution", tests: [["chunk_size_in_mb": 256, "rows": 10000000000, "rows_comment": "one row has 100 byte", teragen_number_mapper: 10 ,reduce_tasks_per_node: 2, "topology": "/data", replication: 3, compression: "on"]]]
     }
 
     @Override
@@ -72,8 +72,9 @@ class BenchmarkYarnTerasortMrModule implements ExecuteModule {
             def compression = test.getOrDefault("compression", "on")
             def chunkSize = test.getOrDefault("chunk_size_in_mb", 256) * 1024
             def reduceTasksPerNode = test.getOrDefault("reduce_tasks_per_node", 2)
+            def teragenNumberMapper = test.getOrDefault("teragen_number_mapper", 10)
 
-            def settings = [reduceTasksPerNode: reduceTasksPerNode, chunkSize: chunkSize, compression: compression, topology: topology, replication: replication, rows: rows]
+            def settings = [teragenNumberMapper: teragenNumberMapper, reduceTasksPerNode: reduceTasksPerNode, chunkSize: chunkSize, compression: compression, topology: topology, replication: replication, rows: rows]
             def volumeName = "benchmarks_" + RandomStringUtils.random(8, true, true).toLowerCase()
             setupBenchmarkVolume(test, role, volumeName, settings)
             def teraGenResult = generateTerasortBenchmark(test, role, volumeName, settings)
@@ -189,6 +190,7 @@ ${result.teraSort.error}
                 def teraGenOutout = executeSudo(suStr("""hadoop jar ${hadoopExamplesJar} teragen \\
       -Dmapreduce.map.cpu.vcores=0 \\
       -Dmapreduce.map.disk=0 \\
+      -Dmapreduce.job.maps=${config.teragenNumberMapper} \\
       -Dmapreduce.map.speculative=false \\
       -Dmapreduce.reduce.speculative=false \\
       -Dmapreduce.map.output.compress=false \\

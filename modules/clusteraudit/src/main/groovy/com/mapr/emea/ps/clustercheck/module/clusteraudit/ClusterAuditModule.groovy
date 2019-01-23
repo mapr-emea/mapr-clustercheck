@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier
  * Created by chufe on 22.08.17.
  */
 
-@ClusterCheckModule(name = "cluster-audit", version = "1.0")
+@ClusterCheckModule(name = "cluster-audit", version = "1.0.1")
 class ClusterAuditModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(ClusterAuditModule.class);
 
@@ -107,8 +107,8 @@ class ClusterAuditModule implements ExecuteModule {
                 node['memory.swap_free'] = getColonProperty(memory, "SwapFree")
                 node['memory.hugepage_total'] = getColonProperty(memory, "HugePages_Total")
                 node['memory.hugepage_free'] = getColonProperty(memory, "HugePages_Free")
-                node['memory.dimm_slots'] = executeSudo('dmidecode -t memory |grep -c \'^[[:space:]]*Locator:\'')
-                node['memory.dimm_count'] = executeSudo('dmidecode -t memory | grep -c \'^[[:space:]]Size: [0-9][0-9]*\'')
+                node['memory.dimm_slots'] = executeSudo('dmidecode -t memory |grep -c \'^[[:space:]]*Locator:\' || true')
+                node['memory.dimm_count'] = executeSudo('dmidecode -t memory | grep -c \'^[[:space:]]Size: [0-9][0-9]*\' || true')
                 node['memory.dimm_info'] = executeSudo('dmidecode -t memory | awk \'/Memory Device$/,/^$/ {print}\'')
 
                 // NIC / Ethernet
@@ -128,21 +128,25 @@ class ClusterAuditModule implements ExecuteModule {
                 node['os.distribution'] = distribution
                 node['os.kernel'] = execute("uname -srvmo | fmt")
                 node['os.time'] = execute("date")
-                node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG' || true"), "LANG=")
-
-                if (distribution.toLowerCase().contains("ubuntu")) {
+                node['os.locale'] = getColonValueFromLines(executeSudo("locale | grep LANG || true"), "LANG=")
+            //    node['os.locale'] = getColonValueFromLines(executeSudo("su - ${mapruser} -c 'locale | grep LANG' || true"), "LANG=")
+                if (distribution.toLowerCase().contains("ubuntu") || distribution.toLowerCase().contains("sles")) {
                     node['os.umask'] = executeSudo("su -c umask")
+                }
+                else {
+                    node['os.umask'] = executeSudo("umask")
+                }
+                if (distribution.toLowerCase().contains("ubuntu")) {
                     node['os.services.apparmor'] = executeSudo("apparmor_status | sed 's/([0-9]*)//' || true")
                     node['os.services.selinux'] = execute("([ -d /etc/selinux -a -f /etc/selinux/config ] && grep ^SELINUX= /etc/selinux/config) || echo 'Disabled'")
                     node['os.services.firewall'] = executeSudo("service ufw status | head -10 || true").tokenize('\n')
                     node['os.services.iptables'] = executeSudo("iptables -L | head -10 || true").tokenize('\n')
                     node['os.packages.nfs'] = execute("dpkg -l '*nfs*' | grep ^i || true").tokenize('\n')
                 } else {
-                    node['os.umask'] = executeSudo("umask")
                     if (distribution.toLowerCase().contains("sles")) {
-                        node['os.repositories'] = execute("zypper repos | grep -i mapr").tokenize('\n')
-                        node['os.selinux'] = execute("rpm -q selinux-tools selinux-policy")
-                        node['os.firewall'] = executeSudo("service SuSEfirewall2_init status").tokenize('\n')
+                        node['os.repositories'] = execute("zypper repos | grep -i mapr || true").tokenize('\n')
+                        node['os.selinux'] = execute("rpm -q selinux-tools selinux-policy || true")
+                        node['os.firewall'] = executeSudo("service SuSEfirewall2_init status || true").tokenize('\n')
                     } else {
                         node['os.repositories'] = executeSudo("yum --noplugins repolist | grep -i mapr || true").tokenize('\n')
                         node['os.selinux'] = executeSudo("getenforce")
@@ -213,6 +217,9 @@ class ClusterAuditModule implements ExecuteModule {
                 node['dns.lookup'] = execute("host -W 10 " + node['hostname'] + " || true")
                 node['dns.reverse'] = execute("host -W 10 " + node['ip'] + " || true")
 
+                node['configured.domain.name'] = execute("hostname -d")
+
+
                 nodes.add(node)
             }
         }
@@ -256,6 +263,9 @@ class ClusterAuditModule implements ExecuteModule {
         recommendations += ifBuildMessage(result, "dns.reverse", {
             !it.contains("domain name pointer")
         }, "Reverse DNS lookup for host does not work.")
+        recommendations += ifBuildMessage(result, "configured.domain.name", {
+            !it
+        }, "When enable security using configure.sh without -certdomain option, domain name should be configured, otherwise certificate generation will fail.")
 
         def textReport = buildTextReport(result)
 

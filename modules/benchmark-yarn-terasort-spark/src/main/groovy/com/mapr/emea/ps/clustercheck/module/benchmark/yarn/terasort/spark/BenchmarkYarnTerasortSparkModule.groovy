@@ -25,13 +25,15 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
-
+    @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath;
     @Autowired
     ResourceLoader resourceLoader;
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [role: "clusterjob-execution", tests: [["chunk_size_in_mb": 256, data_size: "1T", num_executors: 10, executor_cores: 2, executor_memory: "4G", "topology": "/data", replication: 3, compression: "on"]]]
+        return [role: "clusterjob-execution", tests: [["chunk_size_in_mb": 256, data_size: "1T", num_executors: 10, executor_cores: 2, executor_memory: "4G", driver_cores: 2, driver_memory: "4G", "topology": "/data", replication: 3, compression: "on"]]]
     }
 
     @Override
@@ -72,6 +74,8 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
             def numExecutors = test.getOrDefault("num_executors", 10)
             def executorCores = test.getOrDefault("executor_cores", 2)
             def executorMemory = test.getOrDefault("executor_memory", "4G")
+            def driverCores = test.getOrDefault("driver_cores", 2)
+            def driverMemory = test.getOrDefault("driver_memory", "4G")
             def config = [
                 topology: topology,
                 replication: replication,
@@ -80,7 +84,9 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
                 dataSize: dataSize,
                 numExecutors: numExecutors,
                 executorCores: executorCores,
-                executorMemory: executorMemory
+                executorMemory: executorMemory,
+                driverCores: driverCores,
+                driverMemory: driverMemory
             ]
             def volumeName = "benchmarks_" + RandomStringUtils.random(8, true, true).toLowerCase()
             setupBenchmarkVolume(test, role, volumeName, config)
@@ -122,11 +128,12 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
         ssh.run {
             session(ssh.remotes.role(role)) {
                 def inputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/benchmark/yarn/terasort/spark/spark-2.1-terasort-1.1-SNAPSHOT.jar").getInputStream()
-                put from: inputStream, into: "/tmp/spark-2.1-terasort-1.1-SNAPSHOT.jar"
-                def homePath = executeSudo(suStr("echo \$HOME"))
-                executeSudo(suStr("mkdir -p ${homePath}/.clustercheck"))
-                executeSudo(suStr("cp /tmp/spark-2.1-terasort-1.1-SNAPSHOT.jar ${homePath}/.clustercheck/spark-2.1-terasort-1.1-SNAPSHOT.jar"))
-                sparkTeraJar = "${homePath}/.clustercheck/spark-2.1-terasort-1.1-SNAPSHOT.jar"
+                def tmpModule = "${tmpPath}/benchmark-yarn-terasort-spark"
+                execute "mkdir -p ${tmpModule}"
+                execute "chmod 777 ${tmpModule}"
+                put from: inputStream, into: "${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar"
+                sparkTeraJar = "${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar"
+                execute "chmod 755 ${tmpModule}/spark-2.1-terasort-1.1-SNAPSHOT.jar"
             }
         }
         return sparkTeraJar
@@ -180,6 +187,8 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
                 executeSudo(suStr("""${sparkPath}/bin/spark-submit --master yarn --deploy-mode client \\
   --name "Spark TeraGen" \\
   --class com.github.ehiggs.spark.terasort.TeraGen \\
+  --driver-cores ${config.driverCores} \\
+  --driver-memory ${config.driverMemory} \\
   --num-executors ${config.numExecutors} \\
   --executor-cores ${config.executorCores} \\
   --executor-memory ${config.executorMemory} \\
@@ -211,6 +220,8 @@ class BenchmarkYarnTerasortSparkModule implements ExecuteModule {
                 executeSudo(suStr("""${sparkPath}/bin/spark-submit --master yarn --deploy-mode client \\
   --name "Spark TeraSort" \\
   --class com.github.ehiggs.spark.terasort.TeraSort \\
+  --driver-cores ${config.driverCores} \\
+  --driver-memory ${config.driverMemory} \\
   --num-executors ${config.numExecutors} \\
   --executor-cores ${config.executorCores} \\
   --executor-memory ${config.executorMemory} \\

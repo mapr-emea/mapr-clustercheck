@@ -25,7 +25,9 @@ class BenchmarkMemoryModule implements ExecuteModule {
     @Autowired
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
-
+    @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath;
     @Autowired
     ResourceLoader resourceLoader;
 
@@ -114,11 +116,15 @@ class BenchmarkMemoryModule implements ExecuteModule {
                 node['threads'] = execute("grep '^siblings' /proc/cpuinfo | sort -u | awk '{print \$NF}'") as Integer
                 node['model'] = execute("grep '^model name' /proc/cpuinfo | sort -u | awk -F'[:]' '{print \$NF}'").trim()
                 def stream59Result = ""
+                def tmpModule = "${tmpPath}/benchmark-memory"
+                execute "mkdir -p ${tmpModule}"
+                execute "chmod 777 ${tmpModule}"
+
                 if (node['cores'] == node['threads']) {
-                    stream59Result = execute("\$HOME/.clustercheck/stream59")
+                    stream59Result = execute("${tmpModule}/stream59")
                 } else {
                     def threads = node['sockets'] * node['cores']
-                    stream59Result = execute("OMP_NUM_THREADS=${threads} KMP_AFFINITY=granularity=core,scatter \$HOME/.clustercheck/stream59")
+                    stream59Result = execute("OMP_NUM_THREADS=${threads} KMP_AFFINITY=granularity=core,scatter ${tmpModule}/stream59")
                 }
                 node['memoryTest'] = [:]
                 def copy = getColonValueFromLines(stream59Result, "Copy:")
@@ -168,11 +174,14 @@ class BenchmarkMemoryModule implements ExecuteModule {
         log.info(">>>>> Copy ${tool} to remote hosts")
         ssh.run {
             session(ssh.remotes.role(role)) {
-                def homePath = execute 'echo $HOME'
-                execute "mkdir -p ${homePath}/.clustercheck"
+                def tmpModule = "${tmpPath}/benchmark-memory"
+                execute "mkdir -p ${tmpModule}"
+                execute "chmod 777 ${tmpModule}"
+//                def homePath = execute 'echo $HOME'
+//                execute "mkdir -p ${homePath}/.clustercheck"
                 def toolInputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/benchmark/memory/" + tool).getInputStream()
-                put from: toolInputStream, into: "${homePath}/.clustercheck/" + tool
-                execute "chmod +x ${homePath}/.clustercheck/" + tool
+                put from: toolInputStream, into: "${tmpModule}/" + tool
+                execute "chmod +x ${tmpModule}/" + tool
             }
         }
     }
