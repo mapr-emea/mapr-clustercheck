@@ -11,6 +11,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import groovy.json.JsonOutput
+import org.springframework.context.annotation.DependsOn
 import org.springframework.core.io.ResourceLoader
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
@@ -81,6 +82,22 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         }
         Yaml parser = new Yaml()
         return parser.load((configFile as File).text) as Map<String, ?>
+    }
+
+    @Bean("localTmpDir")
+    @DependsOn("ssh")
+    String tmpPath() {
+        def tmpPath = globalYamlConfig().getOrDefault("local_tmp_dir", "/tmp/.clusteraudit")
+        log.info("Local tmp dir on nodes for execution: ${tmpPath}")
+        if (CMD_RUN.equals(command)) {
+            ssh.run {
+                session(ssh.remotes.role('all')) {
+                    executeSudo "mkdir -p ${tmpPath}"
+                    executeSudo "chmod 777 ${tmpPath}"
+                }
+            }
+        }
+        return tmpPath
     }
 
     @Override

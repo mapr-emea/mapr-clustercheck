@@ -1,7 +1,7 @@
 allprojects {
     apply plugin: 'idea'
     group = 'com.mapr.emea.ps'
-    version = "1.0.0"
+    version = "1.0.2"
 }
 
 subprojects {

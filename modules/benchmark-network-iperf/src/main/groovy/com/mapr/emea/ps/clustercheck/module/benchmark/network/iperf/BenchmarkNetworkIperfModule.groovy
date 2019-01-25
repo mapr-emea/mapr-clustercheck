@@ -48,6 +48,10 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
     Map<String, ?> globalYamlConfig
 
     @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath;
+
+    @Autowired
     ResourceLoader resourceLoader;
 
     @Override
@@ -161,7 +165,9 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
     def runSingleTest(remote, node, matrixItem, execute) {
         def currentHost = remote.host
         def serverHost = node.host
-        def iperfResult = execute "\$HOME/.clustercheck/iperf -c ${serverHost} -n ${matrixItem.data_per_thread} -P ${matrixItem.threads} -y C"
+        def tmpModule = "${tmpPath}/benchmark-network-iperf"
+        execute "mkdir -p ${tmpModule}"
+        def iperfResult = execute "${tmpModule}/iperf -c ${serverHost} -n ${matrixItem.data_per_thread} -P ${matrixItem.threads} -y C"
         def iperfTokens = iperfResult.tokenize(',')
         def dataCopiedInBytes = Long.valueOf(iperfTokens[-2])
         def throughputInBitPerSecond = Long.valueOf(iperfTokens[-1])
@@ -203,7 +209,9 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
         log.info(">>>>> Starting iperf server on all nodes")
         ssh.run {
             session(ssh.remotes.role(role)) {
-                execute 'nohup $HOME/.clustercheck/iperf -s > /dev/null 2>&1 &'
+                def tmpModule = "${tmpPath}/benchmark-network-iperf"
+                execute "mkdir -p ${tmpModule}"
+                execute "nohup ${tmpModule}/iperf -s > /dev/null 2>&1 &"
             }
 
         }
@@ -215,11 +223,11 @@ class BenchmarkNetworkIperfModule implements ExecuteModule {
         log.info(">>>>> Copy iperf to remote hosts")
         ssh.run {
             session(ssh.remotes.role(role)) {
-                def homePath = execute 'echo $HOME'
-                execute "mkdir -p ${homePath}/.clustercheck"
+                def tmpModule = "${tmpPath}/benchmark-network-iperf"
+                execute "mkdir -p ${tmpModule}"
                 def iperfInputStream = resourceLoader.getResource("classpath:/com/mapr/emea/ps/clustercheck/module/benchmark/network/iperf/iperf").getInputStream()
-                put from: iperfInputStream, into: "${homePath}/.clustercheck/iperf"
-                execute "chmod +x ${homePath}/.clustercheck/iperf"
+                put from: iperfInputStream, into: "${tmpModule}/iperf"
+                execute "chmod +x ${tmpModule}/iperf"
             }
         }
     }
