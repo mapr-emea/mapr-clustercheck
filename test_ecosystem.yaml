@@ -148,7 +148,7 @@ modules:
         password: mapr123
         certificate: /opt/mapr/conf/ssl_truststore.pem
         kafka_rest_port: 8082
-        enabled: true
+        enabled: false
       - name: data-access-gateway-rest-auth-pam-ssl
         username: mapr
         password: mapr123
@@ -176,6 +176,12 @@ modules:
         certificate: /opt/mapr/conf/ssl_truststore.pem
         grafana_ui_port: 3000
         enabled: false
+      - name: elasticsearch-healthcheck-pam-ssl
+        username: admin
+        password: admin
+        certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem
+        elastic_port: 9200
+        enabled: true
       - name: nfsv3-maprsasl
         enabled: false
       - name: drill-on-yarn-plainauth
@@ -203,8 +209,6 @@ modules:
       - name: sqoop1
         enabled: false
       - name: sqoop2
-        enabled: false
-      - name: elasticsearch
         enabled: false
       - name: kibana-ui
         enabled: false

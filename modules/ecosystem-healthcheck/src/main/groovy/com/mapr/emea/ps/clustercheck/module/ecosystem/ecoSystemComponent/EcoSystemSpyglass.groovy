@@ -13,6 +13,7 @@ class EcoSystemSpyglass {
 
     static final String PACKAGE_NAME_OPENTSDB = "mapr-opentsdb"
     static final String PACKAGE_NAME_GRAFANA = "mapr-grafana"
+    static final String PACKAGE_NAME_ELASTIC = "mapr-elasticsearch"
 
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
@@ -64,6 +65,36 @@ class EcoSystemSpyglass {
         })
 
         log.trace("End : EcoSystemSpyglass : verifyGrafanaUIPamSSL")
+
+        testResult
+    }
+
+    /**
+     * Elastic health check with PAM and SSL
+     * @param packages
+     * @param username
+     * @param password
+     * @param certificate
+     * @param port
+     * @return
+     */
+    def verifyElasticPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+
+        log.trace("Start : EcoSystemSpyglass : verifyElasticPamSSL")
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_ELASTIC, {
+            def nodeResult = [:]
+
+            String query = "curl --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/_cluster/health ; echo \$?"
+
+            nodeResult['output'] = executeSudo query
+            nodeResult['query'] = "sudo " + query
+            nodeResult['success'] = nodeResult['output'].toString().contains("cluster_name") && nodeResult['output'].toString().reverse().take(1).equals("0")
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemSpyglass : verifyElasticPamSSL")
 
         testResult
     }
