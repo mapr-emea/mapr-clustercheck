@@ -2,7 +2,7 @@ cluster_name: demo.mapr.com
 customer_name: Custom Test Environment
 output_dir: /Users/xuelansun/Git/mapr-clustercheck/build/audit-result
 mapr_user: mapr
-
+local_tmp_dir: /tmp/.clustercheck
 modules:
   cluster-audit:
     enabled: false

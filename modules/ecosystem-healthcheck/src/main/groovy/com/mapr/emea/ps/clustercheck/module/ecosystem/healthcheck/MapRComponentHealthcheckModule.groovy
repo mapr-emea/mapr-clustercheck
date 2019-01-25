@@ -61,6 +61,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
 
+    //TODO use tmpPath
+    @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath
+
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
