@@ -136,6 +136,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hive-webhcat-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
             [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
+            [name: "kafka-rest-api-pam-ssl", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
             [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
@@ -145,11 +146,14 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             // TODO implement
             // TODO How to simplify the template?
+            [name: "nfsv3-maprsasl", enabled: false],
+            [name: "drill-on-yarn-plainauth", enabled: false],
+            [name: "drill-on-yarn-maprsasl", enabled: false],
             [name: "yarn-command-insecure", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
             [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
-            [name: "kafka-connect-maprsasl" , enabled: false],
+            [name: "kafka-connect-to-maprfs-distributed" , enabled: false],
             [name: "spark-yarn-maprsasl" , enabled: false],
             [name: "spark-standalone" , enabled: false],
             [name: "spark-historyserver-ui", enabled: false],
@@ -406,6 +410,16 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['kafka-rest-auth-pam-ssl'] = ecoSystemKafkaRest.verifyAuthPamSSL(packages, username, password, certificate, port)
+
+            }  else if(test['name'] == "kafka-rest-api-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def port = healthcheckconfig.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+
+                result['kafka-rest-api-pam-ssl'] = ecoSystemKafkaRest.verifyAPIPamSSL(packages, username, password, certificate, ticketfile, port)
 
             } else if(test['name'] == "data-access-gateway-rest-auth-insecure" && (test['enabled'] as boolean)) {
 

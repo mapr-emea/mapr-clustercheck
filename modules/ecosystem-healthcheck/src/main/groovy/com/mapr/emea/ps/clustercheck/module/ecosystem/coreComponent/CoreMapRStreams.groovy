@@ -31,6 +31,9 @@ class CoreMapRStreams {
 
             def nodeResult = [:]
 
+            //Delete the test directory
+            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRSTREAMS, delegate)
+
             //Create a test directory
             executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_MAPRSTREAMS}"
 
