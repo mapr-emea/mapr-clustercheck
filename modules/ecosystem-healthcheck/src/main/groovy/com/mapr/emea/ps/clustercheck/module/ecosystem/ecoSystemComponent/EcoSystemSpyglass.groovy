@@ -14,7 +14,7 @@ class EcoSystemSpyglass {
     static final String PACKAGE_NAME_OPENTSDB = "mapr-opentsdb"
     static final String PACKAGE_NAME_GRAFANA = "mapr-grafana"
     static final String PACKAGE_NAME_ELASTIC = "mapr-elasticsearch"
-
+    static final String PACKAGE_NAME_KIBANA = "mapr-kibana"
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
@@ -31,8 +31,10 @@ class EcoSystemSpyglass {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_OPENTSDB, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl http://${remote.host}:${port}/api/version | grep -q version; echo \$?"
+            final String query = "curl http://${remote.host}:${port}/api/version | grep -q version; echo \$?"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().reverse().take(1).equals("0")
+            nodeResult['query'] = "sudo " + query
 
             nodeResult
         })
@@ -58,8 +60,10 @@ class EcoSystemSpyglass {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_GRAFANA, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
+            final String query = "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = "sudo " + query
 
             nodeResult
         })
@@ -85,16 +89,46 @@ class EcoSystemSpyglass {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_ELASTIC, {
             def nodeResult = [:]
 
-            String query = "curl --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/_cluster/health ; echo \$?"
+            final String query = "curl --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/_cluster/health ; echo \$?"
 
             nodeResult['output'] = executeSudo query
-            nodeResult['query'] = "sudo " + query
             nodeResult['success'] = nodeResult['output'].toString().contains("cluster_name") && nodeResult['output'].toString().reverse().take(1).equals("0")
+            nodeResult['query'] = "sudo " + query
 
             nodeResult
         })
 
         log.trace("End : EcoSystemSpyglass : verifyElasticPamSSL")
+
+        testResult
+    }
+
+    /**
+     * Verify Kibana UI with Pam and SSL
+     * @param packages
+     * @param username
+     * @param password
+     * @param certificate
+     * @param port
+     * @return
+     */
+    def verifyKibanaUIPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+
+        log.trace("Start : EcoSystemSpyglass : verifyKibanaPamSSL")
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_KIBANA, {
+            def nodeResult = [:]
+
+            final String query = "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
+
+            nodeResult['output'] = executeSudo query
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = "sudo " + query
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemSpyglass : verifyKibanaPamSSL")
 
         testResult
     }

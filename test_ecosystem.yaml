@@ -169,21 +169,25 @@ modules:
         enabled: false
       - name: opentsdb-api
         opentsdb_api_port: 4242
-        enabled: false
+        enabled: true
       - name: grafana-ui-pam-ssl
         username: mapr
         password: mapr123
         certificate: /opt/mapr/conf/ssl_truststore.pem
         grafana_ui_port: 3000
-        enabled: false
+        enabled: true
       - name: elasticsearch-healthcheck-pam-ssl
-        username: admin
-        password: admin
+        username_elastic: admin
+        password_elastic: admin
         certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem
         elastic_port: 9200
         enabled: true
-      - name: nfsv3-maprsasl
-        enabled: false
+      - name: kibana-ui-pam-ssl
+        username_kibana: admin
+        password_kibana: admin
+        certificate_kibana: /opt/mapr/kibana/kibana-6.2.3/config/cert.pem
+        kibana_port: 5601
+        enabled: true
       - name: drill-on-yarn-plainauth
         enabled: false
       - name: drill-on-yarn-maprsasl
@@ -209,8 +213,6 @@ modules:
       - name: sqoop1
         enabled: false
       - name: sqoop2
-        enabled: false
-      - name: kibana-ui
         enabled: false
       - name: oozie-client
         enabled: false

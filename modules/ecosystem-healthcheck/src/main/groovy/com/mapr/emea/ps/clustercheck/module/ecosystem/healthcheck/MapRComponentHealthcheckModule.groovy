@@ -36,12 +36,16 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final String DEFAULT_MAPR_SSL_TRUSTSTORE_FILE = "/opt/mapr/conf/ssl_truststore"
     static final String PATH_SSL_CERTIFICATE_FILE = "/opt/mapr/conf/ssl_truststore.pem"
     static final String PATH_SSL_CERTIFICATE_FILE_ELASTIC = "/opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem"
+    static final String PATH_SSL_CERTIFICATE_FILE_KIBANA = "/opt/mapr/kibana/kibana-6.2.3/config/cert.pem"
 
     static final String DEFAULT_MAPR_USERNAME = "mapr"
     static final String DEFAULT_MAPR_PASSWORD = "mapr123"
 
     static final String DEFAULT_ELASTIC_USERNAME = "admin"
     static final String DEFAULT_ELASTIC_PASSWORD = "admin"
+
+    static final String DEFAULT_KIBANA_USERNAME = "admin"
+    static final String DEFAULT_KIBANA_PASSWORD = "admin"
 
     static final Integer DEFAULT_DRILL_PORT = 31010
     static final Integer DEFAULT_DRILL_UI_PORT = 8047
@@ -61,6 +65,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_OPENTSDB_API_PORT = 4242
     static final Integer DEFAULT_GRAFANA_UI_PORT = 3000
     static final Integer DEFAULT_ELASTIC_PORT = 9200
+    static final Integer DEFAULT_KIBANA_PORT = 5601
 
     @Autowired
     @Qualifier("globalYamlConfig")
@@ -155,10 +160,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "opentsdb-api", opentsdb_api_port: DEFAULT_OPENTSDB_API_PORT, enabled: false],
             [name: "grafana-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, grafana_ui_port: DEFAULT_GRAFANA_UI_PORT, enabled: false],
             [name: "elasticsearch-healthcheck-pam-ssl", username_elastic: DEFAULT_ELASTIC_USERNAME, password_elastic: DEFAULT_ELASTIC_PASSWORD, certificate_elastic: PATH_SSL_CERTIFICATE_FILE_ELASTIC, elastic_port: DEFAULT_ELASTIC_PORT, enabled: false],
+            [name: "kibana-ui-pam-ssl", username_kibana: DEFAULT_KIBANA_USERNAME, password_kibana: DEFAULT_KIBANA_PASSWORD, certificate_kibana: PATH_SSL_CERTIFICATE_FILE_KIBANA, kibana_port: DEFAULT_KIBANA_PORT, enabled: false],
+
 
             // TODO implement
             // TODO How to simplify the template?
-            [name: "nfsv3-maprsasl", enabled: false],
             [name: "drill-on-yarn-plainauth", enabled: false],
             [name: "drill-on-yarn-maprsasl", enabled: false],
             [name: "yarn-command-insecure", enabled: false],
@@ -172,7 +178,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hue-plainauth", enabled: false],
             [name: "sqoop1", enabled: false],
             [name: "sqoop2", enabled: false],
-            [name: "kibana-ui", enabled: false],
             [name: "oozie-client", enabled: false],
             [name: "oozie-ui", enabled: false],
     ]
@@ -476,13 +481,21 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
                 result['grafana-ui-pam-ssl'] = ecoSystemSpyglass.verifyGrafanaUIPamSSL(packages, username, password, certificate, port)
 
-            }  else if(test['name'] == "elasticsearch-healthcheck-pam-ssl" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "elasticsearch-healthcheck-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def elastic_port = healthcheckconfig.getOrDefault("grafana_ui_port", DEFAULT_ELASTIC_PORT)
                 def username_elastic = healthcheckconfig.getOrDefault("username_elastic", DEFAULT_ELASTIC_USERNAME)
                 def password_elastic = healthcheckconfig.getOrDefault("password_elastic", DEFAULT_ELASTIC_PASSWORD)
                 def certificate_elastic = healthcheckconfig.getOrDefault("certificate_elastic", PATH_SSL_CERTIFICATE_FILE_ELASTIC)
                 result['elasticsearch-healthcheck-pam-ssl'] = ecoSystemSpyglass.verifyElasticPamSSL(packages, username_elastic, password_elastic, certificate_elastic, elastic_port)
+
+            } else if(test['name'] == "kibana-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def kibana_port = healthcheckconfig.getOrDefault("kibana_port", DEFAULT_KIBANA_PORT)
+                def username_kibana = healthcheckconfig.getOrDefault("username_kibana", DEFAULT_KIBANA_USERNAME)
+                def password_kibana = healthcheckconfig.getOrDefault("password_kibana", DEFAULT_KIBANA_PASSWORD)
+                def certificate_kibana = healthcheckconfig.getOrDefault("certificate_kibana", PATH_SSL_CERTIFICATE_FILE_KIBANA)
+                result['kibana-ui-pam-ssl'] = ecoSystemSpyglass.verifyKibanaUIPamSSL(packages, username_kibana, password_kibana, certificate_kibana, kibana_port)
 
             } else {
                 log.info(">>>>> ... Test '${test['name']}' not found!")
