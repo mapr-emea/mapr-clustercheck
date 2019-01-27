@@ -138,14 +138,15 @@ class EcoSystemKafkaRest {
             nodeResult['output'] = executeSudo queryConsumeMessage
             nodeResult['success'] = nodeResult['output'].contains("paul")
 
-            nodeResult['1. Query : Create the Dir     '] = "sudo " + queryCreateDir
-            nodeResult['2. Query : Create the Stream  '] = "sudo " + queryCreateStream
-            nodeResult['3. Query : Create the Topic   '] = "sudo " + queryCreateTopic
-            nodeResult['4. Query : Create the Consumer'] = "sudo " + queryCreateConsumer
-            nodeResult['5. Query : Produce a Message  '] = "sudo " + queryProduceMessage
-            nodeResult['7. Query : Consume the Message'] = "sudo " + queryConsumeMessage
-            nodeResult['8. Query : Delete the Consumer'] = "sudo " + queryDeleteConsumer
-            nodeResult['9. Query : Delete the Stream  '] = "sudo " + queryDeleteStream
+            nodeResult['1.  Query : create the Dir     '] = "sudo " + queryCreateDir
+            nodeResult['2.  Query : create the Stream  '] = "sudo " + queryCreateStream
+            nodeResult['3.  Query : create the Topic   '] = "sudo " + queryCreateTopic
+            nodeResult['4.  Query : create the Consumer'] = "sudo " + queryCreateConsumer
+            nodeResult['5.  Query : produce a Message  '] = "sudo " + queryProduceMessage
+            nodeResult['7.  Query : consume the Message'] = "sudo " + queryConsumeMessage
+            nodeResult['8.  Query : delete the Consumer'] = "sudo " + queryDeleteConsumer
+            nodeResult['9.  Query : delete the Stream  '] = "sudo " + queryDeleteStream
+            nodeResult['10. Query : delete the Dir     '] = "No query available"
 
 
             //Clean up

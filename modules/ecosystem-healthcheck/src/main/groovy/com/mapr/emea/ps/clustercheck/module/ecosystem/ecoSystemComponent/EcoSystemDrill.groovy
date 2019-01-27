@@ -17,7 +17,6 @@ class EcoSystemDrill {
     static final String FILE_DRILL_QUERY = "drill_people.sql"
     static final String FILE_DRILL_MAPR_DB_QUERY = "drill_people_maprdb.sql"
     static final String TB_DRILL_MAPR_DB_JSON = "drill_people_maprdb"
-    static final String PATH_DRILL = "/opt/mapr/drill/drill-*"
 
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
@@ -38,16 +37,29 @@ class EcoSystemDrill {
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
-            def jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
-            def sqlPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_QUERY, delegate)
+
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
+            final String sqlPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_QUERY, delegate)
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_DRILL}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS_DRILL}"
-            nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
-            nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_DRILL}"
+            final String querySendJsonFile = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS_DRILL}"
+            final String queryExecution = "/opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv"
+
+            executeSudo queryCreateDir
+            executeSudo querySendJsonFile
+
+            nodeResult['output'] =  executeSudo queryExecution
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
+
+            nodeResult['1. Query : upload json file         '] = "No query available"
+            nodeResult['2. Query : upload query file        '] = "No query available"
+            nodeResult['3. Query : delete dir if exist      '] = "No query available"
+            nodeResult['4. Query : create dir               '] = "sudo " + queryCreateDir
+            nodeResult['5. Query : send json file to MapRFS '] = "sudo " + querySendJsonFile
+            nodeResult['6. Query : execute query            '] = "sudo " + queryExecution
+            nodeResult['7. Query : delete dir               '] = "No query available"
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
@@ -73,16 +85,29 @@ class EcoSystemDrill {
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
-            def jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
-            def sqlPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_QUERY, delegate)
+
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
+            final String sqlPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_QUERY, delegate)
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_DRILL}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS_DRILL}"
-            nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
-            nodeResult['output'] =  executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_DRILL}"
+            final String querySendJsonFile = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS_DRILL}"
+            final String queryExecution = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv"
+
+            executeSudo queryCreateDir
+            executeSudo querySendJsonFile
+
+            nodeResult['output'] =  executeSudo queryExecution
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
+
+            nodeResult['1. Query : upload json file         '] = "No query available"
+            nodeResult['2. Query : upload query file        '] = "No query available"
+            nodeResult['3. Query : delete dir if exist      '] = "No query available"
+            nodeResult['4. Query : create dir               '] = "sudo " + queryCreateDir
+            nodeResult['5. Query : send json file to MapRFS '] = "sudo " + querySendJsonFile
+            nodeResult['6. Query : execute query            '] = "sudo " + queryExecution
+            nodeResult['7. Query : delete dir               '] = "No query available"
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
@@ -106,19 +131,34 @@ class EcoSystemDrill {
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
-            def jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
-            def sqlPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_MAPR_DB_QUERY, delegate)
+
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
+            final String sqlPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_MAPR_DB_QUERY, delegate)
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_DRILL}"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_DRILL}"
+            final String queryExecution = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
+
+            executeSudo queryCreateDir
 
             def jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(ticketfile, jsonPath, DIR_MAPR_FS_DRILL, delegate)
 
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${DIR_MAPR_FS_DRILL}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
-            nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} ${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
+            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${DIR_MAPR_FS_DRILL}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
+
+            executeSudo queryImportJson
+
+            nodeResult['output'] = executeSudo queryExecution
             nodeResult['success'] = nodeResult['output'].contains("4 rows selected") && nodeResult['output'].toString().reverse().take(1).equals("0")
+
+            nodeResult['1. Query : upload json file           '] = "No query available"
+            nodeResult['2. Query : upload query file          '] = "No query available"
+            nodeResult['3. Query : delete dir if exist        '] = "No query available"
+            nodeResult['4. Query : create dir                 '] = "sudo " + queryCreateDir
+            nodeResult['5. Query : send json file to MapRFS   '] = "No query available"
+            nodeResult['6. Query : import json file to MapRDB '] = "Sudo " + queryImportJson
+            nodeResult['7. Query : execute query              '] = "sudo " + queryExecution
+            nodeResult['8. Query : delete dir                 '] = "No query available"
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
@@ -144,19 +184,34 @@ class EcoSystemDrill {
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
-            def jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
-            def sqlPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_MAPR_DB_QUERY, delegate)
+
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_JSON, delegate)
+            final String sqlPath = mapRComponentHealthcheckUtil.uploadFile(FILE_DRILL_MAPR_DB_QUERY, delegate)
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_DRILL}"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_DRILL}"
+            final String queryExecution = "/opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
+
+            executeSudo queryCreateDir
 
             def jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(ticketfile, jsonPath, DIR_MAPR_FS_DRILL, delegate)
 
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${DIR_MAPR_FS_DRILL}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
-            nodeResult['drillPath'] = execute "ls -d ${PATH_DRILL}"
-            nodeResult['output'] =  executeSudo "${nodeResult['drillPath']}/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
+            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${DIR_MAPR_FS_DRILL}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
+
+            executeSudo queryImportJson
+
+            nodeResult['output'] =  executeSudo queryExecution
             nodeResult['success'] = nodeResult['output'].contains("4 rows selected") && nodeResult['output'].toString().reverse().take(1).equals("0")
+
+            nodeResult['1. Query : upload json file           '] = "No query available"
+            nodeResult['2. Query : upload query file          '] = "No query available"
+            nodeResult['3. Query : delete dir if exist        '] = "No query available"
+            nodeResult['4. Query : create dir                 '] = "sudo " + queryCreateDir
+            nodeResult['5. Query : send json file to MapRFS   '] = "No query available"
+            nodeResult['6. Query : import json file to MapRDB '] = "Sudo " + queryImportJson
+            nodeResult['7. Query : execute query              '] = "sudo " + queryExecution
+            nodeResult['8. Query : delete dir                 '] = "No query available"
 
             mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_DRILL, delegate)
 
@@ -179,8 +234,12 @@ class EcoSystemDrill {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
+            final String query = "curl -Is --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
+
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = "sudo " + query
+
             nodeResult
         })
 
@@ -205,8 +264,12 @@ class EcoSystemDrill {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
+            final String query = "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
+
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = "sudo " + query
+
             nodeResult
         })
 
@@ -227,8 +290,13 @@ class EcoSystemDrill {
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
-            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ | head -n 1"
+
+            final String query = "curl -Is http://${remote.host}:${port}/ | head -n 1"
+
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = "sudo " + query
+
             nodeResult
         })
 

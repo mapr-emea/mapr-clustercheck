@@ -120,6 +120,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
     def defaultTestMatrix = [
+            //Core components check
             [name: "maprfs", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "maprdb-json-shell", enabled: false],
             [name: "maprdb-binary-shell", enabled: false],
@@ -129,6 +130,8 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "mcs-ui-insecure", mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],  //TODO test
             [name: "maprlogin-password", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, enabled: false],
             [name: "mapr-maprcli-api-sasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
+
+            //Drill check
             [name: "drill-jdbc-jsonfile-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false], //TODO need to optimized the packages check
             [name: "drill-jdbc-file-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
@@ -136,6 +139,8 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "drill-ui-secure-ssl", certificate: PATH_SSL_CERTIFICATE_FILE, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
+
+            //Yarn check
             [name: "yarn-resourcemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-nodemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-resourcemanager-ui-insecure", resource_manager_insecure_port: DEFAULT_RESOURCEMANAGER_INSECURE_PORT, enabled: false], //TODO test
@@ -143,6 +148,8 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "yarn-command-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "yarn-historyserver-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
             [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false], //TODO test
+
+            //Hive check
             [name: "hive-server-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
             [name: "hive-client-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "hive-beeline-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],//TODO hive to test with different version
@@ -150,13 +157,19 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hive-beeline-maprsasl-pam", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO hive to test with different version
             [name: "hive-beeline-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, ssl_truststore_file: DEFAULT_MAPR_SSL_TRUSTSTORE_FILE, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
             [name: "hive-webhcat-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
+
+            //Kafka rest check
             [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
             [name: "kafka-rest-api-pam-ssl", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+
+            //Data access gateway check
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
+
             [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
             [name: "httpfs-auth-insecure,", httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],  //TODO test
+
             [name: "opentsdb-api", opentsdb_api_port: DEFAULT_OPENTSDB_API_PORT, enabled: false],
             [name: "grafana-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, grafana_ui_port: DEFAULT_GRAFANA_UI_PORT, enabled: false],
             [name: "elasticsearch-healthcheck-pam-ssl", username_elastic: DEFAULT_ELASTIC_USERNAME, password_elastic: DEFAULT_ELASTIC_PASSWORD, certificate_elastic: PATH_SSL_CERTIFICATE_FILE_ELASTIC, elastic_port: DEFAULT_ELASTIC_PORT, enabled: false],
@@ -165,8 +178,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             // TODO implement
             // TODO How to simplify the template?
-            [name: "drill-on-yarn-plainauth", enabled: false],
-            [name: "drill-on-yarn-maprsasl", enabled: false],
             [name: "yarn-command-insecure", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],

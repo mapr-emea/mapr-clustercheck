@@ -45,25 +45,25 @@ modules:
         enabled: false
       - name: drill-jdbc-jsonfile-plainauth
         drill_port: 31010
-        enabled: false
+        enabled: true
       - name: drill-jdbc-file-json-maprsasl
         drill_port: 31010
-        enabled: false
+        enabled: true
       - name: drill-jdbc-maprdb-json-plainauth
         drill_port: 31010
-        enabled: false
+        enabled: true
       - name: drill-jdbc-maprdb-json-maprsasl
         drill_port: 31010
-        enabled: false
+        enabled: true
       - name: drill-ui-secure-ssl
         certificate: /opt/mapr/conf/ssl_truststore.pem
         drill_ui_port: 8047
-        enabled: false
+        enabled: true
       - name: drill-ui-secure-pam
         username: mapr
         password: mapr123
         drill_ui_port: 8047
-        enabled: false
+        enabled: true
       - name: drill-ui-insecure
         drill_ui_port: 8047
         enabled: false
@@ -169,28 +169,24 @@ modules:
         enabled: false
       - name: opentsdb-api
         opentsdb_api_port: 4242
-        enabled: true
+        enabled: false
       - name: grafana-ui-pam-ssl
         username: mapr
         password: mapr123
         certificate: /opt/mapr/conf/ssl_truststore.pem
         grafana_ui_port: 3000
-        enabled: true
+        enabled: false
       - name: elasticsearch-healthcheck-pam-ssl
         username_elastic: admin
         password_elastic: admin
         certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem
         elastic_port: 9200
-        enabled: true
+        enabled: false
       - name: kibana-ui-pam-ssl
         username_kibana: admin
         password_kibana: admin
         certificate_kibana: /opt/mapr/kibana/kibana-6.2.3/config/cert.pem
         kibana_port: 5601
-        enabled: true
-      - name: drill-on-yarn-plainauth
-        enabled: false
-      - name: drill-on-yarn-maprsasl
         enabled: false
       - name: yarn-command-insecure
         enabled: false
