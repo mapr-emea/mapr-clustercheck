@@ -12,8 +12,7 @@ class CoreMapRDB {
     static final Logger log = LoggerFactory.getLogger(CoreMapRDB.class)
 
     static final String PACKAGE_NAME = "mapr-core"
-    static final String DIR_MAPR_FS_MAPRDB = "/tmp/.clustercheck/ecosystem-healthcheck/maprdb"
-    static final String FILE_MAPR_DB_JSON_QUERY = "maprdb_json_query"
+    static final String DIR_MAPR_FS_MAPRDB = "maprdb"
     static final String FILE_MAPR_DB_JSON = "maprdb_people.json"
     static final String TB_MAPR_DB_JSON = "tb_maprdb_people"
     static final String TB_MAPR_DB_BINARY = "test_binary"
@@ -29,26 +28,34 @@ class CoreMapRDB {
      * @param ticketfile
      * @return
      */
-    def verifyMapRDBJsonShell(List<Object> packages, String ticketfile) {
+    def verifyMapRDBJsonShell(List<Object> packages, String ticketfile, String maprFSTmpDir) {
 
         log.trace("Start : CoreMapRDB : verifyMapRDBJsonShell")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
 
             def nodeResult = [:]
-            def jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON, delegate)
-            def queryPath = mapRComponentHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON_QUERY, delegate)
 
-            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON, delegate)
+            final String query = "find " + "${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_JSON}"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}"
+            final String querySendJsonFile = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}"
+            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${FILE_MAPR_DB_JSON} -dst ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_JSON} -mapreduce false"
+            final String queryDbShell = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell ${query}; echo \$?"
 
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_MAPRDB}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${DIR_MAPR_FS_MAPRDB}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${DIR_MAPR_FS_MAPRDB}/${FILE_MAPR_DB_JSON} -dst ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_JSON} -mapreduce false"
+            executeSudo queryCreateDir
+            executeSudo querySendJsonFile
+            executeSudo queryImportJson
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell script ${queryPath}; echo \$?"
+            nodeResult['output'] = executeSudo queryDbShell
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
-            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
+            nodeResult['1. Path  : json file                  '] = jsonPath
+            nodeResult['2. Query : find table                 '] = query
+            nodeResult['3. Query : create dir                 '] = "sudo " + queryCreateDir
+            nodeResult['4. Query : send json file to MapRFS   '] = "sudo " + querySendJsonFile
+            nodeResult['5. Query : import json file to MapRDB '] = "Sudo " + queryImportJson
+            nodeResult['6. Query : execute query              '] = "sudo " + queryDbShell
 
             nodeResult
         })
@@ -63,7 +70,7 @@ class CoreMapRDB {
      * @param ticketfile
      * @return
      */
-    def verifyMapRDBBinaryShell(List<Object> packages, String ticketfile) {
+    def verifyMapRDBBinaryShell(List<Object> packages, String ticketfile, maprFSTmpDir) {
 
         log.trace("Start : CoreMapRDB : verifyMapRDBBinaryShell")
 
@@ -71,17 +78,24 @@ class CoreMapRDB {
 
             def nodeResult = [:]
 
-            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}"
+            final String queryCreateTable = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table create -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}"
+            final String queryCreateCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf create -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY} -cfname ${CF_MAPR_DB_BINARY}"
+            final String queryListCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}; echo \$?"
 
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_MAPRDB}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table create -path ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}"
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf create -path ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY} -cfname ${CF_MAPR_DB_BINARY}"
+            executeSudo queryCreateDir
+            executeSudo queryCreateTable
+            executeSudo queryCreateCF
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}; echo \$?"
+            nodeResult['output'] = executeSudo queryListCF
             nodeResult['comment'] = "Don't worry if you see the error: Lookup of volume mapr.cluster.root failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
             nodeResult['success'] = nodeResult['output'].contains(CF_MAPR_DB_BINARY) && nodeResult['output'].toString().reverse().take(1).equals("0")
 
-            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRDB, delegate)
+            nodeResult['1. Query : create dir           '] = "sudo " + queryCreateDir
+            nodeResult['2. Query : create table         '] = "sudo " + queryCreateTable
+            nodeResult['3. Query : create column family '] = "sudo " + queryCreateCF
+            nodeResult['4. Query : list column family   '] = "Sudo " + queryListCF
+            nodeResult['5. Query : delete dir           '] = "No query available"
 
             nodeResult
         })

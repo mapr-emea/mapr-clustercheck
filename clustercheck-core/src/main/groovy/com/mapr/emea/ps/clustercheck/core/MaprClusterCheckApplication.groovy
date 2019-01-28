@@ -27,6 +27,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     public static final String CMD_TEST_SSH = "testssh"
     public static final String CMD_VALIDATE = "validate"
     public static final String CMD_GENERATETEMPLATE = "generatetemplate"
+    public static final String PATH_TICKET_FILE = "/opt/mapr/conf/mapruserticket"
 
     @Autowired
     @Qualifier("globalYamlConfig")
@@ -87,7 +88,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     @Bean("localTmpDir")
     @DependsOn("ssh")
     String tmpPath() {
-        def tmpPath = globalYamlConfig().getOrDefault("local_tmp_dir", "/tmp/.clusteraudit")
+        def tmpPath = globalYamlConfig().getOrDefault("local_tmp_dir", "/tmp/.clustercheck")
         log.info("Local tmp dir on nodes for execution: ${tmpPath}")
         if (CMD_RUN.equals(command)) {
             ssh.run {
@@ -98,6 +99,22 @@ class MaprClusterCheckApplication implements CommandLineRunner {
             }
         }
         return tmpPath
+    }
+
+    @Bean("maprFSTmpDir")
+    @DependsOn("ssh")
+    String maprFSTmpPath() {
+        def maprFSTmpPath = globalYamlConfig().getOrDefault("maprfs_tmp_dir", "/tmp/.clustercheck")
+        log.info("MapR-FS tmp dir on MapR-FS for execution: ${maprFSTmpPath}")
+        if (CMD_RUN.equals(command)) {
+            ssh.run {
+                session(ssh.remotes.role('all')) {
+                    executeSudo "MAPR_TICKETFILE_LOCATION=${PATH_TICKET_FILE} hadoop fs -mkdir -p ${maprFSTmpPath}"
+                    executeSudo "MAPR_TICKETFILE_LOCATION=${PATH_TICKET_FILE} hadoop fs -chmod 777 -R ${maprFSTmpPath}"
+                }
+            }
+        }
+        return maprFSTmpPath
     }
 
     @Override

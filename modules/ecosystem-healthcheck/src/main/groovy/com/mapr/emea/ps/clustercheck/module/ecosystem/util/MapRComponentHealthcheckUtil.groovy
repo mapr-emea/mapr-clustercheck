@@ -12,10 +12,12 @@ class MapRComponentHealthcheckUtil {
 
     static final Logger log = LoggerFactory.getLogger(MapRComponentHealthcheckUtil.class)
 
-    static final String PATH_ECO_SYS = ".clustercheck/ecosystem-healthcheck"
-
     static final String PATH_CLASSPATH = "/com/mapr/emea/ps/clustercheck/module/ecosystem/healthcheck"
 
+    @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath
+    
     @Autowired
     @Qualifier("ssh")
     def ssh
@@ -116,7 +118,7 @@ class MapRComponentHealthcheckUtil {
     }
 
     /**
-     * Upload local file to remote
+     * Upload local file to remote node
      * @param fileName
      * @param delegate
      * @return
@@ -124,11 +126,9 @@ class MapRComponentHealthcheckUtil {
     def uploadFile(String fileName, delegate) {
         log.trace("Start : MapRComponentHealthcheckUtil : uploadFile")
 
-        def homePath = delegate.execute 'echo $HOME'
-        delegate.execute "mkdir -p ${homePath}/${PATH_ECO_SYS}/"
         def fileInputStream = resourceLoader.getResource("classpath:${PATH_CLASSPATH}/${fileName}").getInputStream()
-        delegate.put from: fileInputStream, into: "${homePath}/${PATH_ECO_SYS}/${fileName}"
-        def path = "${homePath}/${PATH_ECO_SYS}/${fileName}"
+        delegate.put from: fileInputStream, into: "${tmpPath}/${fileName}"
+        def path = "${tmpPath}/${fileName}"
 
         log.trace("End : MapRComponentHealthcheckUtil : uploadFile")
 

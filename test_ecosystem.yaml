@@ -3,6 +3,7 @@ customer_name: Custom Test Environment
 output_dir: /Users/xuelansun/Git/mapr-clustercheck/build/audit-result
 mapr_user: mapr
 local_tmp_dir: /tmp/.clustercheck
+maprfs_tmp_dir: /tmp2/.clustercheck
 modules:
   cluster-audit:
     enabled: false
@@ -18,9 +19,9 @@ modules:
         ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: maprdb-json-shell
-        enabled: false
+        enabled: true
       - name: maprdb-binary-shell
-        enabled: false
+        enabled: true
       - name: mapr-streams
         ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
@@ -45,25 +46,25 @@ modules:
         enabled: false
       - name: drill-jdbc-jsonfile-plainauth
         drill_port: 31010
-        enabled: true
+        enabled: false
       - name: drill-jdbc-file-json-maprsasl
         drill_port: 31010
-        enabled: true
+        enabled: false
       - name: drill-jdbc-maprdb-json-plainauth
         drill_port: 31010
-        enabled: true
+        enabled: false
       - name: drill-jdbc-maprdb-json-maprsasl
         drill_port: 31010
-        enabled: true
+        enabled: false
       - name: drill-ui-secure-ssl
         certificate: /opt/mapr/conf/ssl_truststore.pem
         drill_ui_port: 8047
-        enabled: true
+        enabled: false
       - name: drill-ui-secure-pam
         username: mapr
         password: mapr123
         drill_ui_port: 8047
-        enabled: true
+        enabled: false
       - name: drill-ui-insecure
         drill_ui_port: 8047
         enabled: false

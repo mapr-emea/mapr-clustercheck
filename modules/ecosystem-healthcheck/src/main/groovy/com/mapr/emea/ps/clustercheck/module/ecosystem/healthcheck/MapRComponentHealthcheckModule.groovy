@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.DependsOn
 
 /**
  * Created by chufe on 22.08.17.
@@ -71,10 +73,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Qualifier("globalYamlConfig")
     Map<String, ?> globalYamlConfig
 
-    //TODO use tmpPath
     @Autowired
-    @Qualifier("localTmpDir")
-    String tmpPath
+    @Qualifier("maprFSTmpDir")
+    String maprFSTmpDir
 
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
@@ -115,8 +116,8 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Autowired
     EcoSystemSpyglass ecoSystemSpyglass
 
-
     //TODO show all query strings in results
+    // TODO How to simplify the template?
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
     def defaultTestMatrix = [
@@ -167,9 +168,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
 
+            //HTTPFS
             [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
             [name: "httpfs-auth-insecure,", httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],  //TODO test
 
+            //Spyglass components check
             [name: "opentsdb-api", opentsdb_api_port: DEFAULT_OPENTSDB_API_PORT, enabled: false],
             [name: "grafana-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: PATH_SSL_CERTIFICATE_FILE, grafana_ui_port: DEFAULT_GRAFANA_UI_PORT, enabled: false],
             [name: "elasticsearch-healthcheck-pam-ssl", username_elastic: DEFAULT_ELASTIC_USERNAME, password_elastic: DEFAULT_ELASTIC_PASSWORD, certificate_elastic: PATH_SSL_CERTIFICATE_FILE_ELASTIC, elastic_port: DEFAULT_ELASTIC_PORT, enabled: false],
@@ -177,7 +180,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
 
             // TODO implement
-            // TODO How to simplify the template?
             [name: "yarn-command-insecure", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
@@ -228,12 +230,12 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "maprdb-json-shell" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                result['maprdb-json-shell'] = coreMapRDB.verifyMapRDBJsonShell(packages, ticketfile)
+                result['maprdb-json-shell'] = coreMapRDB.verifyMapRDBJsonShell(packages, ticketfile, maprFSTmpDir)
 
             } else if(test['name'] == "maprdb-binary-shell" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                result['maprdb-binary-shell'] = coreMapRDB.verifyMapRDBBinaryShell(packages, ticketfile)
+                result['maprdb-binary-shell'] = coreMapRDB.verifyMapRDBBinaryShell(packages, ticketfile, maprFSTmpDir)
 
             } else if(test['name'] == "mapr-streams" && (test['enabled'] as boolean)) {
 
