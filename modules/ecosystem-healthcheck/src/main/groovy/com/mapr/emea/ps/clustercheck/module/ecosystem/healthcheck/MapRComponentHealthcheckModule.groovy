@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.DependsOn
 
 /**
  * Created by chufe on 22.08.17.
@@ -116,8 +114,10 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Autowired
     EcoSystemSpyglass ecoSystemSpyglass
 
-    //TODO show all query strings in results
-    // TODO How to simplify the template?
+    // TODO : Show all query strings in results
+    // TODO : How to simplify the template?
+    // TODO : Test : refresh env, test one by one
+    // TODO : Test : refresh env, test all togeter
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
     def defaultTestMatrix = [
@@ -180,6 +180,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
 
             // TODO implement
+            [name: "cldb-ui", enabled: false],
             [name: "yarn-command-insecure", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
@@ -240,7 +241,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "mapr-streams" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                result['mapr-streams'] = coreMapRStreams.verifyMapRStreams(packages, ticketfile)
+                result['mapr-streams'] = coreMapRStreams.verifyMapRStreams(packages, ticketfile, maprFSTmpDir)
 
             } else if(test['name'] == "mcs-ui-secure-pam" && (test['enabled'] as boolean)) {
 
@@ -277,13 +278,13 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
                 def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
                 def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, port)
+                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, port, maprFSTmpDir)
 
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", DEFAULT_DRILL_PORT)
                 def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                result['drill-jdbc-file-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
+                result['drill-jdbc-file-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprSasl(packages, ticketfile, port, maprFSTmpDir)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
 

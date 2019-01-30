@@ -101,6 +101,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
         return tmpPath
     }
 
+    //TODO Using root volume, is it a good idea to allow user to create clustercheck volume?
     @Bean("maprFSTmpDir")
     @DependsOn("ssh")
     String maprFSTmpPath() {

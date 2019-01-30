@@ -13,7 +13,7 @@ class CoreMapRStreams {
 
     static final String PACKAGE_NAME = "mapr-core"
 
-    static final String DIR_MAPR_FS_MAPRSTREAMS = "/tmp/.clustercheck/ecosystem-healthcheck/maprstreams"
+    static final String DIR_MAPR_FS_MAPRSTREAMS = "maprstreams"
 
     static final String STREAM_NAME = "test_mapr_stream"
 
@@ -22,8 +22,14 @@ class CoreMapRStreams {
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
-
-    def verifyMapRStreams(List<Object> packages, String ticketfile) {
+    /**
+     * Verify MapR Streams, create a topic in a stream and list topics
+     * @param packages
+     * @param ticketfile
+     * @param maprFSTmpDir
+     * @return
+     */
+    def verifyMapRStreams(List<Object> packages, String ticketfile, String maprFSTmpDir) {
 
         log.trace("Start : CoreMapRStreams : verifyMapRStreams")
 
@@ -31,29 +37,28 @@ class CoreMapRStreams {
 
             def nodeResult = [:]
 
-            //Delete the test directory
-            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRSTREAMS, delegate)
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}"
+            final String queryCreateStream = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream create -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}"
+            final String queryCreateTopic = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic create -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME} -topic ${TOPIC_NAME}"
+            final String queryListTopic = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic list -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}; echo \$?"
 
-            //Create a test directory
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${DIR_MAPR_FS_MAPRSTREAMS}"
+            executeSudo queryCreateDir
+            executeSudo queryCreateStream
+            executeSudo queryCreateTopic
 
-            //Create a test stream
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream create -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}"
-
-            //Create a test topic in the stream
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic create -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME} -topic ${TOPIC_NAME}"
-
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic list -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}; echo \$?"
+            nodeResult['output'] = executeSudo queryListTopic
 
             nodeResult['comment'] = "Don't worry if you see the error: Lookup of volume mapr.** failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
 
             nodeResult['success'] = nodeResult['output'].contains(TOPIC_NAME) && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             //Delete the test stream
-            executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream delete -path ${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}"
+            //executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream delete -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}"
 
-            //Delete the test directory
-            mapRComponentHealthcheckUtil.removeMaprfsFileIfExist(ticketfile, DIR_MAPR_FS_MAPRSTREAMS, delegate)
+            nodeResult['1. Query : create a dir        '] = "sudo " + queryCreateDir
+            nodeResult['2. Query : create a stream     '] = "sudo " + queryCreateStream
+            nodeResult['3. Query : create a topic      '] = "sudo " + queryCreateTopic
+            nodeResult['4. Query : list topics         '] = "sudo " + queryListTopic
 
             nodeResult
         })

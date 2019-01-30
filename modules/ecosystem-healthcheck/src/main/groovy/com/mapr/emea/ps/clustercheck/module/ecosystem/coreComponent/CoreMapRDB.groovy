@@ -12,7 +12,7 @@ class CoreMapRDB {
     static final Logger log = LoggerFactory.getLogger(CoreMapRDB.class)
 
     static final String PACKAGE_NAME = "mapr-core"
-    static final String DIR_MAPR_FS_MAPRDB = "maprdb"
+    static final String DIR_MAPRDB = "maprdb"
     static final String FILE_MAPR_DB_JSON = "maprdb_people.json"
     static final String TB_MAPR_DB_JSON = "tb_maprdb_people"
     static final String TB_MAPR_DB_BINARY = "test_binary"
@@ -26,7 +26,8 @@ class CoreMapRDB {
      * https://mapr.com/docs/home/MapR-DB/JSON_DB/getting_started_json_ojai_using_maprdb_shell.html
      * @param packages
      * @param ticketfile
-     * @return
+     * @param maprFSTmpDir
+     *  @return
      */
     def verifyMapRDBJsonShell(List<Object> packages, String ticketfile, String maprFSTmpDir) {
 
@@ -36,11 +37,11 @@ class CoreMapRDB {
 
             def nodeResult = [:]
 
-            final String jsonPath = mapRComponentHealthcheckUtil.uploadFile(FILE_MAPR_DB_JSON, delegate)
-            final String query = "find " + "${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_JSON}"
-            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}"
-            final String querySendJsonFile = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}"
-            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${FILE_MAPR_DB_JSON} -dst ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_JSON} -mapreduce false"
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_MAPRDB, FILE_MAPR_DB_JSON, delegate)
+            final String query = "find " + "${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_JSON}"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${maprFSTmpDir}/${DIR_MAPRDB}"
+            final String querySendJsonFile = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${maprFSTmpDir}/${DIR_MAPRDB}"
+            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFSTmpDir}/${DIR_MAPRDB}/${FILE_MAPR_DB_JSON} -dst ${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_JSON} -mapreduce false"
             final String queryDbShell = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell ${query}; echo \$?"
 
             executeSudo queryCreateDir
@@ -50,12 +51,12 @@ class CoreMapRDB {
             nodeResult['output'] = executeSudo queryDbShell
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
-            nodeResult['1. Path  : json file                  '] = jsonPath
-            nodeResult['2. Query : find table                 '] = query
-            nodeResult['3. Query : create dir                 '] = "sudo " + queryCreateDir
-            nodeResult['4. Query : send json file to MapRFS   '] = "sudo " + querySendJsonFile
-            nodeResult['5. Query : import json file to MapRDB '] = "Sudo " + queryImportJson
-            nodeResult['6. Query : execute query              '] = "sudo " + queryDbShell
+            nodeResult['1. Path  : after uploading json file to remote host '] = jsonPath
+            nodeResult['2. Query : find table                               '] = query
+            nodeResult['3. Query : create dir                               '] = "sudo " + queryCreateDir
+            nodeResult['4. Query : send json file to MapRFS                 '] = "sudo " + querySendJsonFile
+            nodeResult['5. Query : import json file to MapRDB               '] = "Sudo " + queryImportJson
+            nodeResult['6. Query : execute query                            '] = "sudo " + queryDbShell
 
             nodeResult
         })
@@ -68,6 +69,7 @@ class CoreMapRDB {
      * Verify MapRDB Binary, Using maprcli utility
      * @param packages
      * @param ticketfile
+     * @param maprFSTmpDir
      * @return
      */
     def verifyMapRDBBinaryShell(List<Object> packages, String ticketfile, maprFSTmpDir) {
@@ -78,10 +80,10 @@ class CoreMapRDB {
 
             def nodeResult = [:]
 
-            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}"
-            final String queryCreateTable = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table create -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}"
-            final String queryCreateCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf create -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY} -cfname ${CF_MAPR_DB_BINARY}"
-            final String queryListCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRDB}/${TB_MAPR_DB_BINARY}; echo \$?"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${maprFSTmpDir}/${DIR_MAPRDB}"
+            final String queryCreateTable = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table create -path ${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_BINARY}"
+            final String queryCreateCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf create -path ${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_BINARY} -cfname ${CF_MAPR_DB_BINARY}"
+            final String queryListCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_BINARY}; echo \$?"
 
             executeSudo queryCreateDir
             executeSudo queryCreateTable

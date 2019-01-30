@@ -118,19 +118,27 @@ class MapRComponentHealthcheckUtil {
     }
 
     /**
-     * Upload local file to remote node
+     * Upload local file to remote host
      * @param fileName
      * @param delegate
      * @return
      */
-    def uploadFile(String fileName, delegate) {
-        log.trace("Start : MapRComponentHealthcheckUtil : uploadFile")
+    def uploadFileToRemoteHost(String subDir, String fileName, delegate) {
+        log.trace("Start : MapRComponentHealthcheckUtil : uploadFileToRemoteHost")
 
         def fileInputStream = resourceLoader.getResource("classpath:${PATH_CLASSPATH}/${fileName}").getInputStream()
-        delegate.put from: fileInputStream, into: "${tmpPath}/${fileName}"
-        def path = "${tmpPath}/${fileName}"
+        String path = ""
 
-        log.trace("End : MapRComponentHealthcheckUtil : uploadFile")
+        if(subDir){
+            delegate.execute "mkdir -p ${tmpPath}/${subDir}"
+            delegate.put from: fileInputStream, into: "${tmpPath}/${subDir}/${fileName}"
+            path = "${tmpPath}/${subDir}/${fileName}"
+        } else {
+            delegate.put from: fileInputStream, into: "${tmpPath}/${fileName}"
+            path = "${tmpPath}/${fileName}"
+        }
+
+        log.trace("End : MapRComponentHealthcheckUtil : uploadFileToRemoteHost")
 
         return path
     }

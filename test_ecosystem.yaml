@@ -3,7 +3,7 @@ customer_name: Custom Test Environment
 output_dir: /Users/xuelansun/Git/mapr-clustercheck/build/audit-result
 mapr_user: mapr
 local_tmp_dir: /tmp/.clustercheck
-maprfs_tmp_dir: /tmp2/.clustercheck
+maprfs_tmp_dir: /tmp/.clustercheck
 modules:
   cluster-audit:
     enabled: false
@@ -21,7 +21,7 @@ modules:
       - name: maprdb-json-shell
         enabled: true
       - name: maprdb-binary-shell
-        enabled: true
+        enabled: false
       - name: mapr-streams
         ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
