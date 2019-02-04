@@ -17,6 +17,10 @@ class MapRComponentHealthcheckUtil {
     @Autowired
     @Qualifier("localTmpDir")
     String tmpPath
+
+    @Autowired
+    @Qualifier("maprFSTmpDir")
+    String tmpMapRPath
     
     @Autowired
     @Qualifier("ssh")
@@ -127,6 +131,7 @@ class MapRComponentHealthcheckUtil {
         log.trace("Start : MapRComponentHealthcheckUtil : uploadFileToRemoteHost")
 
         def fileInputStream = resourceLoader.getResource("classpath:${PATH_CLASSPATH}/${fileName}").getInputStream()
+
         String path = ""
 
         if(subDir){
@@ -151,10 +156,21 @@ class MapRComponentHealthcheckUtil {
      * @param delegate
      * @return
      */
-    def uploadRemoteFileToMaprfs(String ticketfile, String fileName, String maprfspath, delegate){
+    //TODO use this function every where, instead of have mparfs-tmp everywhere and manage the subDir
+    def uploadRemoteFileToMaprfs(String subDir, String ticketfile, String filePath, delegate){
         log.trace("Start : MapRComponentHealthcheckUtil : uploadRemoteFileToMaprfs")
 
-        delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put ${fileName} ${maprfspath}"
+        String maprfspath = ""
+
+        if(subDir){
+            maprfspath = "${tmpMapRPath}/${subDir}"
+            delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprfspath}"
+
+        } else {
+            maprfspath = "${tmpMapRPath}"
+        }
+
+        delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put ${filePath} ${maprfspath}"
 
         log.trace("End : MapRComponentHealthcheckUtil : uploadRemoteFileToMaprfs")
 

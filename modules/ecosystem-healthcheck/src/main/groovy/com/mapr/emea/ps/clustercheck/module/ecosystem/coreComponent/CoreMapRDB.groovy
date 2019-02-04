@@ -55,7 +55,7 @@ class CoreMapRDB {
             nodeResult['2. Query : find table                               '] = query
             nodeResult['3. Query : create dir                               '] = "sudo " + queryCreateDir
             nodeResult['4. Query : send json file to MapRFS                 '] = "sudo " + querySendJsonFile
-            nodeResult['5. Query : import json file to MapRDB               '] = "Sudo " + queryImportJson
+            nodeResult['5. Query : import json file to MapRDB               '] = "sudo " + queryImportJson
             nodeResult['6. Query : execute query                            '] = "sudo " + queryDbShell
 
             nodeResult
@@ -96,7 +96,7 @@ class CoreMapRDB {
             nodeResult['1. Query : create dir           '] = "sudo " + queryCreateDir
             nodeResult['2. Query : create table         '] = "sudo " + queryCreateTable
             nodeResult['3. Query : create column family '] = "sudo " + queryCreateCF
-            nodeResult['4. Query : list column family   '] = "Sudo " + queryListCF
+            nodeResult['4. Query : list column family   '] = "sudo " + queryListCF
             nodeResult['5. Query : delete dir           '] = "No query available"
 
             nodeResult
