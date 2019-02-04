@@ -29,10 +29,9 @@ class EcoSystemDrill {
      * @param username
      * @param password
      * @param port
-     * @param maprFSTmpDir
      * @return
      */
-    def verifyDrillJdbcJsonFilePlainAuth(List<Object> packages, String ticketfile, String username, String password, int port, String maprFSTmpDir) {
+    def verifyDrillJdbcJsonFilePlainAuth(List<Object> packages, String ticketfile, String username, String password, int port) {
 
         log.trace("Start : EcoSystemDrill : verifyDrillJdbcJsonFilePlainAuth")
 
@@ -67,10 +66,9 @@ class EcoSystemDrill {
      * @param packages
      * @param ticketfile
      * @param port
-     * @param maprFSTmpDir
      * @return
      */
-    def verifyDrillJdbcMaprSasl(List<Object> packages, String ticketfile, int port, String maprFSTmpDir) {
+    def verifyDrillJdbcMaprSasl(List<Object> packages, String ticketfile, int port) {
 
         log.trace("Start : EcoSystemDrill : verifyDrillJdbcMaprSasl")
 
@@ -118,7 +116,7 @@ class EcoSystemDrill {
 
             final String queryExecution = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
             final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${DIR_DRILL}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
-
+//TODO
             executeSudo queryImportJson
 
             nodeResult['output'] = executeSudo queryExecution
@@ -159,7 +157,7 @@ class EcoSystemDrill {
 
             final String queryExecution = "/opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p ${password} --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
             final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${DIR_DRILL}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
-
+//TODO
             executeSudo queryImportJson
 
             nodeResult['output'] =  executeSudo queryExecution

@@ -231,7 +231,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "maprdb-json-shell" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                result['maprdb-json-shell'] = coreMapRDB.verifyMapRDBJsonShell(packages, ticketfile, maprFSTmpDir)
+                result['maprdb-json-shell'] = coreMapRDB.verifyMapRDBJsonShell(packages, ticketfile)
 
             } else if(test['name'] == "maprdb-binary-shell" && (test['enabled'] as boolean)) {
 
@@ -278,13 +278,13 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
                 def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
                 def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, port, maprFSTmpDir)
+                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, port)
 
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", DEFAULT_DRILL_PORT)
                 def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                result['drill-jdbc-file-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprSasl(packages, ticketfile, port, maprFSTmpDir)
+                result['drill-jdbc-file-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
 

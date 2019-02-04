@@ -26,10 +26,9 @@ class CoreMapRDB {
      * https://mapr.com/docs/home/MapR-DB/JSON_DB/getting_started_json_ojai_using_maprdb_shell.html
      * @param packages
      * @param ticketfile
-     * @param maprFSTmpDir
      *  @return
      */
-    def verifyMapRDBJsonShell(List<Object> packages, String ticketfile, String maprFSTmpDir) {
+    def verifyMapRDBJsonShell(List<Object> packages, String ticketfile) {
 
         log.trace("Start : CoreMapRDB : verifyMapRDBJsonShell")
 
@@ -38,25 +37,21 @@ class CoreMapRDB {
             def nodeResult = [:]
 
             final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_MAPRDB, FILE_MAPR_DB_JSON, delegate)
-            final String query = "find " + "${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_JSON}"
-            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${maprFSTmpDir}/${DIR_MAPRDB}"
-            final String querySendJsonFile = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${jsonPath} ${maprFSTmpDir}/${DIR_MAPRDB}"
-            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${maprFSTmpDir}/${DIR_MAPRDB}/${FILE_MAPR_DB_JSON} -dst ${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_JSON} -mapreduce false"
-            final String queryDbShell = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell ${query}; echo \$?"
+            final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_MAPRDB, ticketfile, jsonPath, delegate)
+            final String tablePathMaprfs = "${jsonPathMaprfs}/${TB_MAPR_DB_JSON}"
 
-            executeSudo queryCreateDir
-            executeSudo querySendJsonFile
+            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${tablePathMaprfs} -mapreduce false"
+            final String queryDbShell = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell find ${tablePathMaprfs}; echo \$?"
+
             executeSudo queryImportJson
 
             nodeResult['output'] = executeSudo queryDbShell
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
             nodeResult['1. Path  : after uploading json file to remote host '] = jsonPath
-            nodeResult['2. Query : find table                               '] = query
-            nodeResult['3. Query : create dir                               '] = "sudo " + queryCreateDir
-            nodeResult['4. Query : send json file to MapRFS                 '] = "sudo " + querySendJsonFile
-            nodeResult['5. Query : import json file to MapRDB               '] = "sudo " + queryImportJson
-            nodeResult['6. Query : execute query                            '] = "sudo " + queryDbShell
+            nodeResult['2. Path  : after sending json file to MapRFS        '] = jsonPathMaprfs
+            nodeResult['3. Query : import json file to MapRDB               '] = "sudo " + queryImportJson
+            nodeResult['4. Query : execute query                            '] = "sudo " + queryDbShell
 
             nodeResult
         })

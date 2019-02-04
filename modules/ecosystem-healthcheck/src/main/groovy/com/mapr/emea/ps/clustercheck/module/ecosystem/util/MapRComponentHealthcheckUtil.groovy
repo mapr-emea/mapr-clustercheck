@@ -156,7 +156,6 @@ class MapRComponentHealthcheckUtil {
      * @param delegate
      * @return
      */
-    //TODO use this function every where, instead of have mparfs-tmp everywhere and manage the subDir
     def uploadRemoteFileToMaprfs(String subDir, String ticketfile, String filePath, delegate){
         log.trace("Start : MapRComponentHealthcheckUtil : uploadRemoteFileToMaprfs")
 

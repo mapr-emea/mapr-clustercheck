@@ -19,7 +19,7 @@ modules:
         ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: maprdb-json-shell
-        enabled: false
+        enabled: true
       - name: maprdb-binary-shell
         enabled: false
       - name: mapr-streams
@@ -46,16 +46,16 @@ modules:
         enabled: false
       - name: drill-jdbc-jsonfile-plainauth
         drill_port: 31010
-        enabled: true
+        enabled: false
       - name: drill-jdbc-file-json-maprsasl
         drill_port: 31010
-        enabled: true
+        enabled: false
       - name: drill-jdbc-maprdb-json-plainauth
         drill_port: 31010
-        enabled: true
+        enabled: false
       - name: drill-jdbc-maprdb-json-maprsasl
         drill_port: 31010
-        enabled: true
+        enabled: false
       - name: drill-ui-secure-ssl
         certificate: /opt/mapr/conf/ssl_truststore.pem
         drill_ui_port: 8047
