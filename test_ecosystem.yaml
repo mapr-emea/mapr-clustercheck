@@ -19,7 +19,7 @@ modules:
         ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: maprdb-json-shell
-        enabled: true
+        enabled: false
       - name: maprdb-binary-shell
         enabled: false
       - name: mapr-streams
@@ -149,7 +149,7 @@ modules:
         password: mapr123
         certificate: /opt/mapr/conf/ssl_truststore.pem
         kafka_rest_port: 8082
-        enabled: false
+        enabled: true
       - name: data-access-gateway-rest-auth-pam-ssl
         username: mapr
         password: mapr123

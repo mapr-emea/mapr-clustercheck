@@ -72,10 +72,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     Map<String, ?> globalYamlConfig
 
     @Autowired
-    @Qualifier("maprFSTmpDir")
-    String maprFSTmpDir
-
-    @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     @Autowired
@@ -236,12 +232,12 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "maprdb-binary-shell" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                result['maprdb-binary-shell'] = coreMapRDB.verifyMapRDBBinaryShell(packages, ticketfile, maprFSTmpDir)
+                result['maprdb-binary-shell'] = coreMapRDB.verifyMapRDBBinaryShell(packages, ticketfile)
 
             } else if(test['name'] == "mapr-streams" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                result['mapr-streams'] = coreMapRStreams.verifyMapRStreams(packages, ticketfile, maprFSTmpDir)
+                result['mapr-streams'] = coreMapRStreams.verifyMapRStreams(packages, ticketfile)
 
             } else if(test['name'] == "mcs-ui-secure-pam" && (test['enabled'] as boolean)) {
 

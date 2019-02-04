@@ -4,6 +4,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 @Component
@@ -17,6 +18,10 @@ class CoreMapRDB {
     static final String TB_MAPR_DB_JSON = "tb_maprdb_people"
     static final String TB_MAPR_DB_BINARY = "test_binary"
     static final String CF_MAPR_DB_BINARY = "cfname_test_binary"
+
+    @Autowired
+    @Qualifier("maprFSTmpDir")
+    String maprFSTmpDir
 
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
@@ -67,7 +72,7 @@ class CoreMapRDB {
      * @param maprFSTmpDir
      * @return
      */
-    def verifyMapRDBBinaryShell(List<Object> packages, String ticketfile, maprFSTmpDir) {
+    def verifyMapRDBBinaryShell(List<Object> packages, String ticketfile) {
 
         log.trace("Start : CoreMapRDB : verifyMapRDBBinaryShell")
 

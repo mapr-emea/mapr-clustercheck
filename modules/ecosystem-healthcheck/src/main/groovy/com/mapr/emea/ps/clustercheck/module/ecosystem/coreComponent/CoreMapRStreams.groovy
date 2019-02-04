@@ -4,6 +4,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 @Component
@@ -20,6 +21,10 @@ class CoreMapRStreams {
     static final String TOPIC_NAME = "test_mapr_stream_topic1"
 
     @Autowired
+    @Qualifier("maprFSTmpDir")
+    String maprFSTmpDir
+
+    @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
@@ -29,7 +34,7 @@ class CoreMapRStreams {
      * @param maprFSTmpDir
      * @return
      */
-    def verifyMapRStreams(List<Object> packages, String ticketfile, String maprFSTmpDir) {
+    def verifyMapRStreams(List<Object> packages, String ticketfile) {
 
         log.trace("Start : CoreMapRStreams : verifyMapRStreams")
 
@@ -51,9 +56,6 @@ class CoreMapRStreams {
             nodeResult['comment'] = "Don't worry if you see the error: Lookup of volume mapr.** failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
 
             nodeResult['success'] = nodeResult['output'].contains(TOPIC_NAME) && nodeResult['output'].toString().reverse().take(1).equals("0")
-
-            //Delete the test stream
-            //executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream delete -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}"
 
             nodeResult['1. Query : create a dir        '] = "sudo " + queryCreateDir
             nodeResult['2. Query : create a stream     '] = "sudo " + queryCreateStream
