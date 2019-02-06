@@ -4,6 +4,7 @@ import com.mapr.emea.ps.clustercheck.core.ClusterCheckModule
 import com.mapr.emea.ps.clustercheck.core.ClusterCheckResult
 import com.mapr.emea.ps.clustercheck.core.ExecuteModule
 import com.mapr.emea.ps.clustercheck.core.ModuleValidationException
+import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreCLDB
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRDB
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRStreams
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMapRTool
@@ -47,6 +48,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final String DEFAULT_KIBANA_USERNAME = "admin"
     static final String DEFAULT_KIBANA_PASSWORD = "admin"
 
+    static final Integer DEFAULT_CLDB_UI_PORT = 7443
     static final Integer DEFAULT_DRILL_PORT = 31010
     static final Integer DEFAULT_DRILL_UI_PORT = 8047
     static final Integer DEFAULT_RESOURCEMANAGER_SECURE_PORT = 8090
@@ -73,6 +75,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
+
+    @Autowired
+    CoreCLDB coreCLDB
 
     @Autowired
     CoreMfs coreMfs
@@ -113,11 +118,13 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     // TODO : Show all query strings in results
     // TODO : How to simplify the template?
     // TODO : Test : refresh env, test one by one
-    // TODO : Test : refresh env, test all togeter
+    // TODO : Test : refresh env, test all together
 
     // and more tests based on https://docs.google.com/document/d/1VpMDmvCDHcFz09P8a6rhEa3qFW5mFGFLVJ0K4tkBB0Q/edit
     def defaultTestMatrix = [
+
             //Core components check
+            [name: "cldb", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, cldb_ui_port: DEFAULT_CLDB_UI_PORT, ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "maprfs", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "maprdb-json-shell", enabled: false],
             [name: "maprdb-binary-shell", enabled: false],
@@ -176,7 +183,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
 
             // TODO implement
-            [name: "cldb-ui", enabled: false],
             [name: "yarn-command-insecure", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
@@ -219,7 +225,16 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             log.info(">>>>>>> Running test '${test['name']}'")
 
-            if(test['name'] == "maprfs" && (test['enabled'] as boolean)) {
+            if(test['name'] == "cldb" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("cldb_ui_port", DEFAULT_CLDB_UI_PORT)
+                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+
+                result['cldb'] = coreCLDB.verifyCldbPamSASL(packages, username, password, ticketfile, port)
+
+            } else if(test['name'] == "maprfs" && (test['enabled'] as boolean)) {
 
                 def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
                 result['maprfs'] = coreMfs.verifyMaprFs(packages, ticketfile)

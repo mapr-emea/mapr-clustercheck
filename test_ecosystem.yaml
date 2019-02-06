@@ -15,6 +15,12 @@ modules:
     username: mapr
     password: mapr123
     tests:
+      - name: cldb
+        username: mapr
+        password: mapr123
+        cldb_ui_port: 7443
+        ticketfile: /opt/mapr/conf/mapruserticket
+        enabled: true
       - name: maprfs
         ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
@@ -149,7 +155,7 @@ modules:
         password: mapr123
         certificate: /opt/mapr/conf/ssl_truststore.pem
         kafka_rest_port: 8082
-        enabled: true
+        enabled: false
       - name: data-access-gateway-rest-auth-pam-ssl
         username: mapr
         password: mapr123
