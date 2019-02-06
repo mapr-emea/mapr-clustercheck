@@ -20,17 +20,17 @@ modules:
         password: mapr123
         cldb_ui_port: 7443
         ticketfile: /opt/mapr/conf/mapruserticket
-        enabled: true
+        enabled: false
       - name: maprfs
         ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: maprdb-json-shell
-        enabled: false
+        enabled: true
       - name: maprdb-binary-shell
-        enabled: false
+        enabled: true
       - name: mapr-streams
         ticketfile: /opt/mapr/conf/mapruserticket
-        enabled: false
+        enabled: true
       - name: mcs-ui-secure-pam
         username: mapr
         password: mapr123

@@ -32,12 +32,17 @@ class CoreCLDB {
             def nodeResult = [:]
 
             final String fqdn = execute "hostname -f"
-            final String queryCLDBMaster = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli node cldbmaster"
+            final String queryCLDBMaster = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli node cldbmaster"
+            final String queryCldbUI = "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
 
-            //Cert is not working
-            nodeResult['output'] = executeSudo "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
-            nodeResult['ui_success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
-            nodeResult['cldbmaster'] = queryCLDBMaster.contains(fqdn)
+            final String cldbMaster = executeSudo queryCLDBMaster
+
+            nodeResult['ui-output'] = executeSudo queryCldbUI
+            nodeResult['ui-success'] = nodeResult['ui-output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['cldb-master'] = cldbMaster.contains(fqdn)
+            nodeResult['1-query-cldb-ui'] = queryCldbUI
+            nodeResult['2-query-cldbmaster'] = "sudo " + queryCLDBMaster
+
 
             nodeResult
         })

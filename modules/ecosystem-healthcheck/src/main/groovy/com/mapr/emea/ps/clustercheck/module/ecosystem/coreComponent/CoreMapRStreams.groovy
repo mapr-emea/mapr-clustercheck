@@ -57,10 +57,10 @@ class CoreMapRStreams {
 
             nodeResult['success'] = nodeResult['output'].contains(TOPIC_NAME) && nodeResult['output'].toString().reverse().take(1).equals("0")
 
-            nodeResult['1. Query : create a dir        '] = "sudo " + queryCreateDir
-            nodeResult['2. Query : create a stream     '] = "sudo " + queryCreateStream
-            nodeResult['3. Query : create a topic      '] = "sudo " + queryCreateTopic
-            nodeResult['4. Query : list topics         '] = "sudo " + queryListTopic
+            nodeResult['1-query-create-dir']    = "sudo " + queryCreateDir
+            nodeResult['2-query-create-stream'] = "sudo " + queryCreateStream
+            nodeResult['3-query-create-topic']  = "sudo " + queryCreateTopic
+            nodeResult['4-query-list-topic']    = "sudo " + queryListTopic
 
             nodeResult
         })

@@ -53,10 +53,10 @@ class CoreMapRDB {
             nodeResult['output'] = executeSudo queryDbShell
             nodeResult['success'] = nodeResult['output'].contains("Data Engineer") && nodeResult['output'].toString().reverse().take(1).equals("0")
 
-            nodeResult['1. Path  : after uploading json file to remote host '] = jsonPath
-            nodeResult['2. Path  : after sending json file to MapRFS        '] = jsonPathMaprfs
-            nodeResult['3. Query : import json file to MapRDB               '] = "sudo " + queryImportJson
-            nodeResult['4. Query : execute query                            '] = "sudo " + queryDbShell
+            nodeResult['1-path-after-uploading-json-remote-host'] = jsonPath
+            nodeResult['2-path-after-sending-json-maprfs']        = jsonPathMaprfs
+            nodeResult['3-query-import-json-maprdb']              = "sudo " + queryImportJson
+            nodeResult['4-query-dbshel']                          = "sudo " + queryDbShell
 
             nodeResult
         })
@@ -93,11 +93,10 @@ class CoreMapRDB {
             nodeResult['comment'] = "Don't worry if you see the error: Lookup of volume mapr.cluster.root failed, error Read-only file system(30) ... it just means in clusters.conf the read-only CLDB is first tried then redirected to the read/write CLDB server."
             nodeResult['success'] = nodeResult['output'].contains(CF_MAPR_DB_BINARY) && nodeResult['output'].toString().reverse().take(1).equals("0")
 
-            nodeResult['1. Query : create dir           '] = "sudo " + queryCreateDir
-            nodeResult['2. Query : create table         '] = "sudo " + queryCreateTable
-            nodeResult['3. Query : create column family '] = "sudo " + queryCreateCF
-            nodeResult['4. Query : list column family   '] = "sudo " + queryListCF
-            nodeResult['5. Query : delete dir           '] = "No query available"
+            nodeResult['1-query-create-dir']           = "sudo " + queryCreateDir
+            nodeResult['2-query-create-table']         = "sudo " + queryCreateTable
+            nodeResult['3-query-create-column-family'] = "sudo " + queryCreateCF
+            nodeResult['4-query-list-column-family']   = "sudo " + queryListCF
 
             nodeResult
         })
