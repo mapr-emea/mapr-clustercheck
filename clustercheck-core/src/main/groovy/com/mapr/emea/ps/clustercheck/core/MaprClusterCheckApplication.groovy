@@ -102,7 +102,7 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     }
 
     //TODO Option for creating clustercheck volume?
-    //TODO Option for purging the maprFSTmpDir
+    //TODO Option for purging the maprFSTmpDir, including created tables/volumes/streams/files...etc
     @Bean("maprFSTmpDir")
     @DependsOn("ssh")
     String tmpMapRPath() {

@@ -135,7 +135,9 @@ class EcoSystemKafkaRest {
             //Produce a message
             executeSudo queryProduceMessage
 
-            executeSudo queryConsumeMessage //TODO why 2 times? offset?
+            //TODO Bug https://github.com/confluentinc/kafka-rest/issues/432
+            //TODO need to be followed in the future
+            executeSudo queryConsumeMessage
 
             //Consume the message
             nodeResult['output'] = executeSudo queryConsumeMessage
@@ -144,7 +146,7 @@ class EcoSystemKafkaRest {
             nodeResult['1.  Query : create the Dir     '] = "sudo " + queryCreateDir
             nodeResult['2.  Query : create the Stream  '] = "sudo " + queryCreateStream
             nodeResult['3.  Query : create the Topic   '] = "sudo " + queryCreateTopic
-            nodeResult['4.  Query : create the Consumer'] = "sudo " + queryCreateConsumer
+            nodeResult['4.  Query : create the Consumer'] = "sudo " + queryCreateConsumer.replaceAll("\\\\","")
             nodeResult['5.  Query : produce a Message  '] = "sudo " + queryProduceMessage
             nodeResult['6.  Query : consume the Message'] = "sudo " + queryConsumeMessage
             nodeResult['7.  Query : delete the Consumer'] = "sudo " + queryDeleteConsumer
@@ -152,13 +154,11 @@ class EcoSystemKafkaRest {
 
             //Clean up
 
-            //Delete the consumer
+            //Delete the consumer, this is mandatory, otherwise next time will not work
             executeSudo queryDeleteConsumer
 
             //Delete the test stream
             executeSudo queryDeleteStream
-
-            sleep(5000)
 
             nodeResult
         })
