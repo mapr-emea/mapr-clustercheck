@@ -14,6 +14,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSyst
 import com.mapr.emea.ps.clustercheck.module.ecosystem.coreComponent.CoreMcs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHive
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHttpfs
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHueUI
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemKafkaRest
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemSpyglass
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemYarn
@@ -68,6 +69,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_GRAFANA_UI_PORT = 3000
     static final Integer DEFAULT_ELASTIC_PORT = 9200
     static final Integer DEFAULT_KIBANA_PORT = 5601
+    static final Integer DEFAULT_HUE_UI_PORT = 8888
 
     @Autowired
     @Qualifier("globalYamlConfig")
@@ -111,6 +113,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
     @Autowired
     EcoSystemHttpfs ecoSystemHttpfs
+
+    @Autowired
+    EcoSystemHueUI ecoSystemHueUI
 
     @Autowired
     EcoSystemSpyglass ecoSystemSpyglass
@@ -181,6 +186,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "elasticsearch-healthcheck-pam-ssl", username_elastic: DEFAULT_ELASTIC_USERNAME, password_elastic: DEFAULT_ELASTIC_PASSWORD, certificate_elastic: PATH_SSL_CERTIFICATE_FILE_ELASTIC, elastic_port: DEFAULT_ELASTIC_PORT, enabled: false],
             [name: "kibana-ui-pam-ssl", username_kibana: DEFAULT_KIBANA_USERNAME, password_kibana: DEFAULT_KIBANA_PASSWORD, certificate_kibana: PATH_SSL_CERTIFICATE_FILE_KIBANA, kibana_port: DEFAULT_KIBANA_PORT, enabled: false],
 
+            //Hue UI
+            [name: "hue-ui", hue_ui_port: DEFAULT_HUE_UI_PORT, enabled: false], //TODO no auth, only simple test
+
 
             // TODO implement
             [name: "yarn-command-insecure", enabled: false],
@@ -191,7 +199,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "spark-yarn-maprsasl" , enabled: false],
             [name: "spark-standalone" , enabled: false],
             [name: "spark-historyserver-ui", enabled: false],
-            [name: "hue-plainauth", enabled: false],
             [name: "sqoop1", enabled: false],
             [name: "sqoop2", enabled: false],
             [name: "oozie-client", enabled: false],
@@ -521,6 +528,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def password_kibana = healthcheckconfig.getOrDefault("password_kibana", DEFAULT_KIBANA_PASSWORD)
                 def certificate_kibana = healthcheckconfig.getOrDefault("certificate_kibana", PATH_SSL_CERTIFICATE_FILE_KIBANA)
                 result['kibana-ui-pam-ssl'] = ecoSystemSpyglass.verifyKibanaUIPamSSL(packages, username_kibana, password_kibana, certificate_kibana, kibana_port)
+
+            }  else if(test['name'] == "hue-ui" && (test['enabled'] as boolean)) {
+
+                def port = healthcheckconfig.getOrDefault("hue_ui_port", DEFAULT_HUE_UI_PORT)
+                result['hue-ui'] = ecoSystemHueUI.verifyHueUI(packages, port)
 
             } else {
                 log.info(">>>>> ... Test '${test['name']}' not found!")
