@@ -119,7 +119,7 @@ class EcoSystemSpyglass {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_KIBANA, {
             def nodeResult = [:]
 
-            final String query = "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
+            final String query = "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/app/kibana | head -n 1"
 
             nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")

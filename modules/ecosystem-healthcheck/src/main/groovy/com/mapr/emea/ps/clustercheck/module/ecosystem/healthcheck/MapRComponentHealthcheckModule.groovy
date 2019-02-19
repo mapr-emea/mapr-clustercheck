@@ -38,7 +38,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final String DEFAULT_MAPR_SSL_TRUSTSTORE_FILE = "/opt/mapr/conf/ssl_truststore"
     static final String PATH_SSL_CERTIFICATE_FILE = "/opt/mapr/conf/ssl_truststore.pem"
     static final String PATH_SSL_CERTIFICATE_FILE_ELASTIC = "/opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem"
-    static final String PATH_SSL_CERTIFICATE_FILE_KIBANA = "/opt/mapr/kibana/kibana-6.2.3/config/cert.pem"
+    static final String PATH_SSL_CERTIFICATE_FILE_KIBANA = "/opt/mapr/kibana/kibana-6.5.3/config/cert.pem"
 
     static final String DEFAULT_MAPR_USERNAME = "mapr"
     static final String DEFAULT_MAPR_PASSWORD = "mapr123"
@@ -196,8 +196,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
             [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
             [name: "kafka-connect-to-maprfs-distributed" , enabled: false],
-            [name: "spark-yarn-maprsasl" , enabled: false],
-            [name: "spark-standalone" , enabled: false],
             [name: "spark-historyserver-ui", enabled: false],
             [name: "sqoop1", enabled: false],
             [name: "sqoop2", enabled: false],
@@ -234,299 +232,299 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             if(test['name'] == "cldb" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("cldb_ui_port", DEFAULT_CLDB_UI_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def port = test.getOrDefault("cldb_ui_port", DEFAULT_CLDB_UI_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
 
                 result['cldb'] = coreCLDB.verifyCldbPamSASL(packages, username, password, ticketfile, port)
 
             } else if(test['name'] == "maprfs" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
                 result['maprfs'] = coreMfs.verifyMaprFs(packages, ticketfile)
 
             } else if(test['name'] == "maprdb-json-shell" && (test['enabled'] as boolean)) {
-
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                lthcheckconfig.
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
                 result['maprdb-json-shell'] = coreMapRDB.verifyMapRDBJsonShell(packages, ticketfile)
 
             } else if(test['name'] == "maprdb-binary-shell" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
                 result['maprdb-binary-shell'] = coreMapRDB.verifyMapRDBBinaryShell(packages, ticketfile)
 
             } else if(test['name'] == "mapr-streams" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
                 result['mapr-streams'] = coreMapRStreams.verifyMapRStreams(packages, ticketfile)
 
             } else if(test['name'] == "mcs-ui-secure-pam" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def port = test.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
                 result['mcs-ui-secure-pam'] = coreMcs.verifyMcsUiSecurePAM(packages, username, password, port)
 
             } else if(test['name'] == "mcs-ui-secure-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
                 result['mcs-ui-secure-ssl'] = coreMcs.verifyMcsUiSecureSSL(packages, certificate, port)
 
             } else if(test['name'] == "mcs-ui-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
+                def port = test.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
                 result['mcs-ui-insecure'] = coreMcs.verifyMcsUiInSecure(packages, port)
 
             } else if(test['name'] == "mapr-maprcli-api-sasl" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
                 result['mapr-maprcli-api-sasl'] = coreMapRTool.verifyMapRCliApiSasl(packages, ticketfile)
 
             } else if(test['name'] == "maprlogin-password" && (test['enabled'] as boolean)) {
 
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
                 result['maprlogin-password'] = coreMapRTool.verifyMapRLoginPassword(packages, username, password)
 
             } else if(test['name'] == "drill-jdbc-jsonfile-plainauth" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
                 result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, port)
 
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", DEFAULT_DRILL_PORT)
-                def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
+                def ticketfile = test.getOrDefault("ticketfile", DEFAULT_DRILL_PORT)
+                def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
                 result['drill-jdbc-file-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
                 result['drill-jdbc-maprdb-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, port)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-maprsasl" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                def port = healthcheckconfig.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
                 result['drill-jdbc-maprdb-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port)
 
             } else if(test['name'] == "drill-ui-secure-ssl" && (test['enabled'] as boolean)) {
 
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
-                def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 result['drill-ui-secure-ssl'] = ecoSystemDrill.verifyDrillUISecureSSL(packages, certificate, port)
 
             } else if(test['name'] == "drill-ui-secure-pam" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
                 result['drill-ui-secure-pam'] = ecoSystemDrill.verifyDrillUISecurePAM(packages, username, password, port)
 
             } else if(test['name'] == "drill-ui-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
+                def port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUIInsecure(packages, port)
 
             } else if(test['name'] == "yarn-resourcemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("resource_manager_secure_port", DEFAULT_RESOURCEMANAGER_SECURE_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("resource_manager_secure_port", DEFAULT_RESOURCEMANAGER_SECURE_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['yarn-resourcemanager-ui-pam-ssl'] = ecoSystemYarn.verifyResourceManagerUIPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "yarn-nodemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("node_manager_secure_port", DEFAULT_NODEMANAGER_SECURE_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("node_manager_secure_port", DEFAULT_NODEMANAGER_SECURE_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['yarn-nodemanager-ui-pam-ssl'] = ecoSystemYarn.verifyNodeManagerUIPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "yarn-resourcemanager-ui-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("resource_manager_insecure_port", DEFAULT_RESOURCEMANAGER_INSECURE_PORT)
+                def port = test.getOrDefault("resource_manager_insecure_port", DEFAULT_RESOURCEMANAGER_INSECURE_PORT)
 
                 result['yarn-resourcemanager-ui-insecure'] = ecoSystemYarn.verifyRsourceManagerUIInSecure(packages, port)
 
             } else if(test['name'] == "yarn-nodemanager-ui-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("node_manager_insecure_port", DEFAULT_NODEMANAGER_INSECURE_PORT)
+                def port = test.getOrDefault("node_manager_insecure_port", DEFAULT_NODEMANAGER_INSECURE_PORT)
 
                 result['yarn-nodemanager-ui-insecure'] = ecoSystemYarn.verifyNodeManagerUIInSecure(packages, port)
 
             } else if(test['name'] == "yarn-command-maprsasl" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
 
                 result['yarn-command-maprsasl'] = ecoSystemYarn.verifyYarnCommandMapRSasl(packages, ticketfile)
 
             } else if(test['name'] == "yarn-historyserver-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("yarn_history_server_secure_port", DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("yarn_history_server_secure_port", DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['yarn-historyserver-ui-pam-ssl'] = ecoSystemYarn.verifyYarnHistoryServerPamSSL(packages, username, password, certificate, port)
 
             }  else if(test['name'] == "yarn-historyserver-ui-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("yarn_history_server_insecure_port", DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT)
+                def port = test.getOrDefault("yarn_history_server_insecure_port", DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT)
 
                 result['yarn-historyserver-ui-insecure'] = ecoSystemYarn.verifyYarnHistoryServerInsecure(packages, port)
 
             } else if(test['name'] == "hive-server-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("hive_server_ui_port", DEFAULT_HIVE_SERVER_UI_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("hive_server_ui_port", DEFAULT_HIVE_SERVER_UI_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['hive-server-ui-pam-ssl'] = ecoSystemHive.verifyHiveServerUIPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "hive-client-maprsasl" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
 
                 result['hive-client-maprsasl'] = ecoSystemHive.verifyHiveClientMapRSasl(packages, ticketfile)
 
             } else if(test['name'] == "hive-beeline-maprsasl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
 
                 result['hive-beeline-maprsasl'] = ecoSystemHive.verifyHiveBeelineMapRSasl(packages, ticketfile, port)
 
             } else if(test['name'] == "hive-beeline-pam" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
 
                 result['hive-beeline-pam'] = ecoSystemHive.verifyHiveBeelinePam(packages, username, password, port)
 
             } else if(test['name'] == "hive-beeline-maprsasl-pam" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
 
                 result['hive-beeline-maprsasl-pam'] = ecoSystemHive.verifyHiveBeelineMapRSaslPam(packages, ticketfile, username, password, port)
 
             } else if(test['name'] == "hive-beeline-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def truststore = healthcheckconfig.getOrDefault("ssl_truststore_file", DEFAULT_MAPR_SSL_TRUSTSTORE_FILE)
+                def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def truststore = test.getOrDefault("ssl_truststore_file", DEFAULT_MAPR_SSL_TRUSTSTORE_FILE)
 
                 result['hive-beeline-pam-ssl'] = ecoSystemHive.verifyHiveBeelinePamSSL(packages, truststore, username, password, port)
 
             } else if(test['name'] == "hive-webhcat-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("hive_webhcat_api_port", DEFAULT_HIVE_WEBHCAT_API_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("hive_webhcat_api_port", DEFAULT_HIVE_WEBHCAT_API_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['hive-webhcat-pam-ssl'] = ecoSystemHive.verifyHiveWebHcatPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+                def port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
 
                 result['kafka-rest-auth-insecure'] = ecoSystemKafkaRest.verifyAuthInsecure(packages, port)
 
             } else if(test['name'] == "kafka-rest-auth-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['kafka-rest-auth-pam-ssl'] = ecoSystemKafkaRest.verifyAuthPamSSL(packages, username, password, certificate, port)
 
             }  else if(test['name'] == "kafka-rest-api-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def ticketfile = healthcheckconfig.getOrDefault("ticketfile", PATH_TICKET_FILE)
-                def port = healthcheckconfig.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def ticketfile = test.getOrDefault("ticketfile", PATH_TICKET_FILE)
+                def port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['kafka-rest-api-pam-ssl'] = ecoSystemKafkaRest.verifyAPIPamSSL(packages, username, password, certificate, ticketfile, port)
 
             } else if(test['name'] == "data-access-gateway-rest-auth-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
+                def port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
 
                 result['data-access-gateway-rest-auth-insecure'] = ecoSystemDataAccessGateway.verifyRESTAuthInsecure(packages, port)
 
             } else if(test['name'] == "data-access-gateway-rest-auth-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['data-access-gateway-rest-auth-pam-ssl'] = ecoSystemDataAccessGateway.verifyRESTAuthPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "httpfs-auth-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
 
                 result['httpfs-auth-pam-ssl'] = ecoSystemHttpfs.verifyAuthPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "httpfs-auth-insecure" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("httpfs_port", DEFAULT_HTTPFS_PORT)
+                def port = test.getOrDefault("httpfs_port", DEFAULT_HTTPFS_PORT)
 
                 result['httpfs-auth-insecure'] = ecoSystemHttpfs.verifyAuthInsecure(packages, port)
 
             } else if(test['name'] == "opentsdb-api" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("opentsdb_api_port", DEFAULT_OPENTSDB_API_PORT)
+                def port = test.getOrDefault("opentsdb_api_port", DEFAULT_OPENTSDB_API_PORT)
 
                 result['opentsdb-api'] = ecoSystemSpyglass.verifyOpentsdbAPI(packages, port)
 
             } else if(test['name'] == "grafana-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def port = healthcheckconfig.getOrDefault("grafana_ui_port", DEFAULT_GRAFANA_UI_PORT)
-                def username = healthcheckconfig.getOrDefault("username", DEFAULT_MAPR_USERNAME)
-                def password = healthcheckconfig.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
-                def certificate = healthcheckconfig.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
+                def port = test.getOrDefault("grafana_ui_port", DEFAULT_GRAFANA_UI_PORT)
+                def username = test.getOrDefault("username", DEFAULT_MAPR_USERNAME)
+                def password = test.getOrDefault("password", DEFAULT_MAPR_PASSWORD)
+                def certificate = test.getOrDefault("certificate", PATH_SSL_CERTIFICATE_FILE)
                 result['grafana-ui-pam-ssl'] = ecoSystemSpyglass.verifyGrafanaUIPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "elasticsearch-healthcheck-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def elastic_port = healthcheckconfig.getOrDefault("grafana_ui_port", DEFAULT_ELASTIC_PORT)
-                def username_elastic = healthcheckconfig.getOrDefault("username_elastic", DEFAULT_ELASTIC_USERNAME)
-                def password_elastic = healthcheckconfig.getOrDefault("password_elastic", DEFAULT_ELASTIC_PASSWORD)
-                def certificate_elastic = healthcheckconfig.getOrDefault("certificate_elastic", PATH_SSL_CERTIFICATE_FILE_ELASTIC)
+                def elastic_port = test.getOrDefault("grafana_ui_port", DEFAULT_ELASTIC_PORT)
+                def username_elastic = test.getOrDefault("username_elastic", DEFAULT_ELASTIC_USERNAME)
+                def password_elastic = test.getOrDefault("password_elastic", DEFAULT_ELASTIC_PASSWORD)
+                def certificate_elastic = test.getOrDefault("certificate_elastic", PATH_SSL_CERTIFICATE_FILE_ELASTIC)
                 result['elasticsearch-healthcheck-pam-ssl'] = ecoSystemSpyglass.verifyElasticPamSSL(packages, username_elastic, password_elastic, certificate_elastic, elastic_port)
 
             } else if(test['name'] == "kibana-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
-                def kibana_port = healthcheckconfig.getOrDefault("kibana_port", DEFAULT_KIBANA_PORT)
-                def username_kibana = healthcheckconfig.getOrDefault("username_kibana", DEFAULT_KIBANA_USERNAME)
-                def password_kibana = healthcheckconfig.getOrDefault("password_kibana", DEFAULT_KIBANA_PASSWORD)
-                def certificate_kibana = healthcheckconfig.getOrDefault("certificate_kibana", PATH_SSL_CERTIFICATE_FILE_KIBANA)
+                def kibana_port = test.getOrDefault("kibana_port", DEFAULT_KIBANA_PORT)
+                def username_kibana = test.getOrDefault("username_kibana", DEFAULT_KIBANA_USERNAME)
+                def password_kibana = test.getOrDefault("password_kibana", DEFAULT_KIBANA_PASSWORD)
+                def certificate_kibana = test.getOrDefault("certificate_kibana", PATH_SSL_CERTIFICATE_FILE_KIBANA)
                 result['kibana-ui-pam-ssl'] = ecoSystemSpyglass.verifyKibanaUIPamSSL(packages, username_kibana, password_kibana, certificate_kibana, kibana_port)
 
             }  else if(test['name'] == "hue-ui" && (test['enabled'] as boolean)) {

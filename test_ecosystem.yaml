@@ -185,19 +185,19 @@ modules:
         enabled: false
       - name: elasticsearch-healthcheck-pam-ssl
         username_elastic: admin
-        password_elastic: admin
-        certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem
+        password_elastic: mapr123
+        certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.5.3/usr/share/curator/cacert.pem
         elastic_port: 9200
         enabled: false
       - name: kibana-ui-pam-ssl
         username_kibana: admin
-        password_kibana: admin
-        certificate_kibana: /opt/mapr/kibana/kibana-6.2.3/config/cert.pem
+        password_kibana: mapr123
+        certificate_kibana: /opt/mapr/kibana/kibana-6.5.3/config/cert.pem
         kibana_port: 5601
-        enabled: false
+        enabled: true
       - name: hue-ui
         hue_ui_port: 8888
-        enabled: true
+        enabled: false
       - name: yarn-command-insecure
         enabled: false
       - name: yarn-timelineserver-ui
@@ -288,8 +288,6 @@ nodes-global-config:
   ssh_identity: /Users/xuelansun/.ssh/xsun-keypair-eu-west-2.pem
 
 nodes:
-- host: ip-10-0-0-23.eu-west-2.compute.internal
-- host: ip-10-0-0-142.eu-west-2.compute.internal
-- host: ip-10-0-0-150.eu-west-2.compute.internal
-- host: ip-10-0-0-214.eu-west-2.compute.internal
-- host: ip-10-0-0-222.eu-west-2.compute.internal
+- host: ip-10-0-0-123.eu-west-2.compute.internal
+- host: ip-10-0-0-201.eu-west-2.compute.internal
+- host: ip-10-0-0-241.eu-west-2.compute.internal
