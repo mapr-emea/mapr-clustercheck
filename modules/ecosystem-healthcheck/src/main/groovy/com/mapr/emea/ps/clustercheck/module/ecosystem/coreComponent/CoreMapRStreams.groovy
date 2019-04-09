@@ -34,7 +34,7 @@ class CoreMapRStreams {
      * @param maprFSTmpDir
      * @return
      */
-    def verifyMapRStreams(List<Object> packages, String ticketfile) {
+    def verifyMapRStreams(List<Object> packages, String ticketfile, Boolean purgeaftercheck) {
 
         log.trace("Start : CoreMapRStreams : verifyMapRStreams")
 
@@ -42,10 +42,11 @@ class CoreMapRStreams {
 
             def nodeResult = [:]
 
-            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}"
-            final String queryCreateStream = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream create -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}"
-            final String queryCreateTopic = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic create -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME} -topic ${TOPIC_NAME}"
-            final String queryListTopic = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic list -path ${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}/${STREAM_NAME}; echo \$?"
+            final String pathStreamMapRFS = "${maprFSTmpDir}/${DIR_MAPR_FS_MAPRSTREAMS}"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${pathStreamMapRFS}"
+            final String queryCreateStream = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream create -path ${pathStreamMapRFS}/${STREAM_NAME}"
+            final String queryCreateTopic = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic create -path ${pathStreamMapRFS}/${STREAM_NAME} -topic ${TOPIC_NAME}"
+            final String queryListTopic = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic list -path ${pathStreamMapRFS}/${STREAM_NAME}; echo \$?"
 
             executeSudo queryCreateDir
             executeSudo queryCreateStream
@@ -61,6 +62,13 @@ class CoreMapRStreams {
             nodeResult['2-query-create-stream'] = "sudo " + queryCreateStream
             nodeResult['3-query-create-topic']  = "sudo " + queryCreateTopic
             nodeResult['4-query-list-topic']    = "sudo " + queryListTopic
+
+            if(purgeaftercheck){
+                final String queryPurge = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r -f ${pathStreamMapRFS}; echo \$?"
+                nodeResult['5-query-purge']                       = "sudo " + queryPurge
+                nodeResult['purge_output'] = executeSudo queryPurge
+                nodeResult['purge_success'] = nodeResult['purge_output'].toString().reverse().take(1).equals("0")
+            }
 
             nodeResult
         })

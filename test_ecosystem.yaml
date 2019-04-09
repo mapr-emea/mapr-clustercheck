@@ -11,32 +11,25 @@ modules:
     enabled: false
   ecosystem-healthcheck:
     enabled: true
-    ticketfile: /opt/mapr/conf/mapruserticket
     username: mapr
-    password: mapr123
+    password: mapr
+    ticketfile: /opt/mapr/conf/mapruserticket
     tests:
       - name: cldb
-        username: mapr
-        password: mapr123
         cldb_ui_port: 7443
-        ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: maprfs
-        ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: maprdb-json-shell
+        purge_after_check: true
         enabled: false
       - name: maprdb-binary-shell
+        purge_after_check: true
         enabled: false
       - name: mapr-streams
-        ticketfile: /opt/mapr/conf/mapruserticket
+        purge_after_check: true
         enabled: false
-      - name: mcs-ui-secure-pam
-        username: mapr
-        password: mapr123
-        mcs_ui_port: 8443
-        enabled: false
-      - name: mcs-ui-secure-ssl
+      - name: mcs-ui-secure
         certificate: /opt/mapr/conf/ssl_truststore.pem
         mcs_ui_port: 8443
         enabled: false
@@ -44,8 +37,6 @@ modules:
         mcs_ui_port: 8443
         enabled: false
       - name: maprlogin-password
-        username: mapr
-        password: mapr123
         enabled: false
       - name: mapr-maprcli-api-sasl
         ticketfile: /opt/mapr/conf/mapruserticket
@@ -185,16 +176,16 @@ modules:
         enabled: false
       - name: elasticsearch-healthcheck-pam-ssl
         username_elastic: admin
-        password_elastic: mapr123
-        certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.5.3/usr/share/curator/cacert.pem
+        password_elastic: admin
+        certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem
         elastic_port: 9200
         enabled: false
       - name: kibana-ui-pam-ssl
         username_kibana: admin
-        password_kibana: mapr123
+        password_kibana: admin
         certificate_kibana: /opt/mapr/kibana/kibana-6.5.3/config/cert.pem
         kibana_port: 5601
-        enabled: true
+        enabled: false
       - name: hue-ui
         hue_ui_port: 8888
         enabled: false
@@ -207,10 +198,6 @@ modules:
       - name: data-access-gateway-grpc
         enabled: false
       - name: kafka-connect-to-maprfs-distributed
-        enabled: false
-      - name: spark-yarn-maprsasl
-        enabled: false
-      - name: spark-standalone
         enabled: false
       - name: spark-historyserver-ui
         enabled: false
@@ -227,60 +214,60 @@ modules:
   benchmark-rawdisk:
     enabled: false
     tests:
-    - mode: READONLY
-      data_in_mb: 2048
+      - mode: READONLY
+        data_in_mb: 2048
   benchmark-network-iperf:
     enabled: false
     tests:
-    - threads: 4
-      data_per_thread: 2G
-      mode: all
+      - threads: 4
+        data_per_thread: 2G
+        mode: all
   benchmark-maprfs-dfsio:
     enabled: false
     role: clusterjob-execution
     tests:
-    - dfsio_number_of_files: 5
-      dfsio_file_size_in_mb: 256
-      topology: /data
-      replication: 3
-      compression: 'off'
-    - dfsio_number_of_files: 5
-      dfsio_file_size_in_mb: 256
-      topology: /data
-      replication: 1
-      compression: 'off'
+      - dfsio_number_of_files: 5
+        dfsio_file_size_in_mb: 256
+        topology: /data
+        replication: 3
+        compression: 'off'
+      - dfsio_number_of_files: 5
+        dfsio_file_size_in_mb: 256
+        topology: /data
+        replication: 1
+        compression: 'off'
   benchmark-maprfs-rwtest:
     enabled: false
     tests:
-    - volume_type: local
-      compression: 'off'
-      size_in_mb: 32
-    - volume_type: standard
-      compression: 'off'
-      size_in_mb: 32
+      - volume_type: local
+        compression: 'off'
+        size_in_mb: 32
+      - volume_type: standard
+        compression: 'off'
+        size_in_mb: 32
   benchmark-yarn-terasort-mr:
     enabled: false
     role: clusterjob-execution
     tests:
-    - chunk_size_in_mb: 256
-      rows: 100000
-      rows_comment: one row has 100 byte
-      reduce_tasks_per_node: 2
-      topology: /data
-      replication: 3
-      compression: 'on'
+      - chunk_size_in_mb: 256
+        rows: 100000
+        rows_comment: one row has 100 byte
+        reduce_tasks_per_node: 2
+        topology: /data
+        replication: 3
+        compression: 'on'
   benchmark-yarn-terasort-spark:
     enabled: false
     role: clusterjob-execution
     tests:
-    - chunk_size_in_mb: 256
-      data_size: 1024M
-      num_executors: 3
-      executor_cores: 2
-      executor_memory: 4G
-      topology: /data
-      replication: 3
-      compression: 'on'
+      - chunk_size_in_mb: 256
+        data_size: 1024M
+        num_executors: 3
+        executor_cores: 2
+        executor_memory: 4G
+        topology: /data
+        replication: 3
+        compression: 'on'
 
 nodes-global-config:
   disks:
@@ -288,6 +275,6 @@ nodes-global-config:
   ssh_identity: /Users/xuelansun/.ssh/xsun-keypair-eu-west-2.pem
 
 nodes:
-- host: ip-10-0-0-123.eu-west-2.compute.internal
-- host: ip-10-0-0-201.eu-west-2.compute.internal
-- host: ip-10-0-0-241.eu-west-2.compute.internal
+  - host: ip-10-0-0-40.eu-west-2.compute.internal
+  - host: ip-10-0-0-181.eu-west-2.compute.internal
+  - host: ip-10-0-0-191.eu-west-2.compute.internal

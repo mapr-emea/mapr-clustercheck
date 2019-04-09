@@ -17,49 +17,28 @@ class CoreMcs {
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
-     * Verify MCS, Secure (PAM) Mode
-     * @param packages
-     * @param username
-     * @param password
-     * @param port
-     * @return
-     */
-    def verifyMcsUiSecurePAM(List<Object> packages, String username, String password, int port) {
-
-        log.trace("Start : CoreMcs : verifyMcsUiSecurePAM")
-
-        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
-            def nodeResult = [:]
-
-            nodeResult['output'] = executeSudo "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/app/mcs/#/ | head -n 1"
-            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
-            nodeResult
-        })
-
-        log.trace("End : CoreMcs : verifyMcsUiSecurePAM")
-        testResult
-    }
-
-    /**
-     * Verify MCS, Secure (SSL) Mode
+     * Verify MCS
      * @param packages
      * @param certificate
      * @param port
      * @return
      */
-    def verifyMcsUiSecureSSL(List<Object> packages, String certificate, int port) {
+    def verifyMcsUiSecure(List<Object> packages, String certificate, String credentialFileREST, int port) {
 
-        log.trace("Start : CoreMcs : verifyMcsUiSecureSSL")
+        log.trace("Start : CoreMcs : verifyMcsUiSecure")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} https://${remote.host}:${port}/app/mcs/#/  | head -n 1"
+            final String query = "curl -Is --netrc-file ${credentialFileREST} --cacert ${certificate} https://${remote.host}:${port}/app/mcs/#/  | head -n 1"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 
-        log.trace("End : CoreMcs : verifyMcsUiSecureSSL")
+        log.trace("End : CoreMcs : verifyMcsUiSecure")
         testResult
     }
 

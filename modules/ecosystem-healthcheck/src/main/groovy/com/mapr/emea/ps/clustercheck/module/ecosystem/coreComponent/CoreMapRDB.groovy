@@ -33,7 +33,7 @@ class CoreMapRDB {
      * @param ticketfile
      *  @return
      */
-    def verifyMapRDBJsonShell(List<Object> packages, String ticketfile) {
+    def verifyMapRDBJsonShell(List<Object> packages, String ticketfile, Boolean purgeaftercheck) {
 
         log.trace("Start : CoreMapRDB : verifyMapRDBJsonShell")
 
@@ -43,10 +43,10 @@ class CoreMapRDB {
 
             final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_MAPRDB, FILE_MAPR_DB_JSON, delegate)
             final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_MAPRDB, ticketfile, jsonPath, delegate)
-            final String tablePathMaprfs = "${jsonPathMaprfs}/${TB_MAPR_DB_JSON}"
+            final String pathTableMapRFS = "${jsonPathMaprfs}/${TB_MAPR_DB_JSON}"
 
-            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${tablePathMaprfs} -mapreduce false"
-            final String queryDbShell = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell find ${tablePathMaprfs}; echo \$?"
+            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${pathTableMapRFS} -mapreduce false"
+            final String queryDbShell = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr dbshell find ${pathTableMapRFS}; echo \$?"
 
             executeSudo queryImportJson
 
@@ -57,6 +57,13 @@ class CoreMapRDB {
             nodeResult['2-path-after-sending-json-maprfs']        = jsonPathMaprfs
             nodeResult['3-query-import-json-maprdb']              = "sudo " + queryImportJson
             nodeResult['4-query-dbshel']                          = "sudo " + queryDbShell
+
+            if(purgeaftercheck){
+                final String queryPurge = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r -f ${jsonPathMaprfs}; echo \$?"
+                nodeResult['5-query-purge']                       = "sudo " + queryPurge
+                nodeResult['purge_output'] = executeSudo queryPurge
+                nodeResult['purge_success'] = nodeResult['purge_output'].toString().reverse().take(1).equals("0")
+            }
 
             nodeResult
         })
@@ -72,7 +79,7 @@ class CoreMapRDB {
      * @param maprFSTmpDir
      * @return
      */
-    def verifyMapRDBBinaryShell(List<Object> packages, String ticketfile) {
+    def verifyMapRDBBinaryShell(List<Object> packages, String ticketfile, Boolean purgeaftercheck) {
 
         log.trace("Start : CoreMapRDB : verifyMapRDBBinaryShell")
 
@@ -80,10 +87,11 @@ class CoreMapRDB {
 
             def nodeResult = [:]
 
-            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${maprFSTmpDir}/${DIR_MAPRDB}"
-            final String queryCreateTable = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table create -path ${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_BINARY}"
-            final String queryCreateCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf create -path ${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_BINARY} -cfname ${CF_MAPR_DB_BINARY}"
-            final String queryListCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${maprFSTmpDir}/${DIR_MAPRDB}/${TB_MAPR_DB_BINARY}; echo \$?"
+            final String pathTableMapRFS = "${maprFSTmpDir}/${DIR_MAPRDB}"
+            final String queryCreateDir = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir ${pathTableMapRFS}"
+            final String queryCreateTable = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table create -path ${pathTableMapRFS}/${TB_MAPR_DB_BINARY}"
+            final String queryCreateCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf create -path ${pathTableMapRFS}/${TB_MAPR_DB_BINARY} -cfname ${CF_MAPR_DB_BINARY}"
+            final String queryListCF = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli table cf list -path ${pathTableMapRFS}/${TB_MAPR_DB_BINARY}; echo \$?"
 
             executeSudo queryCreateDir
             executeSudo queryCreateTable
@@ -97,6 +105,13 @@ class CoreMapRDB {
             nodeResult['2-query-create-table']         = "sudo " + queryCreateTable
             nodeResult['3-query-create-column-family'] = "sudo " + queryCreateCF
             nodeResult['4-query-list-column-family']   = "sudo " + queryListCF
+
+            if(purgeaftercheck){
+                final String queryPurge = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r -f ${pathTableMapRFS}; echo \$?"
+                nodeResult['5-query-purge']            = "sudo " + queryPurge
+                nodeResult['purge_output'] = executeSudo queryPurge
+                nodeResult['purge_success'] = nodeResult['purge_output'].toString().reverse().take(1).equals("0")
+            }
 
             nodeResult
         })

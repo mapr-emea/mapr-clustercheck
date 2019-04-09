@@ -4,6 +4,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 @Component
@@ -16,6 +17,7 @@ class CoreCLDB {
     @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
+
     /**
      * Verify CLDB with PAM
      * @param packages
@@ -24,7 +26,7 @@ class CoreCLDB {
      * @param port
      * @return
      */
-    def verifyCldbPamSASL(List<Object> packages, String username, String password, String ticketfile, int port) {
+    def verifyCldbPamSASL(List<Object> packages, String credentialFileREST, String ticketfile, int port) {
 
         log.trace("Start : CoreCLDB : verifyCldbPamSASL")
 
@@ -33,7 +35,7 @@ class CoreCLDB {
 
             final String fqdn = execute "hostname -f"
             final String queryCLDBMaster = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli node cldbmaster"
-            final String queryCldbUI = "curl -Is -k -u ${username}:${password} https://${remote.host}:${port}/ | head -n 1"
+            final String queryCldbUI = "curl -Is -k --netrc-file ${credentialFileREST} https://${remote.host}:${port}/ | head -n 1"
 
             final String cldbMaster = executeSudo queryCLDBMaster
 

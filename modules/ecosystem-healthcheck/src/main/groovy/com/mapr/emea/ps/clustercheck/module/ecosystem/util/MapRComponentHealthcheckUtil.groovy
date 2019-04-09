@@ -70,6 +70,61 @@ class MapRComponentHealthcheckUtil {
     }
 
     /**
+     * Create the credential file for REST API call
+     * @param role
+     * @param credentialFileName
+     * @param username
+     * @param password
+     * @return pathCredentialFile
+     */
+    def createCredentialFileREST(role, String credentialFileName, String username, String password) {
+        log.trace("Start : MapRComponentHealthcheckUtil : createCredentialFileREST")
+
+        def packages = Collections.synchronizedList([])
+        ssh.runInOrder {
+            settings {
+                pty = true
+                ignoreError = true
+            }
+            session(ssh.remotes.role(role)) {
+                final String hostname = execute("hostname -f")
+                final String content = "machine ${hostname} login ${username} password ${password}"
+                executeSudo "rm -f ${tmpPath}/${credentialFileName}"
+                executeSudo "echo ${content} >> ${tmpPath}/${credentialFileName}"
+                executeSudo "chmod 400 ${tmpPath}/${credentialFileName}"
+            }
+        }
+
+        final String pathCredentialFile = "${tmpPath}/${credentialFileName}"
+
+        log.trace("End : MapRComponentHealthcheckUtil : createCredentialFileREST")
+        return pathCredentialFile
+    }
+
+    /**
+     * Delete a local file with path
+     * @param role
+     * @param filePath
+     * @return
+     */
+    def deleteLocalFile(role, String filePath) {
+        log.trace("Start : MapRComponentHealthcheckUtil : deleteLocalFile")
+
+        def packages = Collections.synchronizedList([])
+        ssh.runInOrder {
+            settings {
+                pty = true
+                ignoreError = true
+            }
+            session(ssh.remotes.role(role)) {
+                executeSudo "rm -f ${filePath}"
+            }
+        }
+
+        log.trace("End : MapRComponentHealthcheckUtil : deleteLocalFile")
+    }
+
+    /**
      * Find hosts with package installed //TODO find exact package installed, instead of using "contains" (in case of drill...etc.)
      * @param packages
      * @param packageName

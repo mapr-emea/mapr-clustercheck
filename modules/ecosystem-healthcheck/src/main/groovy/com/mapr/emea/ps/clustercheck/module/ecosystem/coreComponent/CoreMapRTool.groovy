@@ -4,6 +4,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 @Component
@@ -14,28 +15,42 @@ class CoreMapRTool {
     static final String PACKAGE_NAME = "mapr-core"
 
     @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath
+
+    @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
-     * Verify MapR-Login tool with password
+     * Verify MapR-Login tool with password (in a credential file and will be deleted after the test)
      * @param packages
      * @param username
      * @param password
      * @return
      */
-    def verifyMapRLoginPassword(List<Object> packages, String username, String password) {
+    def verifyMapRLoginPassword(List<Object> packages, String username, String password, String credentialFileName) {
         log.trace("Start : CoreMapRTool : verifyMapRLoginPassword")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
+            final String credentialFilePath = "${tmpPath}/${credentialFileName}"
+            executeSudo "rm -f ${credentialFilePath}"
+            executeSudo "echo ${password} >> ${credentialFilePath}"
+            executeSudo "chmod 400 ${credentialFilePath}"
+            executeSudo "chown ${username} ${credentialFilePath}"
+
+
             def uid = executeSudo("su - ${username} -c 'id -u ${username}'")
 
             def ticketFile = "/tmp/maprticket_${uid}"
 
-            nodeResult['output'] = executeSudo("su - ${username} -c 'echo ${password} | maprlogin password'")
+            nodeResult['output'] = executeSudo("su - ${username} -c 'echo \$(cat ${credentialFilePath}) | maprlogin password'")
 
             nodeResult['success'] = nodeResult['output'].contains(ticketFile)
+
+            executeSudo "rm -f ${tmpPath}/${credentialFileName}"
+
             nodeResult
         })
 
