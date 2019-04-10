@@ -1,1 +1,1 @@
-SELECT * FROM dfs.`/tmp/.clustercheck/drill/drill_people.json`;
+SELECT * FROM dfs.`/tmp/.clustercheck/drill/drill_people_maprdb`;

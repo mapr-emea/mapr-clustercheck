@@ -49,7 +49,7 @@ class CoreMapRTool {
 
             nodeResult['success'] = nodeResult['output'].contains(ticketFile)
 
-            executeSudo "rm -f ${tmpPath}/${credentialFileName}"
+            executeSudo "rm -f ${credentialFilePath}"
 
             nodeResult
         })

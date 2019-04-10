@@ -224,7 +224,7 @@ class MapRComponentHealthcheckUtil {
             maprfspath = "${tmpMapRPath}"
         }
 
-        delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put ${filePath} ${maprfspath}"
+        delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -put -f ${filePath} ${maprfspath}"
 
         log.trace("End : MapRComponentHealthcheckUtil : uploadRemoteFileToMaprfs")
 

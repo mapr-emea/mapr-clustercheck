@@ -1,8 +1,11 @@
-## MapR Ecosystem Components HealthCheck
+# MapR Ecosystem Components HealthCheck
 
-## TODO
+## PASSWORD AUTH
+* Credential file used and will be purged after test, so that password will not be exposed in bash history
+    - For REST API with PAM
+    - For components with PAM pain authen : credential
 
-### Components Verification
+## Components Verification
 
 * drill-jdbc-jsonfile-plainauth
 

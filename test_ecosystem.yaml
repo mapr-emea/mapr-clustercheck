@@ -57,22 +57,18 @@ modules:
         enabled: false
       - name: drill-jdbc-maprdb-json-plainauth
         drill_port: 31010
+        purge_after_check: true
         enabled: false
       - name: drill-jdbc-maprdb-json-maprsasl
         drill_port: 31010
+        purge_after_check: true
+        enabled: false
+      - name: drill-ui-secure
+        drill_ui_port: 8047
         enabled: false
       - name: drill-ui-secure-ssl
-        certificate: /opt/mapr/conf/ssl_truststore.pem
         drill_ui_port: 8047
-        enabled: false
-      - name: drill-ui-secure-pam
-        username: mapr
-        password: mapr123
-        drill_ui_port: 8047
-        enabled: false
-      - name: drill-ui-insecure
-        drill_ui_port: 8047
-        enabled: false
+        enabled: true
       - name: yarn-resourcemanager-ui-pam-ssl
         username: mapr
         password: mapr123

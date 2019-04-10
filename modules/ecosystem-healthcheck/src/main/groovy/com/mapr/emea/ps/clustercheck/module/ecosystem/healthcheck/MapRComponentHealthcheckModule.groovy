@@ -139,6 +139,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "mapr-streams", purge_after_check: true, enabled: false],
             [name: "mcs-ui-secure", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "mcs-ui-secure-ssl", mcs_port: DEFAULT_MCS_PORT, enabled: false],
+            [name: "mcs-ui-insecure", mcs_port: DEFAULT_MCS_PORT, enabled: false], //TODO To test
             [name: "mcs-api-secure-pam", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "mcs-api-secure-pam-ssl", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "maprlogin-password", enabled: false],
@@ -147,15 +148,16 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             //Drill check
             [name: "drill-jdbc-jsonfile-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false], //TODO need to optimized the packages check
             [name: "drill-jdbc-file-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
-            [name: "drill-jdbc-maprdb-json-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
-            [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
+            [name: "drill-jdbc-maprdb-json-plainauth", drill_port: DEFAULT_DRILL_PORT, purge_after_check: true, enabled: false],
+            [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, purge_after_check: true, enabled: false],
+            [name: "drill-ui-secure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-secure-ssl", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
-            [name: "drill-ui-secure-pam", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
+            [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
 
             //Yarn check
             [name: "yarn-resourcemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
-            [name: "yarn-nodemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-resourcemanager-ui-insecure", resource_manager_insecure_port: DEFAULT_RESOURCEMANAGER_INSECURE_PORT, enabled: false], //TODO test
+            [name: "yarn-nodemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-nodemanager-ui-insecure", node_manager_insecure_port: DEFAULT_NODEMANAGER_INSECURE_PORT, enabled: false], //TODO test
             [name: "yarn-command-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "yarn-historyserver-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
@@ -191,11 +193,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             //Hue UI
             [name: "hue-ui", hue_ui_port: DEFAULT_HUE_UI_PORT, enabled: false], //TODO no auth, only simple test
-
-            //TODO To test
-            [name: "mcs-ui-insecure", mcs_port: DEFAULT_MCS_PORT, enabled: false],
-            [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
-
 
             // TODO To implement
             [name: "yarn-command-insecure", enabled: false],
@@ -307,7 +304,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             }else if(test['name'] == "drill-jdbc-jsonfile-plainauth" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, port)
+                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port)
 
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
 
@@ -317,22 +314,24 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                result['drill-jdbc-maprdb-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, port)
+                def purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+                result['drill-jdbc-maprdb-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port, purgeaftercheck)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-maprsasl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                result['drill-jdbc-maprdb-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port)
+                def purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+                result['drill-jdbc-maprdb-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port, purgeaftercheck)
 
             } else if(test['name'] == "drill-ui-secure-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 result['drill-ui-secure-ssl'] = ecoSystemDrill.verifyDrillUISecureSSL(packages, certificate, port)
 
-            } else if(test['name'] == "drill-ui-secure-pam" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "drill-ui-secure" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
-                result['drill-ui-secure-pam'] = ecoSystemDrill.verifyDrillUISecurePAM(packages, username, password, port)
+                result['drill-ui-secure'] = ecoSystemDrill.verifyDrillUISecure(packages, port)
 
             } else if(test['name'] == "drill-ui-insecure" && (test['enabled'] as boolean)) {
 
@@ -489,7 +488,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
         }
 
         // Delete the credential file
-        //mapRComponentHealthcheckUtil.deleteLocalFile(role, credentialFileREST)
+        mapRComponentHealthcheckUtil.deleteLocalFile(role, credentialFileREST)
 
         List recommendations = calculateRecommendations(result)
         def textReport = buildTextReport(result)
