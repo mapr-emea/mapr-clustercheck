@@ -14,6 +14,7 @@ modules:
     username: mapr
     password: mapr
     ticketfile: /opt/mapr/conf/mapruserticket
+    ssl_certificate: /opt/mapr/conf/ssl_truststore.pem
     tests:
       - name: cldb
         cldb_ui_port: 7443
@@ -30,9 +31,17 @@ modules:
         purge_after_check: true
         enabled: false
       - name: mcs-ui-secure
-        certificate: /opt/mapr/conf/ssl_truststore.pem
         mcs_ui_port: 8443
-        enabled: false
+        enabled: true
+      - name: mcs-ui-secure-ssl
+        mcs_ui_port: 8443
+        enabled: true
+      - name: mcs-api-secure-pam
+        mcs_port: 8443
+        enabled: true
+      - name: mcs-api-secure-pam-ssl
+        mcs_port: 8443
+        enabled: true
       - name: mcs-ui-insecure
         mcs_ui_port: 8443
         enabled: false

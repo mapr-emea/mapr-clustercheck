@@ -26,16 +26,16 @@ class CoreCLDB {
      * @param port
      * @return
      */
-    def verifyCldbPamSASL(List<Object> packages, String credentialFileREST, String ticketfile, int port) {
+    def verifyCldbUI(List<Object> packages, String ticketfile, int port) {
 
-        log.trace("Start : CoreCLDB : verifyCldbPamSASL")
+        log.trace("Start : CoreCLDB : verifyCldbUI")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
             final String fqdn = execute "hostname -f"
             final String queryCLDBMaster = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli node cldbmaster"
-            final String queryCldbUI = "curl -Is -k --netrc-file ${credentialFileREST} https://${remote.host}:${port}/ | head -n 1"
+            final String queryCldbUI = "curl -Is -k https://${remote.host}:${port}/ | head -n 1"
 
             final String cldbMaster = executeSudo queryCLDBMaster
 
@@ -49,7 +49,7 @@ class CoreCLDB {
             nodeResult
         })
 
-        log.trace("End : CoreCLDB : verifyCldbPamSASL")
+        log.trace("End : CoreCLDB : verifyCldbUI")
         testResult
     }
 }

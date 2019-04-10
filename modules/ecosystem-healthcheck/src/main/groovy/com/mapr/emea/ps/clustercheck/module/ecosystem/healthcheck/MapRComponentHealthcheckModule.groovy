@@ -64,7 +64,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_HIVE_SERVER_PORT = 10000
     static final Integer DEFAULT_HIVE_SERVER_UI_PORT = 10002
     static final Integer DEFAULT_HIVE_WEBHCAT_API_PORT = 50111
-    static final Integer DEFAULT_MCS_UI_PORT = 8443
+    static final Integer DEFAULT_MCS_PORT = 8443
     static final Integer DEFAULT_KAFKA_REST_PORT = 8082
     static final Integer DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT = 8243
     static final Integer DEFAULT_HTTPFS_PORT = 14000
@@ -137,7 +137,10 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "maprdb-json-shell", purge_after_check: true, enabled: false],
             [name: "maprdb-binary-shell", purge_after_check: true, enabled: false],
             [name: "mapr-streams", purge_after_check: true, enabled: false],
-            [name: "mcs-ui-secure", certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
+            [name: "mcs-ui-secure", mcs_port: DEFAULT_MCS_PORT, enabled: false],
+            [name: "mcs-ui-secure-ssl", mcs_port: DEFAULT_MCS_PORT, enabled: false],
+            [name: "mcs-api-secure-pam", mcs_port: DEFAULT_MCS_PORT, enabled: false],
+            [name: "mcs-api-secure-pam-ssl", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "maprlogin-password", enabled: false],
             [name: "mapr-maprcli-api-sasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
 
@@ -146,44 +149,43 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "drill-jdbc-file-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false],
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, enabled: false],
-            [name: "drill-ui-secure-ssl", certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
-            [name: "drill-ui-secure-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
-            [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
+            [name: "drill-ui-secure-ssl", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
+            [name: "drill-ui-secure-pam", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
 
             //Yarn check
-            [name: "yarn-resourcemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
-            [name: "yarn-nodemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
+            [name: "yarn-resourcemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
+            [name: "yarn-nodemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-resourcemanager-ui-insecure", resource_manager_insecure_port: DEFAULT_RESOURCEMANAGER_INSECURE_PORT, enabled: false], //TODO test
             [name: "yarn-nodemanager-ui-insecure", node_manager_insecure_port: DEFAULT_NODEMANAGER_INSECURE_PORT, enabled: false], //TODO test
             [name: "yarn-command-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
-            [name: "yarn-historyserver-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
+            [name: "yarn-historyserver-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
             [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false], //TODO test
 
             //Hive check
-            [name: "hive-server-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
+            [name: "hive-server-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
             [name: "hive-client-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "hive-beeline-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],//TODO hive to test with different version
             [name: "hive-beeline-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO hive to test with different version
             [name: "hive-beeline-maprsasl-pam", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO hive to test with different version
             [name: "hive-beeline-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, ssl_truststore_file: DEFAULT_MAPR_SSL_TRUSTSTORE_FILE, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
-            [name: "hive-webhcat-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
+            [name: "hive-webhcat-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
 
             //Kafka rest check
-            [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
-            [name: "kafka-rest-api-pam-ssl", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "kafka-rest-api-pam-ssl", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
 
             //Data access gateway check
-            [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
+            [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
             [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
 
             //HTTPFS
-            [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
+            [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
             [name: "httpfs-auth-insecure,", httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],  //TODO test
 
             //Spyglass components check
             [name: "opentsdb-api", opentsdb_api_port: DEFAULT_OPENTSDB_API_PORT, enabled: false],
-            [name: "grafana-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, certificate: DEFAULT_PATH_SSL_CERTIFICATE_FILE, grafana_ui_port: DEFAULT_GRAFANA_UI_PORT, enabled: false],
+            [name: "grafana-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, grafana_ui_port: DEFAULT_GRAFANA_UI_PORT, enabled: false],
             [name: "elasticsearch-healthcheck-pam-ssl", username_elastic: DEFAULT_ELASTIC_USERNAME, password_elastic: DEFAULT_ELASTIC_PASSWORD, certificate_elastic: DEFAULT_PATH_SSL_CERTIFICATE_FILE_ELASTIC, elastic_port: DEFAULT_ELASTIC_PORT, enabled: false],
             [name: "kibana-ui-pam-ssl", username_kibana: DEFAULT_KIBANA_USERNAME, password_kibana: DEFAULT_KIBANA_PASSWORD, certificate_kibana: DEFAULT_PATH_SSL_CERTIFICATE_FILE_KIBANA, kibana_port: DEFAULT_KIBANA_PORT, enabled: false],
 
@@ -191,7 +193,8 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hue-ui", hue_ui_port: DEFAULT_HUE_UI_PORT, enabled: false], //TODO no auth, only simple test
 
             //TODO To test
-            [name: "mcs-ui-insecure", mcs_ui_port: DEFAULT_MCS_UI_PORT, enabled: false],
+            [name: "mcs-ui-insecure", mcs_port: DEFAULT_MCS_PORT, enabled: false],
+            [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
 
 
             // TODO To implement
@@ -209,7 +212,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, ticketfile: DEFAULT_PATH_TICKET_FILE, tests:defaultTestMatrix]
+        return [username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, ticketfile: DEFAULT_PATH_TICKET_FILE, ssl_tests:defaultTestMatrix]
     }
 
     @Override
@@ -231,9 +234,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
         def result = Collections.synchronizedMap([:])
         def packages = mapRComponentHealthcheckUtil.retrievePackages(role)
 
-        final String ticketfile = healthcheckconfig.getOrDefault("ticketfile", getDEFAULT_PATH_TICKET_FILE())
         final String username = healthcheckconfig.getOrDefault("username", getDEFAULT_MAPR_USERNAME())
         final String password = healthcheckconfig.getOrDefault("password", getDEFAULT_MAPR_PASSWORD())
+        final String ticketfile = healthcheckconfig.getOrDefault("ticketfile", getDEFAULT_PATH_TICKET_FILE())
+        final String certificate = healthcheckconfig.getOrDefault("certificate", getDEFAULT_PATH_SSL_CERTIFICATE_FILE())
+
         //Create the credential file for all rest api call, this file will be deleted in the end
         final String credentialFileREST = mapRComponentHealthcheckUtil.createCredentialFileREST(role, getDEFAULT_CREDENTIAL_FILE_REST(), username, password)
 
@@ -245,7 +250,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
                 def port = test.getOrDefault("cldb_ui_port", DEFAULT_CLDB_UI_PORT)
 
-                result['cldb'] = coreCLDB.verifyCldbPamSASL(packages, credentialFileREST, ticketfile, port)
+                result['cldb'] = coreCLDB.verifyCldbUI(packages, ticketfile, port)
 
             } else if(test['name'] == "maprfs" && (test['enabled'] as boolean)) {
 
@@ -268,13 +273,27 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             } else if(test['name'] == "mcs-ui-secure" && (test['enabled'] as boolean)) {
 
-                def port = test.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-                result['mcs-ui-secure'] = coreMcs.verifyMcsUiSecure(packages, certificate, credentialFileREST, port)
+                def port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
+                result['mcs-ui-secure'] = coreMcs.verifyMcsUiSecure(packages, port)
+
+            } else if(test['name'] == "mcs-ui-secure-ssl" && (test['enabled'] as boolean)) {
+
+                def port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
+                result['mcs-ui-secure-ssl'] = coreMcs.verifyMcsUiSecureSSL(packages, certificate, port)
+
+            } else if(test['name'] == "mcs-api-secure-pam" && (test['enabled'] as boolean)) {
+
+                def port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
+                result['mcs-api-secure-pam'] = coreMcs.verifyMcsApiSecurePAM(packages, credentialFileREST, port)
+
+            } else if(test['name'] == "mcs-api-secure-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
+                result['mcs-api-secure-pam-ssl'] = coreMcs.verifyMcsApiSecurePAMSSL(packages, credentialFileREST, certificate, port)
 
             } else if(test['name'] == "mcs-ui-insecure" && (test['enabled'] as boolean)) {
 
-                def port = test.getOrDefault("mcs_ui_port", DEFAULT_MCS_UI_PORT)
+                def port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
                 result['mcs-ui-insecure'] = coreMcs.verifyMcsUiInSecure(packages, port)
 
             } else if(test['name'] == "maprlogin-password" && (test['enabled'] as boolean)) {
@@ -307,7 +326,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             } else if(test['name'] == "drill-ui-secure-ssl" && (test['enabled'] as boolean)) {
 
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
                 def port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 result['drill-ui-secure-ssl'] = ecoSystemDrill.verifyDrillUISecureSSL(packages, certificate, port)
 
@@ -324,15 +342,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "yarn-resourcemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("resource_manager_secure_port", DEFAULT_RESOURCEMANAGER_SECURE_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['yarn-resourcemanager-ui-pam-ssl'] = ecoSystemYarn.verifyResourceManagerUIPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "yarn-nodemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("node_manager_secure_port", DEFAULT_NODEMANAGER_SECURE_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['yarn-nodemanager-ui-pam-ssl'] = ecoSystemYarn.verifyNodeManagerUIPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "yarn-resourcemanager-ui-insecure" && (test['enabled'] as boolean)) {
@@ -354,8 +368,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "yarn-historyserver-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("yarn_history_server_secure_port", DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['yarn-historyserver-ui-pam-ssl'] = ecoSystemYarn.verifyYarnHistoryServerPamSSL(packages, username, password, certificate, port)
 
             }  else if(test['name'] == "yarn-historyserver-ui-insecure" && (test['enabled'] as boolean)) {
@@ -367,8 +379,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "hive-server-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_server_ui_port", DEFAULT_HIVE_SERVER_UI_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['hive-server-ui-pam-ssl'] = ecoSystemHive.verifyHiveServerUIPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "hive-client-maprsasl" && (test['enabled'] as boolean)) {
@@ -401,8 +411,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "hive-webhcat-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_webhcat_api_port", DEFAULT_HIVE_WEBHCAT_API_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['hive-webhcat-pam-ssl'] = ecoSystemHive.verifyHiveWebHcatPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
@@ -414,15 +422,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "kafka-rest-auth-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['kafka-rest-auth-pam-ssl'] = ecoSystemKafkaRest.verifyAuthPamSSL(packages, username, password, certificate, port)
 
             }  else if(test['name'] == "kafka-rest-api-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['kafka-rest-api-pam-ssl'] = ecoSystemKafkaRest.verifyAPIPamSSL(packages, username, password, certificate, ticketfile, port)
 
             } else if(test['name'] == "data-access-gateway-rest-auth-insecure" && (test['enabled'] as boolean)) {
@@ -434,15 +438,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "data-access-gateway-rest-auth-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['data-access-gateway-rest-auth-pam-ssl'] = ecoSystemDataAccessGateway.verifyRESTAuthPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "httpfs-auth-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
-
                 result['httpfs-auth-pam-ssl'] = ecoSystemHttpfs.verifyAuthPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "httpfs-auth-insecure" && (test['enabled'] as boolean)) {
@@ -460,7 +460,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "grafana-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("grafana_ui_port", DEFAULT_GRAFANA_UI_PORT)
-                def certificate = test.getOrDefault("certificate", DEFAULT_PATH_SSL_CERTIFICATE_FILE)
                 result['grafana-ui-pam-ssl'] = ecoSystemSpyglass.verifyGrafanaUIPamSSL(packages, username, password, certificate, port)
 
             } else if(test['name'] == "elasticsearch-healthcheck-pam-ssl" && (test['enabled'] as boolean)) {
@@ -490,7 +489,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
         }
 
         // Delete the credential file
-        mapRComponentHealthcheckUtil.deleteLocalFile(role, credentialFileREST)
+        //mapRComponentHealthcheckUtil.deleteLocalFile(role, credentialFileREST)
 
         List recommendations = calculateRecommendations(result)
         def textReport = buildTextReport(result)
