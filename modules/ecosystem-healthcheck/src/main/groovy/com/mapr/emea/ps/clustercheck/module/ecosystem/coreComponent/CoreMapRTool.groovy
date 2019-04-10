@@ -71,9 +71,11 @@ class CoreMapRTool {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli service list; echo \$?"
-
+            final String query = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli service list; echo \$?"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].contains("logpath") && nodeResult['output'].toString().reverse().take(1).equals("0")
+            nodeResult['query'] = query
+
             nodeResult
         })
 

@@ -32,23 +32,22 @@ modules:
         enabled: false
       - name: mcs-ui-secure
         mcs_ui_port: 8443
-        enabled: true
+        enabled: false
       - name: mcs-ui-secure-ssl
         mcs_ui_port: 8443
-        enabled: true
+        enabled: false
       - name: mcs-api-secure-pam
         mcs_port: 8443
-        enabled: true
+        enabled: false
       - name: mcs-api-secure-pam-ssl
         mcs_port: 8443
-        enabled: true
+        enabled: false
       - name: mcs-ui-insecure
         mcs_ui_port: 8443
         enabled: false
       - name: maprlogin-password
         enabled: false
       - name: mapr-maprcli-api-sasl
-        ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: drill-jdbc-jsonfile-plainauth
         drill_port: 31010

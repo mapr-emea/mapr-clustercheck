@@ -142,7 +142,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "mcs-api-secure-pam", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "mcs-api-secure-pam-ssl", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "maprlogin-password", enabled: false],
-            [name: "mapr-maprcli-api-sasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
+            [name: "mapr-maprcli-api-sasl", enabled: false],
 
             //Drill check
             [name: "drill-jdbc-jsonfile-plainauth", drill_port: DEFAULT_DRILL_PORT, enabled: false], //TODO need to optimized the packages check
