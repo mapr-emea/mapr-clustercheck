@@ -155,12 +155,15 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
 
             //Yarn check
-            [name: "yarn-resourcemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
+            [name: "yarn-resourcemanager-ui-pam", resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
+            [name: "yarn-resourcemanager-ui-pam-ssl", resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-resourcemanager-ui-insecure", resource_manager_insecure_port: DEFAULT_RESOURCEMANAGER_INSECURE_PORT, enabled: false], //TODO test
-            [name: "yarn-nodemanager-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
+            [name: "yarn-nodemanager-ui-pam", node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
+            [name: "yarn-nodemanager-ui-pam-ssl", node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-nodemanager-ui-insecure", node_manager_insecure_port: DEFAULT_NODEMANAGER_INSECURE_PORT, enabled: false], //TODO test
             [name: "yarn-command-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
-            [name: "yarn-historyserver-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
+            [name: "yarn-historyserver-ui-pam", yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
+            [name: "yarn-historyserver-ui-pam-ssl", yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
             [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false], //TODO test
 
             //Hive check
@@ -338,15 +341,25 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
                 result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUIInsecure(packages, port)
 
-            } else if(test['name'] == "yarn-resourcemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "yarn-resourcemanager-ui-pam" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("resource_manager_secure_port", DEFAULT_RESOURCEMANAGER_SECURE_PORT)
-                result['yarn-resourcemanager-ui-pam-ssl'] = ecoSystemYarn.verifyResourceManagerUIPamSSL(packages, username, password, certificate, port)
+                result['yarn-resourcemanager-ui-pam'] = ecoSystemYarn.verifyResourceManagerUIPam(packages, credentialFileREST, port)
 
-            } else if(test['name'] == "yarn-nodemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
+            }  else if(test['name'] == "yarn-resourcemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = test.getOrDefault("resource_manager_secure_port", DEFAULT_RESOURCEMANAGER_SECURE_PORT)
+                result['yarn-resourcemanager-ui-pam-ssl'] = ecoSystemYarn.verifyResourceManagerUIPamSSL(packages, certificate, credentialFileREST, port)
+
+            } else if(test['name'] == "yarn-nodemanager-ui-pam" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("node_manager_secure_port", DEFAULT_NODEMANAGER_SECURE_PORT)
-                result['yarn-nodemanager-ui-pam-ssl'] = ecoSystemYarn.verifyNodeManagerUIPamSSL(packages, username, password, certificate, port)
+                result['yarn-nodemanager-ui-pam'] = ecoSystemYarn.verifyNodeManagerUIPam(packages, credentialFileREST, port)
+
+            }  else if(test['name'] == "yarn-nodemanager-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = test.getOrDefault("node_manager_secure_port", DEFAULT_NODEMANAGER_SECURE_PORT)
+                result['yarn-nodemanager-ui-pam-ssl'] = ecoSystemYarn.verifyNodeManagerUIPamSSL(packages, certificate, credentialFileREST, port)
 
             } else if(test['name'] == "yarn-resourcemanager-ui-insecure" && (test['enabled'] as boolean)) {
 
@@ -364,12 +377,17 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
                 result['yarn-command-maprsasl'] = ecoSystemYarn.verifyYarnCommandMapRSasl(packages, ticketfile)
 
+            } else if(test['name'] == "yarn-historyserver-ui-pam" && (test['enabled'] as boolean)) {
+
+                def port = test.getOrDefault("yarn_history_server_secure_port", DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT)
+                result['yarn-historyserver-ui-pam'] = ecoSystemYarn.verifyYarnHistoryServerPam(packages, credentialFileREST, port)
+
             } else if(test['name'] == "yarn-historyserver-ui-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("yarn_history_server_secure_port", DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT)
-                result['yarn-historyserver-ui-pam-ssl'] = ecoSystemYarn.verifyYarnHistoryServerPamSSL(packages, username, password, certificate, port)
+                result['yarn-historyserver-ui-pam-ssl'] = ecoSystemYarn.verifyYarnHistoryServerPamSSL(packages, certificate, credentialFileREST, port)
 
-            }  else if(test['name'] == "yarn-historyserver-ui-insecure" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "yarn-historyserver-ui-insecure" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("yarn_history_server_insecure_port", DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT)
 

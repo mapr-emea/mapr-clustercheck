@@ -20,6 +20,35 @@ class EcoSystemYarn {
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
+     * Verify ResourceManager UI, REST Client Authentication with Pam (Pam is mandatory)
+     * @param packages
+     * @param credentialFileREST
+     * @param port
+     * @return
+     */
+    def verifyResourceManagerUIPam(List<Object> packages, String credentialFileREST, int port) {
+
+        log.trace("Start : EcoSystemYarn : verifyResourceManagerUIPam")
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_RESOURCEMANAGER, {
+            def nodeResult = [:]
+
+            final String query = "curl -Is -k --netrc-file ${credentialFileREST} https://${remote.host}:${port}/ws/v1/cluster/info | head -n 1"
+
+            nodeResult['output'] = executeSudo query
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['comment'] = "Only one Resourcemanger is running, the others are standby."
+            nodeResult['query'] = query
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemYarn : verifyResourceManagerUIPam")
+
+        testResult
+    }
+
+    /**
      * Verify ResourceManager UI, REST Client Authentication with SSL and Pam (Pam is mandatory)
      * @param packages
      * @param username
@@ -28,20 +57,52 @@ class EcoSystemYarn {
      * @param port
      * @return
      */
-    def verifyResourceManagerUIPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyResourceManagerUIPamSSL(List<Object> packages, String certificate, String credentialFileREST, int port) {
 
         log.trace("Start : EcoSystemYarn : verifyResourceManagerUIPamSSL")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_RESOURCEMANAGER, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/ws/v1/cluster/info | head -n 1"
+            final String query = "curl -Is --cacert ${certificate} --netrc-file ${credentialFileREST}  https://${remote.host}:${port}/ws/v1/cluster/info | head -n 1"
+
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult['comment'] = "Only one Resourcemanger is running, the others are standby."
+            nodeResult['query'] = query
+
             nodeResult
         })
 
         log.trace("End : EcoSystemYarn : verifyResourceManagerUIPamSSL")
+
+        testResult
+    }
+
+    /**
+     * Verify NodeManager UI, REST Client Authentication with Pam (Pam is mandatory)
+     * @param packages
+     * @param credentialFileREST
+     * @param port
+     * @return
+     */
+    def verifyNodeManagerUIPam(List<Object> packages, String credentialFileREST, int port) {
+
+        log.trace("Start : EcoSystemYarn : verifyNodeManagerUIPam")
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_NODEMANAGER, {
+            def nodeResult = [:]
+
+            final String query = "curl -Is -k --netrc-file ${credentialFileREST} https://${remote.host}:${port}/ws/v1/node | head -n 1"
+
+            nodeResult['output'] = executeSudo query
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemYarn : verifyNodeManagerUIPam")
 
         testResult
     }
@@ -55,15 +116,19 @@ class EcoSystemYarn {
      * @param port
      * @return
      */
-    def verifyNodeManagerUIPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyNodeManagerUIPamSSL(List<Object> packages, String certificate, String credentialFileREST, int port) {
 
         log.trace("Start : EcoSystemYarn : verifyNodeManagerUIPamSSL")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_NODEMANAGER, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/ws/v1/node | head -n 1"
+            final String query = "curl -Is --cacert ${certificate} --netrc-file ${credentialFileREST} https://${remote.host}:${port}/ws/v1/node | head -n 1"
+
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 
@@ -85,8 +150,12 @@ class EcoSystemYarn {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_RESOURCEMANAGER, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ws/v1/cluster/info | head -n 1"
+            final String query = "curl -Is http://${remote.host}:${port}/ws/v1/cluster/info | head -n 1"
+
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 
@@ -108,8 +177,11 @@ class EcoSystemYarn {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_NODEMANAGER, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is http://${remote.host}:${port}/ws/v1/node | head -n 1"
+            final String query =  "curl -Is http://${remote.host}:${port}/ws/v1/node | head -n 1"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 
@@ -131,13 +203,42 @@ class EcoSystemYarn {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HADOOP_CORE, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} yarn application -list; echo \$?"
+            final String query = "MAPR_TICKETFILE_LOCATION=${ticketfile} yarn application -list; echo \$?"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].contains("Total number of applications") && nodeResult['output'].toString().reverse().take(1).equals("0")
+            nodeResult['query'] = query
 
             nodeResult
         })
 
         log.trace("End : EcoSystemYarn : verifyYarnCommandMapRSasl")
+
+        testResult
+    }
+
+    /**
+     * Verify History Sever UI, REST Client Authentication with Pam (Pam is mandatory)
+     * @param packages
+     * @param credentialFileREST
+     * @param port
+     * @return
+     */
+    def verifyYarnHistoryServerPam(List<Object> packages, String credentialFileREST, int port) {
+
+        log.trace("Start : EcoSystemYarn : verifyYarnHistoryServerPam")
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_HISTORY_SEVER, {
+            def nodeResult = [:]
+
+            final String query = "curl -X post -Is -k --netrc-file ${credentialFileREST} https://${remote.host}:${port}/jobhistory | head -n 1"
+            nodeResult['output'] = executeSudo query
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemYarn : verifyYarnHistoryServerPam")
 
         testResult
     }
@@ -151,15 +252,18 @@ class EcoSystemYarn {
      * @param port
      * @return
      */
-    def verifyYarnHistoryServerPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyYarnHistoryServerPamSSL(List<Object> packages, String certificate, String credentialFileREST, int port) {
 
         log.trace("Start : EcoSystemYarn : verifyYarnHistoryServerPamSSL")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_HISTORY_SEVER, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -X post -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/jobhistory | head -n 1"
+            final String query = "curl -X post -Is --cacert ${certificate} --netrc-file ${credentialFileREST} https://${remote.host}:${port}/jobhistory | head -n 1"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 
@@ -181,8 +285,11 @@ class EcoSystemYarn {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_YARN_HISTORY_SEVER, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -X post -Is http://${remote.host}:${port}/jobhistory | head -n 1"
+            final String query = "curl -X post -Is http://${remote.host}:${port}/jobhistory | head -n 1"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 
