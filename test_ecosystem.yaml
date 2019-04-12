@@ -124,20 +124,14 @@ modules:
         hive_webhcat_api_port: 50111
         enabled: false
       - name: kafka-rest-auth-pam-ssl
-        username: mapr
-        password: mapr123
-        certificate: /opt/mapr/conf/ssl_truststore.pem
         kafka_rest_port: 8082
         enabled: false
       - name: kafka-rest-auth-insecure
         kafka_rest_port: 8082
         enabled: false
       - name: kafka-rest-api-pam-ssl
-        ticketfile: /opt/mapr/conf/mapruserticket
-        username: mapr
-        password: mapr123
-        certificate: /opt/mapr/conf/ssl_truststore.pem
         kafka_rest_port: 8082
+        purge_after_check: true
         enabled: false
       - name: data-access-gateway-rest-auth-pam-ssl
         username: mapr

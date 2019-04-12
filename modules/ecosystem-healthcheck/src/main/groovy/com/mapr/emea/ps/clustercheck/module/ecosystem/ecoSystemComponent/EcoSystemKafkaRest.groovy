@@ -38,14 +38,14 @@ class EcoSystemKafkaRest {
      * @param port
      * @return
      */
-    def verifyAuthPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyAuthPamSSL(List<Object> packages, String certificate, String credentialFileREST, int port) {
 
         log.trace("Start : EcoSystemKafkaRest : verifyAuthPamSSL")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            final String query = "curl -Is -u ${username}:${password} --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
+            final String query = "curl -Is --netrc-file ${credentialFileREST} --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
 
             nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
@@ -101,7 +101,7 @@ class EcoSystemKafkaRest {
      * @param port
      * @return
      */
-    def verifyAPIPamSSL(List<Object> packages, String username, String password, String certificate, String ticketfile, int port) {
+    def verifyAPIPamSSL(List<Object> packages, String certificate, String ticketfile, String credentialFileREST, int port, Boolean purgeaftercheck) {
 
         log.trace("Start : EcoSystemKafkaRest : verifyAPIPamSSL")
 
@@ -114,11 +114,12 @@ class EcoSystemKafkaRest {
             final String queryCreateDir       = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -mkdir -p ${path}"
             final String queryCreateStream    = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream create -path ${path}/${STREAM_NAME} -produceperm p -consumeperm p -topicperm p"
             final String queryCreateTopic     = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream topic create -path ${path}/${STREAM_NAME} -topic ${TOPIC_NAME}"
-            final String queryCreateConsumer  = "curl -u ${username}:${password} --cacert ${certificate} -X POST -H \"Content-Type: application/vnd.kafka.v1+json\" --data '{\"name\": \"${CONSUMER_NAME}\", \"format\": \"json\", \"auto.offset.reset\": \"earliest\"}' https://${remote.host}:${port}/consumers/${pathHTML}%2F${STREAM_NAME}%3A${TOPIC_NAME}"
+            final String queryCreateConsumer  = "curl --netrc-file ${credentialFileREST} --cacert ${certificate} -X POST -H \"Content-Type: application/vnd.kafka.v1+json\" --data '{\"name\": \"${CONSUMER_NAME}\", \"format\": \"json\", \"auto.offset.reset\": \"earliest\"}' https://${remote.host}:${port}/consumers/${pathHTML}%2F${STREAM_NAME}%3A${TOPIC_NAME}"
             final String queryProduceMessage  = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --broker-list this.will.beignored:9092 --topic /${path}/${STREAM_NAME}:${TOPIC_NAME} <<< \$${messages}"
-            final String queryConsumeMessage  = "curl -u ${username}:${password} --cacert ${certificate} -X GET -H \"Accept: application/vnd.kafka.json.v1+json\" https://${remote.host}:${port}/consumers/${pathHTML}%2F${STREAM_NAME}%3A${TOPIC_NAME}/instances/${CONSUMER_NAME}/topics/${pathHTML}%2F${STREAM_NAME}%3A${TOPIC_NAME}"
-            final String queryDeleteConsumer  = "curl -u ${username}:${password} --cacert ${certificate} -X DELETE https://${remote.host}:${port}/consumers/${pathHTML}%2F${STREAM_NAME}%3A${TOPIC_NAME}/instances/${CONSUMER_NAME}"
+            final String queryConsumeMessage  = "curl --netrc-file ${credentialFileREST} --cacert ${certificate} -X GET -H \"Accept: application/vnd.kafka.json.v1+json\" https://${remote.host}:${port}/consumers/${pathHTML}%2F${STREAM_NAME}%3A${TOPIC_NAME}/instances/${CONSUMER_NAME}/topics/${pathHTML}%2F${STREAM_NAME}%3A${TOPIC_NAME}"
+            final String queryDeleteConsumer  = "curl --netrc-file ${credentialFileREST} --cacert ${certificate} -X DELETE https://${remote.host}:${port}/consumers/${pathHTML}%2F${STREAM_NAME}%3A${TOPIC_NAME}/instances/${CONSUMER_NAME}"
             final String queryDeleteStream    = "MAPR_TICKETFILE_LOCATION=${ticketfile} maprcli stream delete -path ${path}/${STREAM_NAME}"
+            final String queryDeleteDir        = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r -f ${path}; echo \$?"
 
             //Create a test directory
             executeSudo queryCreateDir
@@ -150,15 +151,22 @@ class EcoSystemKafkaRest {
             nodeResult['5-query-produce-message'] = "sudo " + queryProduceMessage
             nodeResult['6-query-consume-message'] = "sudo " + queryConsumeMessage
             nodeResult['7-query-delete-consumer'] = "sudo " + queryDeleteConsumer
-            nodeResult['8-query-delete-stream']   = "sudo " + queryDeleteStream
-
-            //Clean up
 
             //Delete the consumer, this is mandatory, otherwise next time will not work
             executeSudo queryDeleteConsumer
 
-            //Delete the test stream
-            executeSudo queryDeleteStream
+            if(purgeaftercheck){
+
+                nodeResult['8-query-purge-stream']   = "sudo " + queryDeleteStream
+                nodeResult['9-query-purge-dir']      = "sudo " + queryDeleteDir
+
+                //Delete the test stream
+                executeSudo queryDeleteStream
+
+                //Delete the directory
+                nodeResult['purge_output'] = executeSudo queryDeleteDir
+                nodeResult['purge_success'] = nodeResult['purge_output'].toString().reverse().take(1).equals("0")
+            }
 
             nodeResult
         })

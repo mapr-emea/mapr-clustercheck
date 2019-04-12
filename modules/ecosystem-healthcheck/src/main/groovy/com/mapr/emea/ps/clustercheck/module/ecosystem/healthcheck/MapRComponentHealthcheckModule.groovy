@@ -177,9 +177,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hive-webhcat-pam", "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
 
             //Kafka rest check
-            [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "kafka-rest-auth-pam-ssl", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
             [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
-            [name: "kafka-rest-api-pam-ssl", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "kafka-rest-api-pam-ssl", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, purge_after_check: true, enabled: false],
 
             //Data access gateway check
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
@@ -241,7 +241,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
         final String certificate = healthcheckconfig.getOrDefault("certificate", getDEFAULT_PATH_SSL_CERTIFICATE_FILE())
 
         //Create the credential file for all rest api call, this file will be deleted in the end
-        final String credentialFileREST = mapRComponentHealthcheckUtil.createCredentialFileREST(role, getDEFAULT_CREDENTIAL_FILE_REST(), username, password)
+        final String credentialFileREST = mapRComponentHealthcheckUtil.createCredentialFileREST(role, DEFAULT_CREDENTIAL_FILE_REST, username, password)
 
         healthcheckconfig['tests'].each { test ->
 
@@ -299,7 +299,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
             } else if(test['name'] == "maprlogin-password" && (test['enabled'] as boolean)) {
 
-                result['maprlogin-password'] = coreMapRTool.verifyMapRLoginPassword(packages, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD())
+                result['maprlogin-password'] = coreMapRTool.verifyMapRLoginPassword(packages, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD)
 
             } else if(test['name'] == "mapr-maprcli-api-sasl" && (test['enabled'] as boolean)) {
 
@@ -308,7 +308,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             }else if(test['name'] == "drill-jdbc-jsonfile-plainauth" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port)
+                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
 
             } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
 
@@ -319,7 +319,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
                 def port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
                 def purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
-                result['drill-jdbc-maprdb-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port, purgeaftercheck)
+                result['drill-jdbc-maprdb-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port, purgeaftercheck)
 
             } else if(test['name'] == "drill-jdbc-maprdb-json-maprsasl" && (test['enabled'] as boolean)) {
 
@@ -416,20 +416,20 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "hive-beeline-pam" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
-                result['hive-beeline-pam'] = ecoSystemHive.verifyHiveBeelinePam(packages, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port)
+                result['hive-beeline-pam'] = ecoSystemHive.verifyHiveBeelinePam(packages, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
 
             } else if(test['name'] == "hive-beeline-maprsasl-pam" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
 
-                result['hive-beeline-maprsasl-pam'] = ecoSystemHive.verifyHiveBeelineMapRSaslPam(packages, ticketfile, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port)
+                result['hive-beeline-maprsasl-pam'] = ecoSystemHive.verifyHiveBeelineMapRSaslPam(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
 
             } else if(test['name'] == "hive-beeline-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
                 def truststore = test.getOrDefault("ssl_truststore_file", DEFAULT_MAPR_SSL_TRUSTSTORE_FILE)
 
-                result['hive-beeline-pam-ssl'] = ecoSystemHive.verifyHiveBeelinePamSSL(packages, truststore, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port)
+                result['hive-beeline-pam-ssl'] = ecoSystemHive.verifyHiveBeelinePamSSL(packages, truststore, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
 
             } else if(test['name'] == "hive-webhcat-pam" && (test['enabled'] as boolean)) {
 
@@ -445,12 +445,14 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "kafka-rest-auth-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
-                result['kafka-rest-auth-pam-ssl'] = ecoSystemKafkaRest.verifyAuthPamSSL(packages, username, password, certificate, port)
+                result['kafka-rest-auth-pam-ssl'] = ecoSystemKafkaRest.verifyAuthPamSSL(packages, certificate, credentialFileREST, port)
 
             }  else if(test['name'] == "kafka-rest-api-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
-                result['kafka-rest-api-pam-ssl'] = ecoSystemKafkaRest.verifyAPIPamSSL(packages, username, password, certificate, ticketfile, port)
+                def purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+
+                result['kafka-rest-api-pam-ssl'] = ecoSystemKafkaRest.verifyAPIPamSSL(packages, certificate, ticketfile, credentialFileREST, port, purgeaftercheck)
 
             } else if(test['name'] == "data-access-gateway-rest-auth-insecure" && (test['enabled'] as boolean)) {
 
