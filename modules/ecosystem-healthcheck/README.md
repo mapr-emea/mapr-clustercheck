@@ -11,7 +11,7 @@ TODO
         + The default value is /opt/mapr/conf/mapruserticket
     - SSL certificate file
         + The default value is /opt/mapr/conf/ssl_truststore.pem
-
+        + In each REST API check, enable/disable the certificate verification can be configured.
 
 ## Components Verification
 

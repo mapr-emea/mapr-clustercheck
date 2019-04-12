@@ -27,17 +27,20 @@ class EcoSystemHive {
      * Verify Hive Server UI, Authentication with Pam (Pam is mandatory)
      * @param packages
      * @param credentialFileREST
+     * @param useSSLCert
      * @param port
      * @return
      */
-    def verifyHiveServerUIPam(List<Object> packages, String credentialFileREST, int port) {
+    def verifyHiveServerUIPam(List<Object> packages, String certificate, String credentialFileREST, Boolean useSSLCert, int port) {
 
         log.trace("Start : EcoSystemHive : verifyHiveServerUIPam")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_SERVER2, {
             def nodeResult = [:]
 
-            final String query = "curl -Is -k --netrc-file ${credentialFileREST} https://${remote.host}:${port}/hiveserver2.jsp | head -n 1"
+            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+            final String query = "curl -Is --netrc-file ${credentialFileREST} ${certToken} https://${remote.host}:${port}/hiveserver2.jsp | head -n 1"
+
             nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult['query'] = query
@@ -46,35 +49,6 @@ class EcoSystemHive {
         })
 
         log.trace("End : EcoSystemHive : verifyHiveServerUIPam")
-
-        testResult
-    }
-
-    /**
-     * Verify Hive Server UI, Authentication with SSL and Pam (Pam is mandatory)
-     * @param packages
-     * @param username
-     * @param password
-     * @param certificate
-     * @param port
-     * @return
-     */
-    def verifyHiveServerUIPamSSL(List<Object> packages, String certificate, String credentialFileREST, int port) {
-
-        log.trace("Start : EcoSystemHive : verifyHiveServerUIPamSSL")
-
-        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_SERVER2, {
-            def nodeResult = [:]
-
-            final String query = "curl -Is --cacert ${certificate} --netrc-file ${credentialFileREST} https://${remote.host}:${port}/hiveserver2.jsp | head -n 1"
-            nodeResult['output'] = executeSudo query
-            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
-            nodeResult['query'] = query
-
-            nodeResult
-        })
-
-        log.trace("End : EcoSystemHive : verifyHiveServerUIPamSSL")
 
         testResult
     }

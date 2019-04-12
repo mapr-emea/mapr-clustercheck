@@ -19,19 +19,25 @@ class EcoSystemHueUI {
     /**
      * Verify Hue UI
      * @param packages
-     * @param username
-     * @param password
+     * @param certificate
      * @param port
+     * @param useSSLCert
+     * @return
      */
-    def verifyHueUI(List<Object> packages, int port){
+    def verifyHueUI(List<Object> packages, String certificate, int port, Boolean useSSLCert){
 
         log.trace("Start : EcoSystemHttpfs : verifyHueUI")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is -k https://${remote.host}:${port}/hue/accounts/login/?next=/hue/about/ | head -n 1"
+            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+            final String query = "curl -Is ${certToken} https://${remote.host}:${port}/hue/accounts/login/?next=/hue/about/ | head -n 1"
+
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 

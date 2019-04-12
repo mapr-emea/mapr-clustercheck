@@ -211,47 +211,22 @@ class EcoSystemDrill {
     }
 
     /**
-     *  Verifying Drill web UI, secure (SSL) mode
+     * Verifying Drill web UI
      * @param packages
      * @param certificate
      * @param port
-     */
-    def verifyDrillUISecureSSL(List<Object> packages, String certificate, int port) {
-        log.trace("Start : EcoSystemDrill : verifyDrillUISecureSSL")
-
-        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
-            def nodeResult = [:]
-
-            final String query = "curl -Is --cacert ${certificate} https://${remote.host}:${port}/ | head -n 1"
-
-            nodeResult['output'] = executeSudo query
-            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
-            nodeResult['query'] = "sudo " + query
-
-            nodeResult
-        })
-
-        log.trace("End : EcoSystemDrill : verifyDrillUISecureSSL")
-
-        testResult
-    }
-
-    /**
-     * Verifying Drill web UI
-     * @param packages
-     * @param username
-     * @param password
-     * @param port
+     * @param useSSLCert
      * @return
      */
-    def verifyDrillUISecure(List<Object> packages, int port) {
+    def verifyDrillUISecure(List<Object> packages, String certificate, int port, Boolean useSSLCert) {
 
         log.trace("Start : EcoSystemDrill : verifyDrillUISecurePAM")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            final String query = "curl -Is -k https://${remote.host}:${port}/ | head -n 1"
+            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+            final String query = "curl -Is ${certToken} https://${remote.host}:${port}/ | head -n 1"
 
             nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")

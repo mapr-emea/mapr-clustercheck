@@ -17,27 +17,32 @@ class EcoSystemDataAccessGateway {
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
-     * Verify MapR Data Access Gateway, REST Client Authentication with SSL and Pam (Pam is mandatory)
+     * Verify MapR Data Access Gateway, REST Client Authentication with Pam (Pam is mandatory)
      * @param packages
-     * @param username
-     * @param password
      * @param certificate
+     * @param credentialFileREST
+     * @param useSSLCert
      * @param port
      * @return
      */
-    def verifyRESTAuthPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyRESTAuthPam(List<Object> packages, String certificate, String credentialFileREST, Boolean useSSLCert, int port) {
 
-        log.trace("Start : EcoSystemDataAccessGateway : verifyRESTAuthPamSSL")
+        log.trace("Start : EcoSystemDataAccessGateway : verifyRESTAuthPam")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is -u ${username}:${password} --cacert ${certificate} https://${remote.host}:${port}/app/swagger/ | head -n 1"
+            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+            final String query = "curl -Is --netrc-file ${credentialFileREST} ${certToken} https://${remote.host}:${port}/app/swagger/ | head -n 1"
+
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 
-        log.trace("End : EcoSystemDataAccessGateway : verifyRESTAuthPamSSL")
+        log.trace("End : EcoSystemDataAccessGateway : verifyRESTAuthPam")
 
         testResult
 

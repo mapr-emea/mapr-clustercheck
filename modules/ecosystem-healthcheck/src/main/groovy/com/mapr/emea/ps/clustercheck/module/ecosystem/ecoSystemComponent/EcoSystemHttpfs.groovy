@@ -17,17 +17,17 @@ class EcoSystemHttpfs {
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
 
     /**
-     * Verify HTTPFS Authentication with Pam and SSL (Pam is mandatory)
+     *  Verify HTTPFS Authentication with Pam (Pam is mandatory)
      * @param packages
-     * @param username
-     * @param password
      * @param certificate
+     * @param credentialFileREST
+     * @param useSSLCert
      * @param port
      * @return
      */
     def verifyAuthPam(List<Object> packages, String certificate, String credentialFileREST, Boolean useSSLCert, int port) {
 
-        log.trace("Start : EcoSystemHttpfs : verifyAuthPamSSL")
+        log.trace("Start : EcoSystemHttpfs : verifyAuthPam")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
@@ -42,7 +42,7 @@ class EcoSystemHttpfs {
             nodeResult
         })
 
-        log.trace("End : EcoSystemHttpfs : verifyAuthPamSSL")
+        log.trace("End : EcoSystemHttpfs : verifyAuthPam")
 
         testResult
 

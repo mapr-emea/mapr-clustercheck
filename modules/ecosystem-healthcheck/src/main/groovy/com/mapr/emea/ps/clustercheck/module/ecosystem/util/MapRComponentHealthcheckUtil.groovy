@@ -102,6 +102,27 @@ class MapRComponentHealthcheckUtil {
     }
 
     /**
+     * Create the credential file for Spyglass
+     * @param credentialFileName
+     * @param username
+     * @param password
+     * @return
+     */
+    def createCredentialFileSpyglass(String credentialFileName, String username, String password, delegate){
+        log.trace("Start : MapRComponentHealthcheckUtil : createCredentialFileSpyglass")
+
+        final String hostname = delegate.executeSudo "hostname -f"
+        final String content = "machine ${hostname} login ${username} password ${password}"
+        delegate.executeSudo "rm -f ${tmpPath}/${credentialFileName}"
+        delegate.executeSudo "echo ${content} >> ${tmpPath}/${credentialFileName}"
+        delegate.executeSudo "chmod 400 ${tmpPath}/${credentialFileName}"
+        final String pathCredentialFile = "${tmpPath}/${credentialFileName}"
+
+        log.trace("End : MapRComponentHealthcheckUtil : createCredentialFileSpyglass")
+        return pathCredentialFile
+    }
+
+    /**
      * Delete a local file with path
      * @param role
      * @param filePath

@@ -19,19 +19,21 @@ class CoreMcs {
     /**
      * Verify MCS in Secure cluster without authentication
      * @param packages
-     * @param username
-     * @param password
+     * @param certificate
      * @param port
+     * @param useSSLCert
      * @return
      */
-    def verifyMcsUiSecure(List<Object> packages, int port) {
+    def verifyMcsUiSecure(List<Object> packages, String certificate, int port, Boolean useSSLCert) {
 
         log.trace("Start : CoreMcs : verifyMcsUiSecure")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            final String query = "curl -Is -k https://${remote.host}:${port}/app/mcs/#/  | head -n 1"
+            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+            final String query = "curl -Is ${certToken} https://${remote.host}:${port}/app/mcs/#/  | head -n 1"
+
             nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult['query'] = query
@@ -44,45 +46,24 @@ class CoreMcs {
     }
 
     /**
-     * Verify MCS, Secure (SSL) Mode
-     * @param packages
-     * @param certificate
-     * @param port
-     * @return
-     */
-    def verifyMcsUiSecureSSL(List<Object> packages, String certificate, int port) {
-
-        log.trace("Start : CoreMcs : verifyMcsUiSecureSSL")
-
-        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
-            def nodeResult = [:]
-
-            final String query = "curl -Is --cacert ${certificate} https://${remote.host}:${port}/app/mcs/#/  | head -n 1"
-            nodeResult['output'] = executeSudo query
-            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
-            nodeResult['query'] = query
-            nodeResult
-        })
-
-        log.trace("End : CoreMcs : verifyMcsUiSecureSSL")
-        testResult
-    }
-
-    /**
      * Verify MCS rest api with PAM
      * @param packages
      * @param credentialFileREST
+     * @param certificate
      * @param port
+     * @param useSSLCert
      * @return
      */
-    def verifyMcsApiSecurePAM(List<Object> packages, String credentialFileREST, int port) {
+    def verifyMcsApiSecurePAM(List<Object> packages, String credentialFileREST, String certificate, int port, Boolean useSSLCert) {
 
         log.trace("Start : CoreMcs : verifyMcsApiSecurePAM")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            final String query = "curl -Is -k --netrc-file ${credentialFileREST} https://${remote.host}:${port}/rest/node/list  | head -n 1"
+            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+            final String query = "curl -Is --netrc-file ${credentialFileREST} ${certToken} https://${remote.host}:${port}/rest/node/list  | head -n 1"
+
             nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult['query'] = query
@@ -91,33 +72,6 @@ class CoreMcs {
         })
 
         log.trace("End : CoreMcs : verifyMcsApiSecurePAM")
-        testResult
-    }
-
-    /**
-     * Verify MCS rest api with PAM + SSL
-     * @param packages
-     * @param certificate
-     * @param credentialFileREST
-     * @param port
-     * @return
-     */
-    def verifyMcsApiSecurePAMSSL(List<Object> packages, String credentialFileREST, String certificate, int port) {
-
-        log.trace("Start : CoreMcs : verifyMcsApiSecurePAMSSL")
-
-        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
-            def nodeResult = [:]
-
-            final String query = "curl -Is -k --netrc-file ${credentialFileREST} --cacert ${certificate} https://${remote.host}:${port}/rest/node/list  | head -n 1"
-            nodeResult['output'] = executeSudo query
-            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
-            nodeResult['query'] = query
-
-            nodeResult
-        })
-
-        log.trace("End : CoreMcs : verifyMcsApiSecurePAMSSL")
         testResult
     }
 

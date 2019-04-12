@@ -32,15 +32,11 @@ modules:
         enabled: false
       - name: mcs-ui-secure
         mcs_port: 8443
-        enabled: false
-      - name: mcs-ui-secure-ssl
-        mcs_port: 8443
+        use_ssl_cert: true
         enabled: false
       - name: mcs-api-secure-pam
         mcs_port: 8443
-        enabled: false
-      - name: mcs-api-secure-pam-ssl
-        mcs_port: 8443
+        use_ssl_cert: true
         enabled: false
       - name: maprlogin-password
         enabled: false
@@ -62,36 +58,26 @@ modules:
         enabled: false
       - name: drill-ui-secure
         drill_ui_port: 8047
-        enabled: false
-      - name: drill-ui-secure-ssl
-        drill_ui_port: 8047
+        use_ssl_cert: true
         enabled: false
       - name: yarn-resourcemanager-ui-pam
         resource_manager_secure_port: 8090
-        enabled: false
-      - name: yarn-resourcemanager-ui-pam-ssl
-        resource_manager_secure_port: 8090
+        use_ssl_cert: true
         enabled: false
       - name: yarn-nodemanager-ui-pam
         node_manager_secure_port: 8044
-        enabled: false
-      - name: yarn-nodemanager-ui-pam-ssl
-        node_manager_secure_port: 8044
+        use_ssl_cert: true
         enabled: false
       - name: yarn-command-maprsasl
         ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: yarn-historyserver-ui-pam
         yarn_history_server_secure_port: 19890
-        enabled: false
-      - name: yarn-historyserver-ui-pam-ssl
-        yarn_history_server_secure_port: 19890
+        use_ssl_cert: true
         enabled: false
       - name: hive-server-ui-pam
         hive_server_ui_port: 10002
-        enabled: false
-      - name: hive-server-ui-pam-ssl
-        hive_server_ui_port: 10002
+        use_ssl_cert: true
         enabled: false
       - name: hive-client-maprsasl
         enabled: false
@@ -111,17 +97,18 @@ modules:
       - name: hive-webhcat-pam
         hive_webhcat_api_port: 50111
         enabled: false
-      - name: kafka-rest-auth-pam-ssl
+      - name: kafka-rest-auth-pam
         kafka_rest_port: 8082
+        use_ssl_cert: true
         enabled: false
-      - name: kafka-rest-api-pam-ssl
+      - name: kafka-rest-api-pam
         kafka_rest_port: 8082
+        use_ssl_cert: true
         purge_after_check: true
         enabled: false
-      - name: data-access-gateway-rest-auth-pam-ssl
-        username: mapr
-        password: mapr
+      - name: data-access-gateway-rest-auth-pam
         data_access_gateway_rest_port: 8243
+        use_ssl_cert: true
         enabled: false
       - name: httpfs-auth-pam
         httpfs_port: 14000
@@ -130,26 +117,28 @@ modules:
       - name: opentsdb-api
         opentsdb_api_port: 4242
         enabled: false
-      - name: grafana-ui-pam-ssl
-        username: mapr
-        password: mapr
+      - name: grafana-ui-pam
         grafana_ui_port: 3000
+        use_ssl_cert: true
         enabled: false
-      - name: elasticsearch-healthcheck-pam-ssl
+      - name: elasticsearch-healthcheck-pam
         username_elastic: admin
         password_elastic: admin
-        certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem
+        certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.5.3/etc/elasticsearch/sg/admin-usr-clientCert.pem
         elastic_port: 9200
+        use_ssl_cert: true
         enabled: false
-      - name: kibana-ui-pam-ssl
+      - name: kibana-ui-pam
         username_kibana: admin
         password_kibana: admin
         certificate_kibana: /opt/mapr/kibana/kibana-6.5.3/config/cert.pem
         kibana_port: 5601
+        use_ssl_cert: true
         enabled: false
       - name: hue-ui
         hue_ui_port: 8888
-        enabled: false
+        use_ssl_cert: false
+        enabled: true
       - name: yarn-command-insecure
         enabled: false
       - name: yarn-timelineserver-ui
