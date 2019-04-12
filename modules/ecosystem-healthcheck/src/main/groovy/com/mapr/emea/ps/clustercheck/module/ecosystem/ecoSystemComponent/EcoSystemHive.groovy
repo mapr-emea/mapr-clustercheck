@@ -4,6 +4,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 @Component
@@ -16,7 +17,38 @@ class EcoSystemHive {
     static final String PACKAGE_NAME_HIVE_WEBHCAT = "mapr-hivewebhcat"
 
     @Autowired
+    @Qualifier("localTmpDir")
+    String tmpPath
+
+    @Autowired
     MapRComponentHealthcheckUtil mapRComponentHealthcheckUtil
+
+    /**
+     * Verify Hive Server UI, Authentication with Pam (Pam is mandatory)
+     * @param packages
+     * @param credentialFileREST
+     * @param port
+     * @return
+     */
+    def verifyHiveServerUIPam(List<Object> packages, String credentialFileREST, int port) {
+
+        log.trace("Start : EcoSystemHive : verifyHiveServerUIPam")
+
+        def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_SERVER2, {
+            def nodeResult = [:]
+
+            final String query = "curl -Is -k --netrc-file ${credentialFileREST} https://${remote.host}:${port}/hiveserver2.jsp | head -n 1"
+            nodeResult['output'] = executeSudo query
+            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
+            nodeResult
+        })
+
+        log.trace("End : EcoSystemHive : verifyHiveServerUIPam")
+
+        testResult
+    }
 
     /**
      * Verify Hive Server UI, Authentication with SSL and Pam (Pam is mandatory)
@@ -27,15 +59,18 @@ class EcoSystemHive {
      * @param port
      * @return
      */
-    def verifyHiveServerUIPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyHiveServerUIPamSSL(List<Object> packages, String certificate, String credentialFileREST, int port) {
 
         log.trace("Start : EcoSystemHive : verifyHiveServerUIPamSSL")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_SERVER2, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/hiveserver2.jsp | head -n 1"
+            final String query = "curl -Is --cacert ${certificate} --netrc-file ${credentialFileREST} https://${remote.host}:${port}/hiveserver2.jsp | head -n 1"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 
@@ -58,8 +93,11 @@ class EcoSystemHive {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_CLIENT, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hive -e \"show databases;\"; echo \$?"
-            nodeResult['success'] = nodeResult['output'].contains("OK") && nodeResult['output'].toString().reverse().take(1).equals("0")
+                final String query = "MAPR_TICKETFILE_LOCATION=${ticketfile} hive -e \"show databases;\"; echo \$?"
+
+                nodeResult['output']  = executeSudo query
+                nodeResult['success'] = nodeResult['output'].contains("OK") && nodeResult['output'].toString().reverse().take(1).equals("0")
+                nodeResult['query']   = query
 
             nodeResult
         })
@@ -86,9 +124,13 @@ class EcoSystemHive {
             def nodeResult = [:]
 
             hiveServerHosts.each {
-                nodeResult['HiveServer-' + it] = [:]
-                nodeResult['HiveServer-' + it]['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;auth=maprsasl;\" -e \"show databases;\"; echo \$?"
+
+                final String query = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;auth=maprsasl;\" -e \"show databases;\"; echo \$?"
+
+                nodeResult['HiveServer-' + it]            = [:]
+                nodeResult['HiveServer-' + it]['output']  = executeSudo query
                 nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+                nodeResult['HiveServer-' + it]['query']   = query
             }
 
             nodeResult
@@ -107,7 +149,7 @@ class EcoSystemHive {
      * @param port
      * @return
      */
-    def verifyHiveBeelinePam(List<Object> packages, String username, String password, int port) {
+    def verifyHiveBeelinePam(List<Object> packages, String username, String password, String credentialFileName, int port) {
 
         log.trace("Start : EcoSystemHive : verifyHiveBeelinePam")
 
@@ -116,11 +158,22 @@ class EcoSystemHive {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_CLIENT, {
             def nodeResult = [:]
 
+            final String credentialFilePath = "${tmpPath}/${credentialFileName}"
+            executeSudo "rm -f ${credentialFilePath}"
+            executeSudo "echo ${password} >> ${credentialFilePath}"
+            executeSudo "chmod 400 ${credentialFilePath}"
+
             hiveServerHosts.each {
-                nodeResult['HiveServer-' + it] = [:]
-                nodeResult['HiveServer-' + it]['output'] = executeSudo "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;user=${username};password=${password}\" -e \"show databases;\"; echo \$?"
+
+                final String query = "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+
+                nodeResult['HiveServer-' + it]            = [:]
+                nodeResult['HiveServer-' + it]['output']  = executeSudo query
                 nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+                nodeResult['HiveServer-' + it]['query']   = query
             }
+
+            executeSudo "rm -f ${credentialFilePath}"
 
             nodeResult
         })
@@ -139,7 +192,7 @@ class EcoSystemHive {
      * @param port
      * @return
      */
-    def verifyHiveBeelineMapRSaslPam(List<Object> packages, String ticketfile, String username, String password, int port) {
+    def verifyHiveBeelineMapRSaslPam(List<Object> packages, String ticketfile, String username, String password, String credentialFileName, int port) {
 
         log.trace("Start : EcoSystemHive : verifyHiveBeelineMapRSaslPam")
 
@@ -148,11 +201,22 @@ class EcoSystemHive {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_CLIENT, {
             def nodeResult = [:]
 
+            final String credentialFilePath = "${tmpPath}/${credentialFileName}"
+            executeSudo "rm -f ${credentialFilePath}"
+            executeSudo "echo ${password} >> ${credentialFilePath}"
+            executeSudo "chmod 400 ${credentialFilePath}"
+
             hiveServerHosts.each {
-                nodeResult['HiveServer-' + it] = [:]
-                nodeResult['HiveServer-' + it]['output'] = executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;auth=maprsasl;user=${username};password=${password}\" -e \"show databases;\"; echo \$?"
+
+                final String query = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;auth=maprsasl;user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+
+                nodeResult['HiveServer-' + it]            = [:]
+                nodeResult['HiveServer-' + it]['output']  = executeSudo query
                 nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+                nodeResult['HiveServer-' + it]['query']   = query
             }
+
+            executeSudo "rm -f ${credentialFilePath}"
 
             nodeResult
         })
@@ -171,7 +235,7 @@ class EcoSystemHive {
      * @param port
      * @return
      */
-    def verifyHiveBeelinePamSSL(List<Object> packages, String truststore, String username, String password, int port) {
+    def verifyHiveBeelinePamSSL(List<Object> packages, String truststore, String username, String password, String credentialFileName, int port) {
 
         log.trace("Start : EcoSystemHive : verifyHiveBeelinePamSSL")
 
@@ -180,11 +244,22 @@ class EcoSystemHive {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_CLIENT, {
             def nodeResult = [:]
 
+            final String credentialFilePath = "${tmpPath}/${credentialFileName}"
+            executeSudo "rm -f ${credentialFilePath}"
+            executeSudo "echo ${password} >> ${credentialFilePath}"
+            executeSudo "chmod 400 ${credentialFilePath}"
+
             hiveServerHosts.each {
-                nodeResult['HiveServer-' + it] = [:]
-                nodeResult['HiveServer-' + it]['output'] = execute "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;ssl=true;sslTrustStore=${truststore};user=${username};password=${password}\" -e \"show databases;\"; echo \$?"
+
+                final String query = "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;ssl=true;sslTrustStore=${truststore};user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+
+                nodeResult['HiveServer-' + it]            = [:]
+                nodeResult['HiveServer-' + it]['output']  = execute query
                 nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+                nodeResult['HiveServer-' + it]['query']   = query
             }
+
+            executeSudo "rm -f ${credentialFilePath}"
 
             nodeResult
         })
@@ -195,7 +270,7 @@ class EcoSystemHive {
     }
 
     /**
-     * Verify Hive WebHcat API, Authentication with SSL and Pam (Pam is mandatory)
+     * Verify Hive WebHcat API, Authentication with Pam (Pam is mandatory)
      * @param packages
      * @param username
      * @param password
@@ -203,20 +278,24 @@ class EcoSystemHive {
      * @param port
      * @return
      */
-    def verifyHiveWebHcatPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyHiveWebHcatPam(List<Object> packages, String username, String credentialFileREST, int port) {
 
-        log.trace("Start : EcoSystemHive : verifyHiveWebHcatPamSSL")
+        log.trace("Start : EcoSystemHive : verifyHiveWebHcatPam")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME_HIVE_WEBHCAT, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is --cacert ${certificate} -u ${username}:${password} https://${remote.host}:${port}/templeton/v1/status?user.name=${username} | head -n 1"
+            final String query = "curl -Is --netrc-file ${credentialFileREST} http://${remote.host}:${port}/templeton/v1/status?user.name=${username} | head -n 1"
+
+            nodeResult['output']  = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
             nodeResult['comment'] = "Only one WebHcat is running, the others are standby."
+            nodeResult['query']   = query
+
             nodeResult
         })
 
-        log.trace("End : EcoSystemHive : verifyHiveWebHcatPamSSL")
+        log.trace("End : EcoSystemHive : verifyHiveWebHcatPam")
 
         testResult
     }

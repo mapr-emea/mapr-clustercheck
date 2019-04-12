@@ -167,13 +167,14 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false], //TODO test
 
             //Hive check
-            [name: "hive-server-ui-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
-            [name: "hive-client-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
-            [name: "hive-beeline-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],//TODO hive to test with different version
-            [name: "hive-beeline-pam", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO hive to test with different version
-            [name: "hive-beeline-maprsasl-pam", ticketfile: "/opt/mapr/conf/mapruserticket", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO hive to test with different version
-            [name: "hive-beeline-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, ssl_truststore_file: DEFAULT_MAPR_SSL_TRUSTSTORE_FILE, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
-            [name: "hive-webhcat-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
+            [name: "hive-server-ui-pam", hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
+            [name: "hive-server-ui-pam-ssl", hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
+            [name: "hive-client-maprsasl", enabled: false],
+            [name: "hive-beeline-maprsasl", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
+            [name: "hive-beeline-pam", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
+            [name: "hive-beeline-maprsasl-pam", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
+            [name: "hive-beeline-pam-ssl", ssl_truststore_file: DEFAULT_MAPR_SSL_TRUSTSTORE_FILE, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO not the default auth / need more configuration / readme
+            [name: "hive-webhcat-pam", "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
 
             //Kafka rest check
             [name: "kafka-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
@@ -393,10 +394,15 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
                 result['yarn-historyserver-ui-insecure'] = ecoSystemYarn.verifyYarnHistoryServerInsecure(packages, port)
 
-            } else if(test['name'] == "hive-server-ui-pam-ssl" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "hive-server-ui-pam" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_server_ui_port", DEFAULT_HIVE_SERVER_UI_PORT)
-                result['hive-server-ui-pam-ssl'] = ecoSystemHive.verifyHiveServerUIPamSSL(packages, username, password, certificate, port)
+                result['hive-server-ui-pam'] = ecoSystemHive.verifyHiveServerUIPam(packages, credentialFileREST, port)
+
+            }  else if(test['name'] == "hive-server-ui-pam-ssl" && (test['enabled'] as boolean)) {
+
+                def port = test.getOrDefault("hive_server_ui_port", DEFAULT_HIVE_SERVER_UI_PORT)
+                result['hive-server-ui-pam-ssl'] = ecoSystemHive.verifyHiveServerUIPamSSL(packages, certificate, credentialFileREST, port)
 
             } else if(test['name'] == "hive-client-maprsasl" && (test['enabled'] as boolean)) {
 
@@ -410,25 +416,25 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             } else if(test['name'] == "hive-beeline-pam" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
-                result['hive-beeline-pam'] = ecoSystemHive.verifyHiveBeelinePam(packages, username, password, port)
+                result['hive-beeline-pam'] = ecoSystemHive.verifyHiveBeelinePam(packages, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port)
 
             } else if(test['name'] == "hive-beeline-maprsasl-pam" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
 
-                result['hive-beeline-maprsasl-pam'] = ecoSystemHive.verifyHiveBeelineMapRSaslPam(packages, ticketfile, username, password, port)
+                result['hive-beeline-maprsasl-pam'] = ecoSystemHive.verifyHiveBeelineMapRSaslPam(packages, ticketfile, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port)
 
             } else if(test['name'] == "hive-beeline-pam-ssl" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
                 def truststore = test.getOrDefault("ssl_truststore_file", DEFAULT_MAPR_SSL_TRUSTSTORE_FILE)
 
-                result['hive-beeline-pam-ssl'] = ecoSystemHive.verifyHiveBeelinePamSSL(packages, truststore, username, password, port)
+                result['hive-beeline-pam-ssl'] = ecoSystemHive.verifyHiveBeelinePamSSL(packages, truststore, username, password, getDEFAULT_CREDENTIAL_FILE_PASSWORD(), port)
 
-            } else if(test['name'] == "hive-webhcat-pam-ssl" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "hive-webhcat-pam" && (test['enabled'] as boolean)) {
 
                 def port = test.getOrDefault("hive_webhcat_api_port", DEFAULT_HIVE_WEBHCAT_API_PORT)
-                result['hive-webhcat-pam-ssl'] = ecoSystemHive.verifyHiveWebHcatPamSSL(packages, username, password, certificate, port)
+                result['hive-webhcat-pam'] = ecoSystemHive.verifyHiveWebHcatPam(packages, username, credentialFileREST, port)
 
             } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
 

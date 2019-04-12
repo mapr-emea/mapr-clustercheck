@@ -99,40 +99,28 @@ modules:
       - name: yarn-historyserver-ui-insecure
         yarn_history_server_insecure_port: 19888
         enabled: false
+      - name: hive-server-ui-pam
+        hive_server_ui_port: 10002
+        enabled: false
       - name: hive-server-ui-pam-ssl
-        username: mapr
-        password: mapr123
-        certificate: /opt/mapr/conf/ssl_truststore.pem
         hive_server_ui_port: 10002
         enabled: false
       - name: hive-client-maprsasl
-        ticketfile: /opt/mapr/conf/mapruserticket
         enabled: false
       - name: hive-beeline-maprsasl
-        ticketfile: /opt/mapr/conf/mapruserticket
         hive_server_port: 10000
         enabled: false
       - name: hive-beeline-pam
-        username: mapr
-        password: mapr123
         hive_server_port: 10000
         enabled: false
       - name: hive-beeline-maprsasl-pam
-        ticketfile: /opt/mapr/conf/mapruserticket
-        username: mapr
-        password: mapr123
         hive_server_port: 10000
         enabled: false
       - name: hive-beeline-pam-ssl
-        username: mapr
-        password: mapr123
         ssl_truststore_file: /opt/mapr/conf/ssl_truststore
         hive_server_port: 10000
         enabled: false
-      - name: hive-webhcat-pam-ssl
-        username: mapr
-        password: mapr123
-        certificate: /opt/mapr/conf/ssl_truststore.pem
+      - name: hive-webhcat-pam
         hive_webhcat_api_port: 50111
         enabled: false
       - name: kafka-rest-auth-pam-ssl
