@@ -25,15 +25,20 @@ class EcoSystemHttpfs {
      * @param port
      * @return
      */
-    def verifyAuthPamSSL(List<Object> packages, String username, String password, String certificate, int port) {
+    def verifyAuthPam(List<Object> packages, String certificate, String credentialFileREST, Boolean useSSLCert, int port) {
 
         log.trace("Start : EcoSystemHttpfs : verifyAuthPamSSL")
 
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            nodeResult['output'] = executeSudo "curl -Is -u ${username}:${password} --cacert ${certificate} \"https://${remote.host}:${port}/webhdfs/v1/?op=GETHOMEDIRECTORY\" | head -n 1"
+            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+
+            final String query = "curl -Is --netrc-file ${credentialFileREST} ${certToken} \"https://${remote.host}:${port}/webhdfs/v1/?op=GETHOMEDIRECTORY\" | head -n 1"
+            nodeResult['output'] = executeSudo query
             nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+            nodeResult['query'] = query
+
             nodeResult
         })
 

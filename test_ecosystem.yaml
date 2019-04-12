@@ -14,7 +14,7 @@ modules:
     username: mapr
     password: mapr
     ticketfile: /opt/mapr/conf/mapruserticket
-    ssl_certificate: /opt/mapr/conf/ssl_truststore.pem
+    ssl_cert: /opt/mapr/conf/ssl_truststore.pem
     tests:
       - name: cldb
         cldb_ui_port: 7443
@@ -31,19 +31,16 @@ modules:
         purge_after_check: true
         enabled: false
       - name: mcs-ui-secure
-        mcs_ui_port: 8443
+        mcs_port: 8443
         enabled: false
       - name: mcs-ui-secure-ssl
-        mcs_ui_port: 8443
+        mcs_port: 8443
         enabled: false
       - name: mcs-api-secure-pam
         mcs_port: 8443
         enabled: false
       - name: mcs-api-secure-pam-ssl
         mcs_port: 8443
-        enabled: false
-      - name: mcs-ui-insecure
-        mcs_ui_port: 8443
         enabled: false
       - name: maprlogin-password
         enabled: false
@@ -75,17 +72,11 @@ modules:
       - name: yarn-resourcemanager-ui-pam-ssl
         resource_manager_secure_port: 8090
         enabled: false
-      - name: yarn-resourcemanager-ui-insecure
-        resource_manager_insecure_port: 8088
-        enabled: false
       - name: yarn-nodemanager-ui-pam
         node_manager_secure_port: 8044
         enabled: false
       - name: yarn-nodemanager-ui-pam-ssl
         node_manager_secure_port: 8044
-        enabled: false
-      - name: yarn-nodemanager-ui-insecure
-        node_manager_insecure_port: 8042
         enabled: false
       - name: yarn-command-maprsasl
         ticketfile: /opt/mapr/conf/mapruserticket
@@ -95,9 +86,6 @@ modules:
         enabled: false
       - name: yarn-historyserver-ui-pam-ssl
         yarn_history_server_secure_port: 19890
-        enabled: false
-      - name: yarn-historyserver-ui-insecure
-        yarn_history_server_insecure_port: 19888
         enabled: false
       - name: hive-server-ui-pam
         hive_server_ui_port: 10002
@@ -126,38 +114,25 @@ modules:
       - name: kafka-rest-auth-pam-ssl
         kafka_rest_port: 8082
         enabled: false
-      - name: kafka-rest-auth-insecure
-        kafka_rest_port: 8082
-        enabled: false
       - name: kafka-rest-api-pam-ssl
         kafka_rest_port: 8082
         purge_after_check: true
         enabled: false
       - name: data-access-gateway-rest-auth-pam-ssl
         username: mapr
-        password: mapr123
-        certificate: /opt/mapr/conf/ssl_truststore.pem
+        password: mapr
         data_access_gateway_rest_port: 8243
         enabled: false
-      - name: data-access-gateway-rest-auth-insecure
-        data_access_gateway_rest_port: 8243
-        enabled: false
-      - name: httpfs-auth-pam-ssl
-        username: mapr
-        password: mapr123
-        certificate: /opt/mapr/conf/ssl_truststore.pem
+      - name: httpfs-auth-pam
         httpfs_port: 14000
-        enabled: false
-      - name: httpfs-auth-insecure,
-        httpfs_port: 14000
+        use_ssl_cert: true
         enabled: false
       - name: opentsdb-api
         opentsdb_api_port: 4242
         enabled: false
       - name: grafana-ui-pam-ssl
         username: mapr
-        password: mapr123
-        certificate: /opt/mapr/conf/ssl_truststore.pem
+        password: mapr
         grafana_ui_port: 3000
         enabled: false
       - name: elasticsearch-healthcheck-pam-ssl
@@ -194,6 +169,30 @@ modules:
       - name: oozie-client
         enabled: false
       - name: oozie-ui
+        enabled: false
+      - name: mcs-ui-insecure
+        mcs_port: 8443
+        enabled: false
+      - name: drill-ui-insecure
+        drill_ui_port: 8047
+        enabled: false
+      - name: yarn-resourcemanager-ui-insecure
+        resource_manager_insecure_port: 8088
+        enabled: false
+      - name: yarn-nodemanager-ui-insecure
+        node_manager_insecure_port: 8042
+        enabled: false
+      - name: yarn-historyserver-ui-insecure
+        yarn_history_server_insecure_port: 19888
+        enabled: false
+      - name: kafka-rest-auth-insecure
+        kafka_rest_port: 8082
+        enabled: false
+      - name: data-access-gateway-rest-auth-insecure
+        data_access_gateway_rest_port: 8243
+        enabled: false
+      - name: httpfs-auth-insecure
+        httpfs_port: 14000
         enabled: false
   benchmark-memory:
     enabled: false

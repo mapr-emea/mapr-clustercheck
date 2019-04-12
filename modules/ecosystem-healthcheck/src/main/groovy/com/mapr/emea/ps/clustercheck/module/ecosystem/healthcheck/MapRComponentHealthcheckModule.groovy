@@ -35,13 +35,14 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Logger log = LoggerFactory.getLogger(MapRComponentHealthcheckModule.class)
 
     static final String DEFAULT_MAPR_USERNAME = "mapr"
-    static final String DEFAULT_MAPR_PASSWORD = "mapr123"
+    static final String DEFAULT_MAPR_PASSWORD = "mapr"
     static final String DEFAULT_PATH_TICKET_FILE = "/opt/mapr/conf/mapruserticket"
     static final String DEFAULT_CREDENTIAL_FILE_REST = "my-credential-file-rest"
     static final String DEFAULT_CREDENTIAL_FILE_PASSWORD = "my-credential-file-password"
-
+    static final Boolean DEFAULT_USE_SSL_CERT = true
     static final String DEFAULT_MAPR_SSL_TRUSTSTORE_FILE = "/opt/mapr/conf/ssl_truststore"
     static final String DEFAULT_PATH_SSL_CERTIFICATE_FILE = "/opt/mapr/conf/ssl_truststore.pem"
+
     static final String DEFAULT_PATH_SSL_CERTIFICATE_FILE_ELASTIC = "/opt/mapr/elasticsearch/elasticsearch-6.2.3/etc/elasticsearch/sg/admin-usr-clientCert.pem"
     static final String DEFAULT_PATH_SSL_CERTIFICATE_FILE_KIBANA = "/opt/mapr/kibana/kibana-6.5.3/config/cert.pem"
 
@@ -51,7 +52,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final String DEFAULT_KIBANA_USERNAME = "admin"
     static final String DEFAULT_KIBANA_PASSWORD = "admin"
 
-    static final boolean DEFAULT_PURGE_AFTER_CHECK = true
+    static final Boolean DEFAULT_PURGE_AFTER_CHECK = true
     static final Integer DEFAULT_CLDB_UI_PORT = 7443
     static final Integer DEFAULT_DRILL_PORT = 31010
     static final Integer DEFAULT_DRILL_UI_PORT = 8047
@@ -139,7 +140,6 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "mapr-streams", purge_after_check: true, enabled: false],
             [name: "mcs-ui-secure", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "mcs-ui-secure-ssl", mcs_port: DEFAULT_MCS_PORT, enabled: false],
-            [name: "mcs-ui-insecure", mcs_port: DEFAULT_MCS_PORT, enabled: false], //TODO To test
             [name: "mcs-api-secure-pam", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "mcs-api-secure-pam-ssl", mcs_port: DEFAULT_MCS_PORT, enabled: false],
             [name: "maprlogin-password", enabled: false],
@@ -152,19 +152,15 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "drill-jdbc-maprdb-json-maprsasl", drill_port: DEFAULT_DRILL_PORT, purge_after_check: true, enabled: false],
             [name: "drill-ui-secure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
             [name: "drill-ui-secure-ssl", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
-            [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false], //TODO test
 
             //Yarn check
             [name: "yarn-resourcemanager-ui-pam", resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-resourcemanager-ui-pam-ssl", resource_manager_secure_port: DEFAULT_RESOURCEMANAGER_SECURE_PORT, enabled: false],
-            [name: "yarn-resourcemanager-ui-insecure", resource_manager_insecure_port: DEFAULT_RESOURCEMANAGER_INSECURE_PORT, enabled: false], //TODO test
             [name: "yarn-nodemanager-ui-pam", node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
             [name: "yarn-nodemanager-ui-pam-ssl", node_manager_secure_port: DEFAULT_NODEMANAGER_SECURE_PORT, enabled: false],
-            [name: "yarn-nodemanager-ui-insecure", node_manager_insecure_port: DEFAULT_NODEMANAGER_INSECURE_PORT, enabled: false], //TODO test
             [name: "yarn-command-maprsasl", ticketfile: "/opt/mapr/conf/mapruserticket", enabled: false],
             [name: "yarn-historyserver-ui-pam", yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
             [name: "yarn-historyserver-ui-pam-ssl", yarn_history_server_secure_port: DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT, enabled: false],
-            [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false], //TODO test
 
             //Hive check
             [name: "hive-server-ui-pam", hive_server_ui_port: DEFAULT_HIVE_SERVER_UI_PORT, enabled: false],
@@ -173,21 +169,18 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hive-beeline-maprsasl", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
             [name: "hive-beeline-pam", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
             [name: "hive-beeline-maprsasl-pam", hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
-            [name: "hive-beeline-pam-ssl", ssl_truststore_file: DEFAULT_MAPR_SSL_TRUSTSTORE_FILE, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false], //TODO not the default auth / need more configuration / readme
+            [name: "hive-beeline-pam-ssl", ssl_truststore_file: DEFAULT_MAPR_SSL_TRUSTSTORE_FILE, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
             [name: "hive-webhcat-pam", "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
 
             //Kafka rest check
             [name: "kafka-rest-auth-pam-ssl", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
-            [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false], //TODO test
             [name: "kafka-rest-api-pam-ssl", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, purge_after_check: true, enabled: false],
 
             //Data access gateway check
             [name: "data-access-gateway-rest-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
-            [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false], //TODO test
 
             //HTTPFS
-            [name: "httpfs-auth-pam-ssl", username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],
-            [name: "httpfs-auth-insecure,", httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false],  //TODO test
+            [name: "httpfs-auth-pam", httpfs_port: DEFAULT_HTTPFS_PORT, use_ssl_cert: DEFAULT_USE_SSL_CERT, enabled: false],
 
             //Spyglass components check
             [name: "opentsdb-api", opentsdb_api_port: DEFAULT_OPENTSDB_API_PORT, enabled: false],
@@ -196,7 +189,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "kibana-ui-pam-ssl", username_kibana: DEFAULT_KIBANA_USERNAME, password_kibana: DEFAULT_KIBANA_PASSWORD, certificate_kibana: DEFAULT_PATH_SSL_CERTIFICATE_FILE_KIBANA, kibana_port: DEFAULT_KIBANA_PORT, enabled: false],
 
             //Hue UI
-            [name: "hue-ui", hue_ui_port: DEFAULT_HUE_UI_PORT, enabled: false], //TODO no auth, only simple test
+            [name: "hue-ui", hue_ui_port: DEFAULT_HUE_UI_PORT, enabled: false], //TODO no auth????? only simple test
 
             // TODO To implement
             [name: "yarn-command-insecure", enabled: false],
@@ -209,11 +202,22 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "sqoop2", enabled: false],
             [name: "oozie-client", enabled: false],
             [name: "oozie-ui", enabled: false],
+
+            // TODO To TEST MapR Insecured cluster
+            [name: "mcs-ui-insecure", mcs_port: DEFAULT_MCS_PORT, enabled: false],
+            [name: "drill-ui-insecure", drill_ui_port: DEFAULT_DRILL_UI_PORT, enabled: false],
+            [name: "yarn-resourcemanager-ui-insecure", resource_manager_insecure_port: DEFAULT_RESOURCEMANAGER_INSECURE_PORT, enabled: false],
+            [name: "yarn-nodemanager-ui-insecure", node_manager_insecure_port: DEFAULT_NODEMANAGER_INSECURE_PORT, enabled: false],
+            [name: "yarn-historyserver-ui-insecure", yarn_history_server_insecure_port: DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT, enabled: false],
+            [name: "kafka-rest-auth-insecure", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, enabled: false],
+            [name: "data-access-gateway-rest-auth-insecure", data_access_gateway_rest_port: DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT, enabled: false],
+            [name: "httpfs-auth-insecure", httpfs_port: DEFAULT_HTTPFS_PORT, enabled: false]
+
     ]
 
     @Override
     Map<String, ?> yamlModuleProperties() {
-        return [username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, ticketfile: DEFAULT_PATH_TICKET_FILE, ssl_tests:defaultTestMatrix]
+        return [username: DEFAULT_MAPR_USERNAME, password: DEFAULT_MAPR_PASSWORD, ticketfile: DEFAULT_PATH_TICKET_FILE, ssl_cert: DEFAULT_PATH_SSL_CERTIFICATE_FILE, tests:defaultTestMatrix]
     }
 
     @Override
@@ -465,10 +469,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 def port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
                 result['data-access-gateway-rest-auth-pam-ssl'] = ecoSystemDataAccessGateway.verifyRESTAuthPamSSL(packages, username, password, certificate, port)
 
-            } else if(test['name'] == "httpfs-auth-pam-ssl" && (test['enabled'] as boolean)) {
+            } else if(test['name'] == "httpfs-auth-pam" && (test['enabled'] as boolean)) {
 
-                def port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
-                result['httpfs-auth-pam-ssl'] = ecoSystemHttpfs.verifyAuthPamSSL(packages, username, password, certificate, port)
+                final int port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
+                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                result['httpfs-auth-pam'] = ecoSystemHttpfs.verifyAuthPam(packages, certificate, credentialFileREST, useSSLCert, port)
 
             } else if(test['name'] == "httpfs-auth-insecure" && (test['enabled'] as boolean)) {
 
