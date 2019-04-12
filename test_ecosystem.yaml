@@ -97,6 +97,10 @@ modules:
       - name: hive-webhcat-pam
         hive_webhcat_api_port: 50111
         enabled: false
+      - name: spark-historyserver-ui-pam
+        spark_historyserver_ui_port: 18480
+        use_ssl_cert: true
+        enabled: false
       - name: kafka-rest-auth-pam
         kafka_rest_port: 8082
         use_ssl_cert: true
@@ -137,9 +141,9 @@ modules:
         enabled: false
       - name: hue-ui
         hue_ui_port: 8888
-        use_ssl_cert: false
-        enabled: true
-      - name: yarn-command-insecure
+        use_ssl_cert: true
+        enabled: false
+      - name: spark-client
         enabled: false
       - name: yarn-timelineserver-ui
         enabled: false
@@ -148,8 +152,6 @@ modules:
       - name: data-access-gateway-grpc
         enabled: false
       - name: kafka-connect-to-maprfs-distributed
-        enabled: false
-      - name: spark-historyserver-ui
         enabled: false
       - name: sqoop1
         enabled: false
@@ -170,6 +172,8 @@ modules:
         enabled: false
       - name: yarn-nodemanager-ui-insecure
         node_manager_insecure_port: 8042
+        enabled: false
+      - name: yarn-command-insecure
         enabled: false
       - name: yarn-historyserver-ui-insecure
         yarn_history_server_insecure_port: 19888

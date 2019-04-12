@@ -16,6 +16,7 @@ import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSyst
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHttpfs
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemHueUI
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemKafkaRest
+import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemSpark
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemSpyglass
 import com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent.EcoSystemYarn
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
@@ -66,6 +67,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final Integer DEFAULT_HIVE_SERVER_PORT = 10000
     static final Integer DEFAULT_HIVE_SERVER_UI_PORT = 10002
     static final Integer DEFAULT_HIVE_WEBHCAT_API_PORT = 50111
+    static final Integer DEFAULT_SPARK_HISTORYSERVER_UI_PORT = 18480
     static final Integer DEFAULT_MCS_PORT = 8443
     static final Integer DEFAULT_KAFKA_REST_PORT = 8082
     static final Integer DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT = 8243
@@ -109,6 +111,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
     @Autowired
     EcoSystemHive ecoSystemHive
+
+    @Autowired
+    EcoSystemSpark ecoSystemSpark
 
     @Autowired
     EcoSystemKafkaRest ecoSystemKafkaRest
@@ -166,6 +171,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hive-beeline-pam-ssl", ssl_truststore_file: DEFAULT_MAPR_SSL_TRUSTSTORE_FILE, hive_server_port: DEFAULT_HIVE_SERVER_PORT, enabled: false],
             [name: "hive-webhcat-pam", "hive_webhcat_api_port": DEFAULT_HIVE_WEBHCAT_API_PORT, enabled: false],
 
+            //Spark
+            [name: "spark-historyserver-ui-pam", spark_historyserver_ui_port: DEFAULT_SPARK_HISTORYSERVER_UI_PORT, use_ssl_cert: DEFAULT_USE_SSL_CERT, enabled: false],
+
             //Kafka rest check
             [name: "kafka-rest-auth-pam", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, use_ssl_cert: DEFAULT_USE_SSL_CERT, enabled: false],
             [name: "kafka-rest-api-pam", kafka_rest_port: DEFAULT_KAFKA_REST_PORT, use_ssl_cert: DEFAULT_USE_SSL_CERT, purge_after_check: true, enabled: false],
@@ -186,11 +194,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hue-ui", hue_ui_port: DEFAULT_HUE_UI_PORT, use_ssl_cert: DEFAULT_USE_SSL_CERT, enabled: false],
 
             // TODO To implement
+            [name: "spark-client", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
             [name: "data-access-gateway-grpc" , enabled: false], //TODO python & node.js
             [name: "kafka-connect-to-maprfs-distributed" , enabled: false],
-            [name: "spark-historyserver-ui", enabled: false],
             [name: "sqoop1", enabled: false],
             [name: "sqoop2", enabled: false],
             [name: "oozie-client", enabled: false],
@@ -424,6 +432,13 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
                 final int port = test.getOrDefault("hive_webhcat_api_port", DEFAULT_HIVE_WEBHCAT_API_PORT)
 
                 result['hive-webhcat-pam'] = ecoSystemHive.verifyHiveWebHcatPam(packages, username, credentialFileREST, port)
+
+            } else if(test['name'] == "spark-historyserver-ui-pam" && (test['enabled'] as boolean)) {
+
+                final int port = test.getOrDefault("spark_historyserver_ui_port", DEFAULT_SPARK_HISTORYSERVER_UI_PORT)
+                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+
+                result['spark-historyserver-ui-pam'] = ecoSystemSpark.verifyHistoryServerUIPAM(packages, certificate, credentialFileREST, port, useSSLCert)
 
             } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
 
