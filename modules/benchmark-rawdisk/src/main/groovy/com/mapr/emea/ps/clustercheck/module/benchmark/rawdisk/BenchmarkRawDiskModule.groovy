@@ -369,7 +369,7 @@ wait
                                             error                   : "No result found in iozone output."]
                                 }
                                 def tokens = tmpTokens.trim().tokenize().collect {
-                                    it as int
+                                    it as long
                                 }
                                 return [disk                    : disk,
                                         dataInKB                : tokens[0],
