@@ -97,14 +97,21 @@ class EcoSystemSpyglass {
 
             final String credentialFileSpyglass = mapRComponentHealthcheckUtil.createCredentialFileSpyglass(credentialFileName, username, password, delegate)
 
-            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
-            final String query = "curl --netrc-file ${credentialFileSpyglass} ${certToken} https://${remote.host}:${port}/_cluster/health ; echo \$?"
+            try {
 
-            nodeResult['output'] = executeSudo query
-            nodeResult['success'] = nodeResult['output'].toString().contains("cluster_name") && nodeResult['output'].toString().reverse().take(1).equals("0")
-            nodeResult['query'] = "sudo " + query
+                final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+                final String query = "curl --netrc-file ${credentialFileSpyglass} ${certToken} https://${remote.host}:${port}/_cluster/health ; echo \$?"
 
-            executeSudo "rm -f ${credentialFileSpyglass}"
+                nodeResult['output'] = executeSudo query
+                nodeResult['success'] = nodeResult['output'].toString().contains("cluster_name") && nodeResult['output'].toString().reverse().take(1).equals("0")
+                nodeResult['query'] = "sudo " + query
+
+            } catch (Exception e) {
+                throw e
+            } finally {
+                executeSudo "rm -f ${credentialFileSpyglass}"
+                log.debug("Local password credential file was Purged successfully.")
+            }
 
             nodeResult
         })
@@ -134,14 +141,21 @@ class EcoSystemSpyglass {
 
             final String credentialFileSpyglass = mapRComponentHealthcheckUtil.createCredentialFileSpyglass(credentialFileName, username, password, delegate)
 
-            final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
-            final String query = "curl -Is --netrc-file ${credentialFileSpyglass} ${certToken} https://${remote.host}:${port}/app/kibana | head -n 1"
+            try {
 
-            nodeResult['output'] = executeSudo query
-            nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
-            nodeResult['query'] = "sudo " + query
+                final String certToken = (useSSLCert == true) ? "--cacert ${certificate}" : "-k"
+                final String query = "curl -Is --netrc-file ${credentialFileSpyglass} ${certToken} https://${remote.host}:${port}/app/kibana | head -n 1"
 
-            executeSudo "rm -f ${credentialFileSpyglass}"
+                nodeResult['output'] = executeSudo query
+                nodeResult['success'] = nodeResult['output'].toString().contains("HTTP/1.1 200 OK")
+                nodeResult['query'] = "sudo " + query
+
+            } catch (Exception e) {
+                throw e
+            } finally {
+                executeSudo "rm -f ${credentialFileSpyglass}"
+                log.debug("Local password credential file was Purged successfully.")
+            }
 
             nodeResult
         })

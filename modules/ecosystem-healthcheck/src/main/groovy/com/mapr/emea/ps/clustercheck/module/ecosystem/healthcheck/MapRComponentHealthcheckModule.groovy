@@ -132,6 +132,10 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
     // TODO : Show all query strings in results
     // TODO : How to simplify the template?
+    // TODO : Try catch everywhere
+    // TODO :         => Clean up global credential file for rest ... ok
+    // TODO :         => Clean up individual for password ... ok
+    // TODO :         => Clean up password in case of interruption ... todo
     // TODO : Test : refresh env, test one by one
     // TODO : Test : refresh env, test all together
 
@@ -194,6 +198,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             [name: "hue-ui", hue_ui_port: DEFAULT_HUE_UI_PORT, use_ssl_cert: DEFAULT_USE_SSL_CERT, enabled: false],
 
             // TODO To implement
+            [name: "hive-client-maprdb-binary", purge_after_check: true, enabled: false],
             [name: "spark-client", enabled: false],
             [name: "yarn-timelineserver-ui", enabled: false],
             [name: "data-access-gateway-rest-api-pam-ssl" , enabled: false],
@@ -232,311 +237,318 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
 
         log.trace("Start : MapRComponentHealthcheckModule : ClusterCheckResult")
 
-        def healthcheckconfig = globalYamlConfig.modules['ecosystem-healthcheck'] as Map<String, ?>
-
-        def role = healthcheckconfig.getOrDefault("role", "all")
-
         log.info(">>>>> Running ecosystem-healthcheck")
 
-        def result = Collections.synchronizedMap([:])
-        def packages = mapRComponentHealthcheckUtil.retrievePackages(role)
+        def textReport
 
+        final def result = Collections.synchronizedMap([:])
+        final def healthcheckconfig = globalYamlConfig.modules['ecosystem-healthcheck'] as Map<String, ?>
+        final def role = healthcheckconfig.getOrDefault("role", "all")
+        final def packages = mapRComponentHealthcheckUtil.retrievePackages(role)
+        final List recommendations = []
+
+        //Create the credential file for all rest api call, this file will be deleted in the end
         final String username = healthcheckconfig.getOrDefault("username", getDEFAULT_MAPR_USERNAME())
         final String password = healthcheckconfig.getOrDefault("password", getDEFAULT_MAPR_PASSWORD())
         final String ticketfile = healthcheckconfig.getOrDefault("ticketfile", getDEFAULT_PATH_TICKET_FILE())
         final String certificate = healthcheckconfig.getOrDefault("certificate", getDEFAULT_PATH_SSL_CERTIFICATE_FILE())
-
-        //Create the credential file for all rest api call, this file will be deleted in the end
         final String credentialFileREST = mapRComponentHealthcheckUtil.createCredentialFileREST(role, DEFAULT_CREDENTIAL_FILE_REST, username, password)
 
-        healthcheckconfig['tests'].each { test ->
+        try {
 
-            log.info(">>>>>>> Running test '${test['name']}'")
+            healthcheckconfig['tests'].each { test ->
 
-            if(test['name'] == "cldb" && (test['enabled'] as boolean)) {
+                log.info(">>>>>>> Running test '${test['name']}'")
 
-                final int port = test.getOrDefault("cldb_ui_port", DEFAULT_CLDB_UI_PORT)
+                if(test['name'] == "cldb" && (test['enabled'] as boolean)) {
 
-                result['cldb'] = coreCLDB.verifyCldbUI(packages, ticketfile, port)
+                    final int port = test.getOrDefault("cldb_ui_port", DEFAULT_CLDB_UI_PORT)
 
-            } else if(test['name'] == "maprfs" && (test['enabled'] as boolean)) {
+                    result['cldb'] = coreCLDB.verifyCldbUI(packages, ticketfile, port)
 
-                result['maprfs'] = coreMfs.verifyMaprFs(packages, ticketfile)
+                } else if(test['name'] == "maprfs" && (test['enabled'] as boolean)) {
 
-            } else if(test['name'] == "maprdb-json-shell" && (test['enabled'] as boolean)) {
+                    result['maprfs'] = coreMfs.verifyMaprFs(packages, ticketfile)
 
-                final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+                } else if(test['name'] == "maprdb-json-shell" && (test['enabled'] as boolean)) {
 
-                result['maprdb-json-shell'] = coreMapRDB.verifyMapRDBJsonShell(packages, ticketfile, purgeaftercheck)
+                    final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
 
-            } else if(test['name'] == "maprdb-binary-shell" && (test['enabled'] as boolean)) {
+                    result['maprdb-json-shell'] = coreMapRDB.verifyMapRDBJsonShell(packages, ticketfile, purgeaftercheck)
 
-                final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+                } else if(test['name'] == "maprdb-binary-shell" && (test['enabled'] as boolean)) {
 
-                result['maprdb-binary-shell'] = coreMapRDB.verifyMapRDBBinaryShell(packages, ticketfile, purgeaftercheck)
+                    final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
 
-            } else if(test['name'] == "mapr-streams" && (test['enabled'] as boolean)) {
+                    result['maprdb-binary-shell'] = coreMapRDB.verifyMapRDBBinaryShell(packages, ticketfile, purgeaftercheck)
 
-                final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+                } else if(test['name'] == "mapr-streams" && (test['enabled'] as boolean)) {
 
-                result['mapr-streams'] = coreMapRStreams.verifyMapRStreams(packages, ticketfile, purgeaftercheck)
+                    final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
 
-            } else if(test['name'] == "mcs-ui-secure" && (test['enabled'] as boolean)) {
+                    result['mapr-streams'] = coreMapRStreams.verifyMapRStreams(packages, ticketfile, purgeaftercheck)
 
-                final int port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                } else if(test['name'] == "mcs-ui-secure" && (test['enabled'] as boolean)) {
 
-                result['mcs-ui-secure'] = coreMcs.verifyMcsUiSecure(packages, certificate, port, useSSLCert)
+                    final int port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
 
-            } else if(test['name'] == "mcs-api-secure-pam" && (test['enabled'] as boolean)) {
+                    result['mcs-ui-secure'] = coreMcs.verifyMcsUiSecure(packages, certificate, port, useSSLCert)
 
-                final int port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                } else if(test['name'] == "mcs-api-secure-pam" && (test['enabled'] as boolean)) {
 
-                result['mcs-api-secure-pam'] = coreMcs.verifyMcsApiSecurePAM(packages, credentialFileREST, certificate, port, useSSLCert)
+                    final int port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
 
-            }  else if(test['name'] == "mcs-ui-insecure" && (test['enabled'] as boolean)) {
+                    result['mcs-api-secure-pam'] = coreMcs.verifyMcsApiSecurePAM(packages, credentialFileREST, certificate, port, useSSLCert)
 
-                final int port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
+                }  else if(test['name'] == "mcs-ui-insecure" && (test['enabled'] as boolean)) {
 
-                result['mcs-ui-insecure'] = coreMcs.verifyMcsUiInSecure(packages, port)
+                    final int port = test.getOrDefault("mcs_port", DEFAULT_MCS_PORT)
 
-            } else if(test['name'] == "maprlogin-password" && (test['enabled'] as boolean)) {
+                    result['mcs-ui-insecure'] = coreMcs.verifyMcsUiInSecure(packages, port)
 
-                result['maprlogin-password'] = coreMapRTool.verifyMapRLoginPassword(packages, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD)
+                } else if(test['name'] == "maprlogin-password" && (test['enabled'] as boolean)) {
 
-            } else if(test['name'] == "mapr-maprcli-api-sasl" && (test['enabled'] as boolean)) {
+                    result['maprlogin-password'] = coreMapRTool.verifyMapRLoginPassword(packages, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD)
 
-                result['mapr-maprcli-api-sasl'] = coreMapRTool.verifyMapRCliApiSasl(packages, ticketfile)
+                } else if(test['name'] == "mapr-maprcli-api-sasl" && (test['enabled'] as boolean)) {
 
-            }else if(test['name'] == "drill-jdbc-jsonfile-plainauth" && (test['enabled'] as boolean)) {
+                    result['mapr-maprcli-api-sasl'] = coreMapRTool.verifyMapRCliApiSasl(packages, ticketfile)
 
-                final int port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
+                }else if(test['name'] == "drill-jdbc-jsonfile-plainauth" && (test['enabled'] as boolean)) {
 
-                result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
+                    final int port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
 
-            } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
+                    result['drill-jdbc-jsonfile-plainauth'] = ecoSystemDrill.verifyDrillJdbcJsonFilePlainAuth(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
 
-                final int port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
+                } else if(test['name'] == "drill-jdbc-file-json-maprsasl" && (test['enabled'] as boolean)) {
 
-                result['drill-jdbc-file-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
+                    final int port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
 
-            } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
+                    result['drill-jdbc-file-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprSasl(packages, ticketfile, port)
 
-                final int port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+                } else if(test['name'] == "drill-jdbc-maprdb-json-plainauth" && (test['enabled'] as boolean)) {
 
-                result['drill-jdbc-maprdb-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port, purgeaftercheck)
+                    final int port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
+                    final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
 
-            } else if(test['name'] == "drill-jdbc-maprdb-json-maprsasl" && (test['enabled'] as boolean)) {
+                    result['drill-jdbc-maprdb-json-plainauth'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonPlainAuth(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port, purgeaftercheck)
 
-                final int port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
-                final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+                } else if(test['name'] == "drill-jdbc-maprdb-json-maprsasl" && (test['enabled'] as boolean)) {
 
-                result['drill-jdbc-maprdb-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port, purgeaftercheck)
+                    final int port = test.getOrDefault("drill_port", DEFAULT_DRILL_PORT)
+                    final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
 
-            } else if(test['name'] == "drill-ui-secure" && (test['enabled'] as boolean)) {
+                    result['drill-jdbc-maprdb-json-maprsasl'] = ecoSystemDrill.verifyDrillJdbcMaprdbJsonMaprSasl(packages, ticketfile, port, purgeaftercheck)
 
-                final int port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                } else if(test['name'] == "drill-ui-secure" && (test['enabled'] as boolean)) {
 
-                result['drill-ui-secure'] = ecoSystemDrill.verifyDrillUISecure(packages, certificate, port, useSSLCert)
+                    final int port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
 
-            } else if(test['name'] == "drill-ui-insecure" && (test['enabled'] as boolean)) {
+                    result['drill-ui-secure'] = ecoSystemDrill.verifyDrillUISecure(packages, certificate, port, useSSLCert)
 
-                final int port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
+                } else if(test['name'] == "drill-ui-insecure" && (test['enabled'] as boolean)) {
 
-                result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUIInsecure(packages, port)
+                    final int port = test.getOrDefault("drill_ui_port", DEFAULT_DRILL_UI_PORT)
 
-            } else if(test['name'] == "yarn-resourcemanager-ui-pam" && (test['enabled'] as boolean)) {
+                    result['drill-ui-insecure'] = ecoSystemDrill.verifyDrillUIInsecure(packages, port)
 
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
-                final int port = test.getOrDefault("resource_manager_secure_port", DEFAULT_RESOURCEMANAGER_SECURE_PORT)
+                } else if(test['name'] == "yarn-resourcemanager-ui-pam" && (test['enabled'] as boolean)) {
 
-                result['yarn-resourcemanager-ui-pam'] = ecoSystemYarn.verifyResourceManagerUIPam(packages, credentialFileREST, certificate, useSSLCert, port)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                    final int port = test.getOrDefault("resource_manager_secure_port", DEFAULT_RESOURCEMANAGER_SECURE_PORT)
 
-            } else if(test['name'] == "yarn-nodemanager-ui-pam" && (test['enabled'] as boolean)) {
+                    result['yarn-resourcemanager-ui-pam'] = ecoSystemYarn.verifyResourceManagerUIPam(packages, credentialFileREST, certificate, useSSLCert, port)
 
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
-                final int port = test.getOrDefault("node_manager_secure_port", DEFAULT_NODEMANAGER_SECURE_PORT)
+                } else if(test['name'] == "yarn-nodemanager-ui-pam" && (test['enabled'] as boolean)) {
 
-                result['yarn-nodemanager-ui-pam'] = ecoSystemYarn.verifyNodeManagerUIPam(packages, credentialFileREST, certificate, useSSLCert, port)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                    final int port = test.getOrDefault("node_manager_secure_port", DEFAULT_NODEMANAGER_SECURE_PORT)
 
-            } else if(test['name'] == "yarn-resourcemanager-ui-insecure" && (test['enabled'] as boolean)) {
+                    result['yarn-nodemanager-ui-pam'] = ecoSystemYarn.verifyNodeManagerUIPam(packages, credentialFileREST, certificate, useSSLCert, port)
 
-                final int port = test.getOrDefault("resource_manager_insecure_port", DEFAULT_RESOURCEMANAGER_INSECURE_PORT)
+                } else if(test['name'] == "yarn-resourcemanager-ui-insecure" && (test['enabled'] as boolean)) {
 
-                result['yarn-resourcemanager-ui-insecure'] = ecoSystemYarn.verifyRsourceManagerUIInSecure(packages, port)
+                    final int port = test.getOrDefault("resource_manager_insecure_port", DEFAULT_RESOURCEMANAGER_INSECURE_PORT)
 
-            } else if(test['name'] == "yarn-nodemanager-ui-insecure" && (test['enabled'] as boolean)) {
+                    result['yarn-resourcemanager-ui-insecure'] = ecoSystemYarn.verifyRsourceManagerUIInSecure(packages, port)
 
-                final int port = test.getOrDefault("node_manager_insecure_port", DEFAULT_NODEMANAGER_INSECURE_PORT)
+                } else if(test['name'] == "yarn-nodemanager-ui-insecure" && (test['enabled'] as boolean)) {
 
-                result['yarn-nodemanager-ui-insecure'] = ecoSystemYarn.verifyNodeManagerUIInSecure(packages, port)
+                    final int port = test.getOrDefault("node_manager_insecure_port", DEFAULT_NODEMANAGER_INSECURE_PORT)
 
-            } else if(test['name'] == "yarn-command-maprsasl" && (test['enabled'] as boolean)) {
+                    result['yarn-nodemanager-ui-insecure'] = ecoSystemYarn.verifyNodeManagerUIInSecure(packages, port)
 
-                result['yarn-command-maprsasl'] = ecoSystemYarn.verifyYarnCommandMapRSasl(packages, ticketfile)
+                } else if(test['name'] == "yarn-command-maprsasl" && (test['enabled'] as boolean)) {
 
-            } else if(test['name'] == "yarn-historyserver-ui-pam" && (test['enabled'] as boolean)) {
+                    result['yarn-command-maprsasl'] = ecoSystemYarn.verifyYarnCommandMapRSasl(packages, ticketfile)
 
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
-                final int port = test.getOrDefault("yarn_history_server_secure_port", DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT)
+                } else if(test['name'] == "yarn-historyserver-ui-pam" && (test['enabled'] as boolean)) {
 
-                result['yarn-historyserver-ui-pam'] = ecoSystemYarn.verifyYarnHistoryServerPam(packages, credentialFileREST, certificate, useSSLCert, port)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                    final int port = test.getOrDefault("yarn_history_server_secure_port", DEFAULT_YARN_HISTORY_SERVER_SECURE_PORT)
 
-            } else if(test['name'] == "yarn-historyserver-ui-insecure" && (test['enabled'] as boolean)) {
+                    result['yarn-historyserver-ui-pam'] = ecoSystemYarn.verifyYarnHistoryServerPam(packages, credentialFileREST, certificate, useSSLCert, port)
 
-                final int port = test.getOrDefault("yarn_history_server_insecure_port", DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT)
+                } else if(test['name'] == "yarn-historyserver-ui-insecure" && (test['enabled'] as boolean)) {
 
-                result['yarn-historyserver-ui-insecure'] = ecoSystemYarn.verifyYarnHistoryServerInsecure(packages, port)
+                    final int port = test.getOrDefault("yarn_history_server_insecure_port", DEFAULT_YARN_HISTORY_SERVER_INSECURE_PORT)
 
-            } else if(test['name'] == "hive-server-ui-pam" && (test['enabled'] as boolean)) {
+                    result['yarn-historyserver-ui-insecure'] = ecoSystemYarn.verifyYarnHistoryServerInsecure(packages, port)
 
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
-                final int port = test.getOrDefault("hive_server_ui_port", DEFAULT_HIVE_SERVER_UI_PORT)
+                } else if(test['name'] == "hive-server-ui-pam" && (test['enabled'] as boolean)) {
 
-                result['hive-server-ui-pam'] = ecoSystemHive.verifyHiveServerUIPam(packages,certificate, credentialFileREST, useSSLCert, port)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                    final int port = test.getOrDefault("hive_server_ui_port", DEFAULT_HIVE_SERVER_UI_PORT)
 
-            } else if(test['name'] == "hive-client-maprsasl" && (test['enabled'] as boolean)) {
+                    result['hive-server-ui-pam'] = ecoSystemHive.verifyHiveServerUIPam(packages,certificate, credentialFileREST, useSSLCert, port)
 
-                result['hive-client-maprsasl'] = ecoSystemHive.verifyHiveClientMapRSasl(packages, ticketfile)
+                } else if(test['name'] == "hive-client-maprsasl" && (test['enabled'] as boolean)) {
 
-            } else if(test['name'] == "hive-beeline-maprsasl" && (test['enabled'] as boolean)) {
+                    result['hive-client-maprsasl'] = ecoSystemHive.verifyHiveClientMapRSasl(packages, ticketfile)
 
-                final int port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                } else if(test['name'] == "hive-beeline-maprsasl" && (test['enabled'] as boolean)) {
 
-                result['hive-beeline-maprsasl'] = ecoSystemHive.verifyHiveBeelineMapRSasl(packages, ticketfile, port)
+                    final int port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
 
-            } else if(test['name'] == "hive-beeline-pam" && (test['enabled'] as boolean)) {
+                    result['hive-beeline-maprsasl'] = ecoSystemHive.verifyHiveBeelineMapRSasl(packages, ticketfile, port)
 
-                final int port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                } else if(test['name'] == "hive-beeline-pam" && (test['enabled'] as boolean)) {
 
-                result['hive-beeline-pam'] = ecoSystemHive.verifyHiveBeelinePam(packages, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
+                    final int port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
 
-            } else if(test['name'] == "hive-beeline-maprsasl-pam" && (test['enabled'] as boolean)) {
+                    result['hive-beeline-pam'] = ecoSystemHive.verifyHiveBeelinePam(packages, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
 
-                final int port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                } else if(test['name'] == "hive-beeline-maprsasl-pam" && (test['enabled'] as boolean)) {
 
-                result['hive-beeline-maprsasl-pam'] = ecoSystemHive.verifyHiveBeelineMapRSaslPam(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
+                    final int port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
 
-            } else if(test['name'] == "hive-beeline-pam-ssl" && (test['enabled'] as boolean)) {
+                    result['hive-beeline-maprsasl-pam'] = ecoSystemHive.verifyHiveBeelineMapRSaslPam(packages, ticketfile, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
 
-                final int port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
-                final String truststore = test.getOrDefault("ssl_truststore_file", DEFAULT_MAPR_SSL_TRUSTSTORE_FILE)
+                } else if(test['name'] == "hive-beeline-pam-ssl" && (test['enabled'] as boolean)) {
 
-                result['hive-beeline-pam-ssl'] = ecoSystemHive.verifyHiveBeelinePamSSL(packages, truststore, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
+                    final int port = test.getOrDefault("hive_server_port", DEFAULT_HIVE_SERVER_PORT)
+                    final String truststore = test.getOrDefault("ssl_truststore_file", DEFAULT_MAPR_SSL_TRUSTSTORE_FILE)
 
-            } else if(test['name'] == "hive-webhcat-pam" && (test['enabled'] as boolean)) {
+                    result['hive-beeline-pam-ssl'] = ecoSystemHive.verifyHiveBeelinePamSSL(packages, truststore, username, password, DEFAULT_CREDENTIAL_FILE_PASSWORD, port)
 
-                final int port = test.getOrDefault("hive_webhcat_api_port", DEFAULT_HIVE_WEBHCAT_API_PORT)
+                } else if(test['name'] == "hive-webhcat-pam" && (test['enabled'] as boolean)) {
 
-                result['hive-webhcat-pam'] = ecoSystemHive.verifyHiveWebHcatPam(packages, username, credentialFileREST, port)
+                    final int port = test.getOrDefault("hive_webhcat_api_port", DEFAULT_HIVE_WEBHCAT_API_PORT)
 
-            } else if(test['name'] == "spark-historyserver-ui-pam" && (test['enabled'] as boolean)) {
+                    result['hive-webhcat-pam'] = ecoSystemHive.verifyHiveWebHcatPam(packages, username, credentialFileREST, port)
 
-                final int port = test.getOrDefault("spark_historyserver_ui_port", DEFAULT_SPARK_HISTORYSERVER_UI_PORT)
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                } else if(test['name'] == "spark-historyserver-ui-pam" && (test['enabled'] as boolean)) {
 
-                result['spark-historyserver-ui-pam'] = ecoSystemSpark.verifyHistoryServerUIPAM(packages, certificate, credentialFileREST, port, useSSLCert)
+                    final int port = test.getOrDefault("spark_historyserver_ui_port", DEFAULT_SPARK_HISTORYSERVER_UI_PORT)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
 
-            } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
+                    result['spark-historyserver-ui-pam'] = ecoSystemSpark.verifyHistoryServerUIPAM(packages, certificate, credentialFileREST, port, useSSLCert)
 
-                final int port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+                } else if(test['name'] == "kafka-rest-auth-insecure" && (test['enabled'] as boolean)) {
 
-                result['kafka-rest-auth-insecure'] = ecoSystemKafkaRest.verifyAuthInsecure(packages, port)
+                    final int port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
 
-            } else if(test['name'] == "kafka-rest-auth-pam" && (test['enabled'] as boolean)) {
+                    result['kafka-rest-auth-insecure'] = ecoSystemKafkaRest.verifyAuthInsecure(packages, port)
 
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
-                final int port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+                } else if(test['name'] == "kafka-rest-auth-pam" && (test['enabled'] as boolean)) {
 
-                result['kafka-rest-auth-pam'] = ecoSystemKafkaRest.verifyAuthPam(packages, certificate, credentialFileREST, useSSLCert, port)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                    final int port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
 
-            }  else if(test['name'] == "kafka-rest-api-pam" && (test['enabled'] as boolean)) {
+                    result['kafka-rest-auth-pam'] = ecoSystemKafkaRest.verifyAuthPam(packages, certificate, credentialFileREST, useSSLCert, port)
 
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
-                final int port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
-                final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
+                }  else if(test['name'] == "kafka-rest-api-pam" && (test['enabled'] as boolean)) {
 
-                result['kafka-rest-api-pam'] = ecoSystemKafkaRest.verifyAPIPam(packages, certificate, ticketfile, credentialFileREST, useSSLCert, port, purgeaftercheck)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                    final int port = test.getOrDefault("kafka_rest_port", DEFAULT_KAFKA_REST_PORT)
+                    final Boolean purgeaftercheck = test.getOrDefault("purge_after_check", DEFAULT_PURGE_AFTER_CHECK)
 
-            } else if(test['name'] == "data-access-gateway-rest-auth-insecure" && (test['enabled'] as boolean)) {
+                    result['kafka-rest-api-pam'] = ecoSystemKafkaRest.verifyAPIPam(packages, certificate, ticketfile, credentialFileREST, useSSLCert, port, purgeaftercheck)
 
-                final int port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
+                } else if(test['name'] == "data-access-gateway-rest-auth-insecure" && (test['enabled'] as boolean)) {
 
-                result['data-access-gateway-rest-auth-insecure'] = ecoSystemDataAccessGateway.verifyRESTAuthInsecure(packages, port)
+                    final int port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
 
-            } else if(test['name'] == "data-access-gateway-rest-auth-pam" && (test['enabled'] as boolean)) {
+                    result['data-access-gateway-rest-auth-insecure'] = ecoSystemDataAccessGateway.verifyRESTAuthInsecure(packages, port)
 
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
-                final int port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
+                } else if(test['name'] == "data-access-gateway-rest-auth-pam" && (test['enabled'] as boolean)) {
 
-                result['data-access-gateway-rest-auth-pam'] = ecoSystemDataAccessGateway.verifyRESTAuthPam(packages, certificate, credentialFileREST, useSSLCert, port)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                    final int port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_DATA_ACCESS_GATEWAY_REST_PORT)
 
-            } else if(test['name'] == "httpfs-auth-pam" && (test['enabled'] as boolean)) {
+                    result['data-access-gateway-rest-auth-pam'] = ecoSystemDataAccessGateway.verifyRESTAuthPam(packages, certificate, credentialFileREST, useSSLCert, port)
 
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
-                final int port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
+                } else if(test['name'] == "httpfs-auth-pam" && (test['enabled'] as boolean)) {
 
-                result['httpfs-auth-pam'] = ecoSystemHttpfs.verifyAuthPam(packages, certificate, credentialFileREST, useSSLCert, port)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                    final int port = test.getOrDefault("data_access_gateway_rest_port", DEFAULT_HTTPFS_PORT)
 
-            } else if(test['name'] == "httpfs-auth-insecure" && (test['enabled'] as boolean)) {
+                    result['httpfs-auth-pam'] = ecoSystemHttpfs.verifyAuthPam(packages, certificate, credentialFileREST, useSSLCert, port)
 
-                final int port = test.getOrDefault("httpfs_port", DEFAULT_HTTPFS_PORT)
+                } else if(test['name'] == "httpfs-auth-insecure" && (test['enabled'] as boolean)) {
 
-                result['httpfs-auth-insecure'] = ecoSystemHttpfs.verifyAuthInsecure(packages, port)
+                    final int port = test.getOrDefault("httpfs_port", DEFAULT_HTTPFS_PORT)
 
-            } else if(test['name'] == "opentsdb-api" && (test['enabled'] as boolean)) {
+                    result['httpfs-auth-insecure'] = ecoSystemHttpfs.verifyAuthInsecure(packages, port)
 
-                final int port = test.getOrDefault("opentsdb_api_port", DEFAULT_OPENTSDB_API_PORT)
+                } else if(test['name'] == "opentsdb-api" && (test['enabled'] as boolean)) {
 
-                result['opentsdb-api'] = ecoSystemSpyglass.verifyOpentsdbAPI(packages, port)
+                    final int port = test.getOrDefault("opentsdb_api_port", DEFAULT_OPENTSDB_API_PORT)
 
-            } else if(test['name'] == "grafana-ui-pam" && (test['enabled'] as boolean)) {
+                    result['opentsdb-api'] = ecoSystemSpyglass.verifyOpentsdbAPI(packages, port)
 
-                final int port = test.getOrDefault("grafana_ui_port", DEFAULT_GRAFANA_UI_PORT)
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                } else if(test['name'] == "grafana-ui-pam" && (test['enabled'] as boolean)) {
 
-                result['grafana-ui-pam'] = ecoSystemSpyglass.verifyGrafanaUIPam(packages, credentialFileREST, certificate, port, useSSLCert)
+                    final int port = test.getOrDefault("grafana_ui_port", DEFAULT_GRAFANA_UI_PORT)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
 
-            } else if(test['name'] == "elasticsearch-healthcheck-pam" && (test['enabled'] as boolean)) {
+                    result['grafana-ui-pam'] = ecoSystemSpyglass.verifyGrafanaUIPam(packages, credentialFileREST, certificate, port, useSSLCert)
 
-                final int elastic_port = test.getOrDefault("elastic_port", DEFAULT_ELASTIC_PORT)
-                def username_elastic = test.getOrDefault("username_elastic", DEFAULT_ELASTIC_USERNAME)
-                def password_elastic = test.getOrDefault("password_elastic", DEFAULT_ELASTIC_PASSWORD)
-                def certificate_elastic = test.getOrDefault("certificate_elastic", DEFAULT_PATH_SSL_CERTIFICATE_FILE_ELASTIC)
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                } else if(test['name'] == "elasticsearch-healthcheck-pam" && (test['enabled'] as boolean)) {
 
-                result['elasticsearch-healthcheck-pam'] = ecoSystemSpyglass.verifyElasticPam(packages, username_elastic, password_elastic, certificate_elastic, elastic_port, useSSLCert, DEFAULT_CREDENTIAL_FILE_SPYGLASS)
+                    final int elastic_port = test.getOrDefault("elastic_port", DEFAULT_ELASTIC_PORT)
+                    def username_elastic = test.getOrDefault("username_elastic", DEFAULT_ELASTIC_USERNAME)
+                    def password_elastic = test.getOrDefault("password_elastic", DEFAULT_ELASTIC_PASSWORD)
+                    def certificate_elastic = test.getOrDefault("certificate_elastic", DEFAULT_PATH_SSL_CERTIFICATE_FILE_ELASTIC)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
 
-            } else if(test['name'] == "kibana-ui-pam" && (test['enabled'] as boolean)) {
+                    result['elasticsearch-healthcheck-pam'] = ecoSystemSpyglass.verifyElasticPam(packages, username_elastic, password_elastic, certificate_elastic, elastic_port, useSSLCert, DEFAULT_CREDENTIAL_FILE_SPYGLASS)
 
-                def kibana_port = test.getOrDefault("kibana_port", DEFAULT_KIBANA_PORT)
-                def username_kibana = test.getOrDefault("username_kibana", DEFAULT_KIBANA_USERNAME)
-                def password_kibana = test.getOrDefault("password_kibana", DEFAULT_KIBANA_PASSWORD)
-                def certificate_kibana = test.getOrDefault("certificate_kibana", DEFAULT_PATH_SSL_CERTIFICATE_FILE_KIBANA)
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                } else if(test['name'] == "kibana-ui-pam" && (test['enabled'] as boolean)) {
 
-                result['kibana-ui-pam'] = ecoSystemSpyglass.verifyKibanaUIPam(packages, username_kibana, password_kibana, certificate_kibana, kibana_port, useSSLCert, DEFAULT_CREDENTIAL_FILE_SPYGLASS)
+                    def kibana_port = test.getOrDefault("kibana_port", DEFAULT_KIBANA_PORT)
+                    def username_kibana = test.getOrDefault("username_kibana", DEFAULT_KIBANA_USERNAME)
+                    def password_kibana = test.getOrDefault("password_kibana", DEFAULT_KIBANA_PASSWORD)
+                    def certificate_kibana = test.getOrDefault("certificate_kibana", DEFAULT_PATH_SSL_CERTIFICATE_FILE_KIBANA)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
 
-            }  else if(test['name'] == "hue-ui" && (test['enabled'] as boolean)) {
+                    result['kibana-ui-pam'] = ecoSystemSpyglass.verifyKibanaUIPam(packages, username_kibana, password_kibana, certificate_kibana, kibana_port, useSSLCert, DEFAULT_CREDENTIAL_FILE_SPYGLASS)
 
-                def port = healthcheckconfig.getOrDefault("hue_ui_port", DEFAULT_HUE_UI_PORT)
-                final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
+                }  else if(test['name'] == "hue-ui" && (test['enabled'] as boolean)) {
 
-                result['hue-ui'] = ecoSystemHueUI.verifyHueUI(packages, certificate, port, useSSLCert)
+                    def port = healthcheckconfig.getOrDefault("hue_ui_port", DEFAULT_HUE_UI_PORT)
+                    final Boolean useSSLCert = test.getOrDefault("use_ssl_cert", DEFAULT_USE_SSL_CERT)
 
-            } else {
-                log.info(">>>>> ... Test '${test['name']}' not found!")
+                    result['hue-ui'] = ecoSystemHueUI.verifyHueUI(packages, certificate, port, useSSLCert)
+
+                } else {
+                    log.info(">>>>> ... Test '${test['name']}' not found!")
+                }
             }
+
+            recommendations.addAll(calculateRecommendations(result))
+            textReport = buildTextReport(result)
+
+        } catch (Exception e) {
+            log.error("Exception catched during the check : ", e)
+        } finally {
+            // Delete the credential file
+            mapRComponentHealthcheckUtil.deleteLocalFile(role, credentialFileREST)
+            log.debug(">>>>> ... Global REST credential file was Purged successfully.")
         }
-
-        // Delete the credential file
-        mapRComponentHealthcheckUtil.deleteLocalFile(role, credentialFileREST)
-
-        List recommendations = calculateRecommendations(result)
-        def textReport = buildTextReport(result)
 
         log.info(">>>>> ... ecosystem-healthcheck finished")
         log.trace("End : MapRComponentHealthcheckModule : ClusterCheckResult")

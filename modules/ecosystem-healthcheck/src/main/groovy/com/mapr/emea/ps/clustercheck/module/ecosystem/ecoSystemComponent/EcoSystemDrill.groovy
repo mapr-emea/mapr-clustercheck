@@ -45,25 +45,32 @@ class EcoSystemDrill {
             def nodeResult = [:]
 
             final String credentialFilePath = "${tmpPath}/${credentialFileName}"
-            executeSudo "rm -f ${credentialFilePath}"
-            executeSudo "echo ${password} >> ${credentialFilePath}"
-            executeSudo "chmod 400 ${credentialFilePath}"
 
-            final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
-            final String sqlPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_QUERY, delegate)
-            final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_DRILL, ticketfile, jsonPath, delegate)
+            try {
+                executeSudo "rm -f ${credentialFilePath}"
+                executeSudo "echo ${password} >> ${credentialFilePath}"
+                executeSudo "chmod 400 ${credentialFilePath}"
 
-            final String queryExecution = "/opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p `cat ${credentialFilePath}` --run=${sqlPath} --force=false --outputformat=csv"
+                final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
+                final String sqlPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_QUERY, delegate)
+                final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_DRILL, ticketfile, jsonPath, delegate)
 
-            nodeResult['output'] =  executeSudo queryExecution
-            nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
+                final String queryExecution = "/opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p `cat ${credentialFilePath}` --run=${sqlPath} --force=false --outputformat=csv"
 
-            nodeResult['1. Path  : after uploading json file to remote host  '] = jsonPath
-            nodeResult['2. Path  : after uploading query file to remote host '] = sqlPath
-            nodeResult['3. Path  : after sending json file to MapRFS         '] = jsonPathMaprfs
-            nodeResult['4. Query : execute query                             '] = "sudo " + queryExecution
+                nodeResult['output'] =  executeSudo queryExecution
+                nodeResult['success'] = nodeResult['output'].contains("Data Engineer")
 
-            executeSudo "rm -f ${credentialFilePath}"
+                nodeResult['1. Path  : after uploading json file to remote host  '] = jsonPath
+                nodeResult['2. Path  : after uploading query file to remote host '] = sqlPath
+                nodeResult['3. Path  : after sending json file to MapRFS         '] = jsonPathMaprfs
+                nodeResult['4. Query : execute query                             '] = "sudo " + queryExecution
+
+            } catch (Exception e) {
+                throw e
+            } finally {
+                executeSudo "rm -f ${credentialFilePath}"
+                log.debug("Local password credential file was Purged successfully.")
+            }
 
             nodeResult
         })
@@ -126,36 +133,44 @@ class EcoSystemDrill {
             def nodeResult = [:]
 
             final String credentialFilePath = "${tmpPath}/${credentialFileName}"
-            executeSudo "rm -f ${credentialFilePath}"
-            executeSudo "echo ${password} >> ${credentialFilePath}"
-            executeSudo "chmod 400 ${credentialFilePath}"
 
-            final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
-            final String sqlPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_MAPR_DB_QUERY, delegate)
-            final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_DRILL, ticketfile, jsonPath, delegate)
+            try {
 
-            final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${jsonPathMaprfs}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
-            final String queryExecution = "/opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p `cat ${credentialFilePath}` --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
+                executeSudo "rm -f ${credentialFilePath}"
+                executeSudo "echo ${password} >> ${credentialFilePath}"
+                executeSudo "chmod 400 ${credentialFilePath}"
 
-            executeSudo queryImportJson
+                final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
+                final String sqlPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_MAPR_DB_QUERY, delegate)
+                final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_DRILL, ticketfile, jsonPath, delegate)
 
-            nodeResult['output'] =  executeSudo queryExecution
-            nodeResult['success'] = nodeResult['output'].contains("4 rows selected") && nodeResult['output'].toString().reverse().take(1).equals("0")
+                final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${jsonPathMaprfs}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
+                final String queryExecution = "/opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p `cat ${credentialFilePath}` --run=${sqlPath} --force=false --outputformat=csv; echo \$?"
 
-            nodeResult['1. Path  : after uploading json file to remote host   '] = jsonPath
-            nodeResult['2. Path  : after uploading query file to remote host  '] = sqlPath
-            nodeResult['3. Path  : after sending json file to MapRFS          '] = jsonPathMaprfs
-            nodeResult['4. Query : import json file to MapRDB                 '] = "sudo " + queryImportJson
-            nodeResult['5. Query : execute query                              '] = "sudo " + queryExecution
+                executeSudo queryImportJson
 
-            if(purgeaftercheck){
-                final String queryPurge = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r -f ${jsonPathMaprfs}; echo \$?"
-                nodeResult['6-query-purge']                       = "sudo " + queryPurge
-                nodeResult['purge_output'] = executeSudo queryPurge
-                nodeResult['purge_success'] = nodeResult['purge_output'].toString().reverse().take(1).equals("0")
+                nodeResult['output'] =  executeSudo queryExecution
+                nodeResult['success'] = nodeResult['output'].contains("4 rows selected") && nodeResult['output'].toString().reverse().take(1).equals("0")
+
+                nodeResult['1. Path  : after uploading json file to remote host   '] = jsonPath
+                nodeResult['2. Path  : after uploading query file to remote host  '] = sqlPath
+                nodeResult['3. Path  : after sending json file to MapRFS          '] = jsonPathMaprfs
+                nodeResult['4. Query : import json file to MapRDB                 '] = "sudo " + queryImportJson
+                nodeResult['5. Query : execute query                              '] = "sudo " + queryExecution
+
+                if(purgeaftercheck){
+                    final String queryPurge = "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r -f ${jsonPathMaprfs}; echo \$?"
+                    nodeResult['6-query-purge']                       = "sudo " + queryPurge
+                    nodeResult['purge_output'] = executeSudo queryPurge
+                    nodeResult['purge_success'] = nodeResult['purge_output'].toString().reverse().take(1).equals("0")
+                }
+
+            } catch (Exception e) {
+                throw e
+            } finally {
+                executeSudo "rm -f ${credentialFilePath}"
+                log.debug("Local password credential file was Purged successfully.")
             }
-
-            executeSudo "rm -f ${credentialFilePath}"
 
             nodeResult
         })

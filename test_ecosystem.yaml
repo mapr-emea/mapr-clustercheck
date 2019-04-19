@@ -130,8 +130,8 @@ modules:
         password_elastic: admin
         certificate_elastic: /opt/mapr/elasticsearch/elasticsearch-6.5.3/etc/elasticsearch/sg/admin-usr-clientCert.pem
         elastic_port: 9200
-        use_ssl_cert: true
-        enabled: false
+        use_ssl_cert: false
+        enabled: true
       - name: kibana-ui-pam
         username_kibana: admin
         password_kibana: admin

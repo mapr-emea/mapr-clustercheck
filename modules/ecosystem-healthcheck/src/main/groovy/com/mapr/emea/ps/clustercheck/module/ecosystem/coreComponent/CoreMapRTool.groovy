@@ -35,21 +35,28 @@ class CoreMapRTool {
             def nodeResult = [:]
 
             final String credentialFilePath = "${tmpPath}/${credentialFileName}"
-            executeSudo "rm -f ${credentialFilePath}"
-            executeSudo "echo ${password} >> ${credentialFilePath}"
-            executeSudo "chmod 400 ${credentialFilePath}"
-            executeSudo "chown ${username} ${credentialFilePath}"
 
+            try {
 
-            def uid = executeSudo("su - ${username} -c 'id -u ${username}'")
+                executeSudo "rm -f ${credentialFilePath}"
+                executeSudo "echo ${password} >> ${credentialFilePath}"
+                executeSudo "chmod 400 ${credentialFilePath}"
+                executeSudo "chown ${username} ${credentialFilePath}"
 
-            def ticketFile = "/tmp/maprticket_${uid}"
+                def uid = executeSudo("su - ${username} -c 'id -u ${username}'")
 
-            nodeResult['output'] = executeSudo("su - ${username} -c 'echo \$(cat ${credentialFilePath}) | maprlogin password'")
+                def ticketFile = "/tmp/maprticket_${uid}"
 
-            nodeResult['success'] = nodeResult['output'].contains(ticketFile)
+                nodeResult['output'] = executeSudo("su - ${username} -c 'echo \$(cat ${credentialFilePath}) | maprlogin password'")
 
-            executeSudo "rm -f ${credentialFilePath}"
+                nodeResult['success'] = nodeResult['output'].contains(ticketFile)
+
+            } catch (Exception e) {
+                throw e
+            } finally {
+                executeSudo "rm -f ${credentialFilePath}"
+                log.debug("Local password credential file was Purged successfully.")
+            }
 
             nodeResult
         })

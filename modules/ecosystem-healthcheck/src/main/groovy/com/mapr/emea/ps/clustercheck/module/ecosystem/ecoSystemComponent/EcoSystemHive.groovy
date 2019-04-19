@@ -133,21 +133,29 @@ class EcoSystemHive {
             def nodeResult = [:]
 
             final String credentialFilePath = "${tmpPath}/${credentialFileName}"
-            executeSudo "rm -f ${credentialFilePath}"
-            executeSudo "echo ${password} >> ${credentialFilePath}"
-            executeSudo "chmod 400 ${credentialFilePath}"
 
-            hiveServerHosts.each {
+            try {
 
-                final String query = "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+                executeSudo "rm -f ${credentialFilePath}"
+                executeSudo "echo ${password} >> ${credentialFilePath}"
+                executeSudo "chmod 400 ${credentialFilePath}"
 
-                nodeResult['HiveServer-' + it]            = [:]
-                nodeResult['HiveServer-' + it]['output']  = executeSudo query
-                nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
-                nodeResult['HiveServer-' + it]['query']   = query
+                hiveServerHosts.each {
+
+                    final String query = "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+
+                    nodeResult['HiveServer-' + it]            = [:]
+                    nodeResult['HiveServer-' + it]['output']  = executeSudo query
+                    nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+                    nodeResult['HiveServer-' + it]['query']   = query
+                }
+
+            } catch (Exception e) {
+                throw e
+            } finally {
+                executeSudo "rm -f ${credentialFilePath}"
+                log.debug("Local password credential file was Purged successfully.")
             }
-
-            executeSudo "rm -f ${credentialFilePath}"
 
             nodeResult
         })
@@ -176,21 +184,29 @@ class EcoSystemHive {
             def nodeResult = [:]
 
             final String credentialFilePath = "${tmpPath}/${credentialFileName}"
-            executeSudo "rm -f ${credentialFilePath}"
-            executeSudo "echo ${password} >> ${credentialFilePath}"
-            executeSudo "chmod 400 ${credentialFilePath}"
 
-            hiveServerHosts.each {
+            try {
 
-                final String query = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;auth=maprsasl;user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+                executeSudo "rm -f ${credentialFilePath}"
+                executeSudo "echo ${password} >> ${credentialFilePath}"
+                executeSudo "chmod 400 ${credentialFilePath}"
 
-                nodeResult['HiveServer-' + it]            = [:]
-                nodeResult['HiveServer-' + it]['output']  = executeSudo query
-                nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
-                nodeResult['HiveServer-' + it]['query']   = query
+                hiveServerHosts.each {
+
+                    final String query = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;auth=maprsasl;user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+
+                    nodeResult['HiveServer-' + it]            = [:]
+                    nodeResult['HiveServer-' + it]['output']  = executeSudo query
+                    nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+                    nodeResult['HiveServer-' + it]['query']   = query
+                }
+
+            } catch (Exception e) {
+                throw e
+            } finally {
+                executeSudo "rm -f ${credentialFilePath}"
+                log.debug("Local password credential file was Purged successfully.")
             }
-
-            executeSudo "rm -f ${credentialFilePath}"
 
             nodeResult
         })
@@ -219,21 +235,30 @@ class EcoSystemHive {
             def nodeResult = [:]
 
             final String credentialFilePath = "${tmpPath}/${credentialFileName}"
-            executeSudo "rm -f ${credentialFilePath}"
-            executeSudo "echo ${password} >> ${credentialFilePath}"
-            executeSudo "chmod 400 ${credentialFilePath}"
 
-            hiveServerHosts.each {
+            try {
 
-                final String query = "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;ssl=true;sslTrustStore=${truststore};user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+                executeSudo "rm -f ${credentialFilePath}"
+                executeSudo "echo ${password} >> ${credentialFilePath}"
+                executeSudo "chmod 400 ${credentialFilePath}"
 
-                nodeResult['HiveServer-' + it]            = [:]
-                nodeResult['HiveServer-' + it]['output']  = execute query
-                nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
-                nodeResult['HiveServer-' + it]['query']   = query
+                hiveServerHosts.each {
+
+                    final String query = "/opt/mapr/hive/hive-*/bin/beeline -u \"jdbc:hive2://${it}:${port}/default;ssl=true;sslTrustStore=${truststore};user=${username};password=`cat ${credentialFilePath}`\" -e \"show databases;\"; echo \$?"
+
+                    nodeResult['HiveServer-' + it]            = [:]
+                    nodeResult['HiveServer-' + it]['output']  = execute query
+                    nodeResult['HiveServer-' + it]['success'] = nodeResult['HiveServer-' + it]['output'].contains("Connected to: Apache Hive") && nodeResult['HiveServer-' + it]['output'].toString().reverse().take(1).equals("0")
+                    nodeResult['HiveServer-' + it]['query']   = query
+
+                }
+
+            } catch (Exception e) {
+                throw e
+            } finally {
+                executeSudo "rm -f ${credentialFilePath}"
+                log.debug("Local password credential file was Purged successfully.")
             }
-
-            executeSudo "rm -f ${credentialFilePath}"
 
             nodeResult
         })
