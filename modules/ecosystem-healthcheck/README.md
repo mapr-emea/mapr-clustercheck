@@ -6,7 +6,7 @@ TODO
 
 * Global parameters
     - username & password
-        + Used in most PAM/Plain authentication, credential file will be used and will be purged after each test, so that password will not be exposed in bash history
+        + Used in most PAM/Plain authentication, credential files will be created locally, sent to remote hosts, and will be purged (locally/remotely) after each test, so that password will not be exposed
     - MapR user ticketfile
         + The default value is /opt/mapr/conf/mapruserticket
     - SSL certificate file
@@ -21,7 +21,10 @@ TODO
 
 ## Purge
 
-* Local tmp files
+* Local tmp files (from tool execution host)
+    - Remote temporary files will be kept after checks, the defualt location is /tmp/.clustercheck on tool execution host.
+
+* Local tmp files (from target hosts)
     - Local temporary files will be kept after checks, the defualt location is /tmp/.clustercheck on each host.
 
 * MapR-FS tmp files
@@ -29,4 +32,4 @@ TODO
 
 ## Output
 
-* Output doesn't only provide the check results but also provide the check query performed or check steps for some complex check.
+* Output doesn't only provide the check results but also provide the check queries/steps for users.

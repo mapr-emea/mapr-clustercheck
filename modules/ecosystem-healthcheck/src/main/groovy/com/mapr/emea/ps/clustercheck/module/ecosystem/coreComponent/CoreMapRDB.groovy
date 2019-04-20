@@ -41,7 +41,7 @@ class CoreMapRDB {
 
             def nodeResult = [:]
 
-            final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_MAPRDB, FILE_MAPR_DB_JSON, delegate)
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_MAPRDB, FILE_MAPR_DB_JSON, delegate)
             final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_MAPRDB, ticketfile, jsonPath, delegate)
             final String pathTableMapRFS = "${jsonPathMaprfs}/${TB_MAPR_DB_JSON}"
 

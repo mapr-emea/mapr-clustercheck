@@ -2,6 +2,9 @@ package com.mapr.emea.ps.clustercheck.module.ecosystem.util
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.Files
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.io.ResourceLoader
@@ -17,6 +20,10 @@ class MapRComponentHealthcheckUtil {
     @Autowired
     @Qualifier("localTmpDir")
     String tmpPath
+
+    @Autowired
+    @Qualifier("localExecutionTmpDir")
+    String tmpExecutionPath
 
     @Autowired
     @Qualifier("maprFSTmpDir")
@@ -70,36 +77,28 @@ class MapRComponentHealthcheckUtil {
     }
 
     /**
-     * Create the credential file for REST API call
+     * Create the credential files for REST API call and Pam auth
      * @param role
      * @param credentialFileName
      * @param username
      * @param password
      * @return pathCredentialFile
      */
-    def createCredentialFileREST(role, String credentialFileName, String username, String password) {
-        log.trace("Start : MapRComponentHealthcheckUtil : createCredentialFileREST")
+    def createLocalCredentialFiles(String credentialFileName, String username, String password) {
+        log.trace("Start : MapRComponentHealthcheckUtil : createLocalCredentialFiles")
 
-        def packages = Collections.synchronizedList([])
-        ssh.runInOrder {
-            settings {
-                pty = true
-                ignoreError = true
-            }
-            session(ssh.remotes.role(role)) {
-                final String hostname = execute("hostname -f")
-                final String content = "machine ${hostname} login ${username} password ${password}"
-                executeSudo "rm -f ${tmpPath}/${credentialFileName}"
-                executeSudo "echo ${content} >> ${tmpPath}/${credentialFileName}"
-                executeSudo "chmod 400 ${tmpPath}/${credentialFileName}"
-            }
-        }
+        //TODO well manage create/close/exception etc
+        //TODO Create file for rest , for other pam also
 
-        final String pathCredentialFile = "${tmpPath}/${credentialFileName}"
+        final String pathCredentialFile = "${tmpExecutionPath}/${credentialFileName}"
 
-        log.trace("End : MapRComponentHealthcheckUtil : createCredentialFileREST")
+        final String content = "machine ${hostname} login ${username} password ${password}"
+
+        log.trace("End : MapRComponentHealthcheckUtil : createLocalCredentialFiles")
         return pathCredentialFile
     }
+
+
 
     /**
      * Create the credential file for Spyglass
@@ -123,13 +122,13 @@ class MapRComponentHealthcheckUtil {
     }
 
     /**
-     * Delete a local file with path
+     * Delete a remote file / path
      * @param role
      * @param filePath
      * @return
      */
-    def deleteLocalFile(role, String filePath) {
-        log.trace("Start : MapRComponentHealthcheckUtil : deleteLocalFile")
+    def deleteRemoteFilePath(role, String filePath) {
+        log.trace("Start : MapRComponentHealthcheckUtil : deleteRemoteFilePath")
 
         def packages = Collections.synchronizedList([])
         ssh.runInOrder {
@@ -138,11 +137,31 @@ class MapRComponentHealthcheckUtil {
                 ignoreError = true
             }
             session(ssh.remotes.role(role)) {
-                executeSudo "rm -f ${filePath}"
+                executeSudo "rm -rf ${tmpPath}/${filePath}"
             }
         }
 
-        log.trace("End : MapRComponentHealthcheckUtil : deleteLocalFile")
+        log.trace("End : MapRComponentHealthcheckUtil : deleteRemoteFilePath")
+    }
+
+    /**
+     * Delete local file / path
+     * @param filePath
+     * @return
+     */
+    def deleteLocalFilePath(String filePath) {
+        log.trace("Start : MapRComponentHealthcheckUtil : deleteLocalFilePath")
+
+        File file = new File("${tmpPath}/${filePath}")
+
+        if(file.delete()) {
+            log.debug("Local File/Path deleted successfully")
+
+        } else {
+            log.debug("Local File/Path deleted unsuccessfully")
+        }
+
+        log.trace("End : MapRComponentHealthcheckUtil : deleteLocalFilePath")
     }
 
     /**
@@ -198,15 +217,15 @@ class MapRComponentHealthcheckUtil {
     }
 
     /**
-     * Upload local file to remote host
+     * Upload Java Resource file to remote host
      * @param fileName
      * @param delegate
      * @return
      */
-    def uploadFileToRemoteHost(String subDir, String fileName, delegate) {
-        log.trace("Start : MapRComponentHealthcheckUtil : uploadFileToRemoteHost")
+    def uploadResourceFileToRemoteHost(String subDir, String fileName, delegate) {
+        log.trace("Start : MapRComponentHealthcheckUtil : uploadResourceFileToRemoteHost")
 
-        def fileInputStream = resourceLoader.getResource("classpath:${PATH_CLASSPATH}/${fileName}").getInputStream()
+        final def fileInputStream = resourceLoader.getResource("classpath:${PATH_CLASSPATH}/${fileName}").getInputStream()
 
         String path = ""
 
@@ -219,7 +238,29 @@ class MapRComponentHealthcheckUtil {
             path = "${tmpPath}/${fileName}"
         }
 
-        log.trace("End : MapRComponentHealthcheckUtil : uploadFileToRemoteHost")
+        log.trace("End : MapRComponentHealthcheckUtil : uploadResourceFileToRemoteHost")
+
+        return path
+    }
+
+
+    def uploadLocalFileToRemoteHost(String subDir, String fileName, delegate) {
+        log.trace("Start : MapRComponentHealthcheckUtil : uploadLocalFileToRemoteHost")
+
+        final def fileInputStream = resourceLoader.getResource("${tmpPath}/${fileName}").getInputStream()
+
+        String path = ""
+
+        if(subDir){
+            delegate.execute "mkdir -p ${tmpPath}/${subDir}"
+            delegate.put from: fileInputStream, into: "${tmpPath}/${subDir}/${fileName}"
+            path = "${tmpPath}/${subDir}/${fileName}"
+        } else {
+            delegate.put from: fileInputStream, into: "${tmpPath}/${fileName}"
+            path = "${tmpPath}/${fileName}"
+        }
+
+        log.trace("End : MapRComponentHealthcheckUtil : uploadLocalFileToRemoteHost")
 
         return path
     }
@@ -250,30 +291,6 @@ class MapRComponentHealthcheckUtil {
         log.trace("End : MapRComponentHealthcheckUtil : uploadRemoteFileToMaprfs")
 
         return maprfspath
-    }
-
-    /**
-     * Remove MapR-FS file/directory if exists
-     * @param ticketfile
-     * @param fileName
-     * @param delegate
-     * @return
-     */
-    def removeMaprfsFileIfExist(String ticketfile, String fileName, delegate){
-        log.trace("Start : MapRComponentHealthcheckUtil : removeMaprfsFileIfExist")
-
-        log.info("Testing existence of MapR-FS directory: ${fileName} ... Error with status 1 when it doesn't exist.")
-
-        def result = delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -ls ${fileName}"
-
-        if(result.contains("No such file or directory")){
-            log.debug("MapR-FS file/directory : ${fileName} doesn't exist.")
-        } else {
-            log.debug("${fileName} exists, will be removed.")
-            delegate.executeSudo "MAPR_TICKETFILE_LOCATION=${ticketfile} hadoop fs -rm -r ${fileName}"
-        }
-
-        log.trace("End : MapRComponentHealthcheckUtil : removeMaprfsFileIfExist")
     }
 
 }

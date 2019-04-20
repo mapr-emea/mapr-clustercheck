@@ -38,8 +38,11 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     static final String DEFAULT_MAPR_USERNAME = "mapr"
     static final String DEFAULT_MAPR_PASSWORD = "mapr"
     static final String DEFAULT_PATH_TICKET_FILE = "/opt/mapr/conf/mapruserticket"
+
+    static final String DEFAULT_CREDENTIAL_PATH = "my-credential"
     static final String DEFAULT_CREDENTIAL_FILE_REST = "my-credential-file-rest"
     static final String DEFAULT_CREDENTIAL_FILE_PASSWORD = "my-credential-file-password"
+
     static final Boolean DEFAULT_USE_SSL_CERT = true
     static final String DEFAULT_MAPR_SSL_TRUSTSTORE_FILE = "/opt/mapr/conf/ssl_truststore"
     static final String DEFAULT_PATH_SSL_CERTIFICATE_FILE = "/opt/mapr/conf/ssl_truststore.pem"
@@ -130,12 +133,9 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
     @Autowired
     EcoSystemSpyglass ecoSystemSpyglass
 
-    // TODO : Show all query strings in results
     // TODO : How to simplify the template?
-    // TODO : Try catch everywhere
-    // TODO :         => Clean up global credential file for rest ... ok
-    // TODO :         => Clean up individual for password ... ok
     // TODO :         => Clean up password in case of interruption ... todo
+    // TODO :         => Create/Clean up credential path/files locally/globally : no need to pass password / no need local create / try catch ... todo
     // TODO : Test : refresh env, test one by one
     // TODO : Test : refresh env, test all together
 
@@ -252,7 +252,7 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
         final String password = healthcheckconfig.getOrDefault("password", getDEFAULT_MAPR_PASSWORD())
         final String ticketfile = healthcheckconfig.getOrDefault("ticketfile", getDEFAULT_PATH_TICKET_FILE())
         final String certificate = healthcheckconfig.getOrDefault("certificate", getDEFAULT_PATH_SSL_CERTIFICATE_FILE())
-        final String credentialFileREST = mapRComponentHealthcheckUtil.createCredentialFileREST(role, DEFAULT_CREDENTIAL_FILE_REST, username, password)
+        final String credentialFileREST = mapRComponentHealthcheckUtil.createLocalCredentialFiles(DEFAULT_CREDENTIAL_FILE_REST, username, password)
 
         try {
 
@@ -546,7 +546,8 @@ class MapRComponentHealthcheckModule implements ExecuteModule {
             log.error("Exception catched during the check : ", e)
         } finally {
             // Delete the credential file
-            mapRComponentHealthcheckUtil.deleteLocalFile(role, credentialFileREST)
+            mapRComponentHealthcheckUtil.deleteRemoteFilePath(role, DEFAULT_CREDENTIAL_PATH)
+            mapRComponentHealthcheckUtil.deleteLocalFilePath(DEFAULT_CREDENTIAL_PATH)
             log.debug(">>>>> ... Global REST credential file was Purged successfully.")
         }
 

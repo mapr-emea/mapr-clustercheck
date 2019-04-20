@@ -1,7 +1,6 @@
 package com.mapr.emea.ps.clustercheck.module.ecosystem.ecoSystemComponent
 
 import com.mapr.emea.ps.clustercheck.module.ecosystem.util.MapRComponentHealthcheckUtil
-import com.sun.org.apache.xpath.internal.operations.Bool
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,8 +50,8 @@ class EcoSystemDrill {
                 executeSudo "echo ${password} >> ${credentialFilePath}"
                 executeSudo "chmod 400 ${credentialFilePath}"
 
-                final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
-                final String sqlPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_QUERY, delegate)
+                final String jsonPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
+                final String sqlPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_DRILL, FILE_DRILL_QUERY, delegate)
                 final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_DRILL, ticketfile, jsonPath, delegate)
 
                 final String queryExecution = "/opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=PLAIN\" -n ${username} -p `cat ${credentialFilePath}` --run=${sqlPath} --force=false --outputformat=csv"
@@ -95,8 +94,8 @@ class EcoSystemDrill {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
-            final String sqlPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_QUERY, delegate)
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
+            final String sqlPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_DRILL, FILE_DRILL_QUERY, delegate)
             final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_DRILL, ticketfile, jsonPath, delegate)
 
             final String queryExecution = "MAPR_TICKETFILE_LOCATION=${ticketfile} /opt/mapr/drill/drill-*/bin/sqlline -u \"jdbc:drill:drillbit=${remote.host}:${port};auth=maprsasl\" --run=${sqlPath} --force=false --outputformat=csv"
@@ -140,8 +139,8 @@ class EcoSystemDrill {
                 executeSudo "echo ${password} >> ${credentialFilePath}"
                 executeSudo "chmod 400 ${credentialFilePath}"
 
-                final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
-                final String sqlPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_MAPR_DB_QUERY, delegate)
+                final String jsonPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
+                final String sqlPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_DRILL, FILE_DRILL_MAPR_DB_QUERY, delegate)
                 final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_DRILL, ticketfile, jsonPath, delegate)
 
                 final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${jsonPathMaprfs}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"
@@ -193,8 +192,8 @@ class EcoSystemDrill {
         def testResult = mapRComponentHealthcheckUtil.executeSsh(packages, PACKAGE_NAME, {
             def nodeResult = [:]
 
-            final String jsonPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
-            final String sqlPath = mapRComponentHealthcheckUtil.uploadFileToRemoteHost(DIR_DRILL, FILE_DRILL_MAPR_DB_QUERY, delegate)
+            final String jsonPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_DRILL, FILE_DRILL_JSON, delegate)
+            final String sqlPath = mapRComponentHealthcheckUtil.uploadResourceFileToRemoteHost(DIR_DRILL, FILE_DRILL_MAPR_DB_QUERY, delegate)
             final String jsonPathMaprfs = mapRComponentHealthcheckUtil.uploadRemoteFileToMaprfs(DIR_DRILL, ticketfile, jsonPath, delegate)
 
             final String queryImportJson = "MAPR_TICKETFILE_LOCATION=${ticketfile} mapr importJSON -idField name -src ${jsonPathMaprfs} -dst ${jsonPathMaprfs}/${TB_DRILL_MAPR_DB_JSON} -mapreduce false"

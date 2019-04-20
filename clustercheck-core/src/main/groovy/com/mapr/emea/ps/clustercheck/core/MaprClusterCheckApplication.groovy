@@ -2,6 +2,9 @@ package com.mapr.emea.ps.clustercheck.core
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.CommandLineRunner
@@ -89,7 +92,9 @@ class MaprClusterCheckApplication implements CommandLineRunner {
     @DependsOn("ssh")
     String tmpPath() {
         def tmpPath = globalYamlConfig().getOrDefault("local_tmp_dir", "/tmp/.clustercheck")
+
         log.info("Local tmp dir on nodes for execution: ${tmpPath}")
+
         if (CMD_RUN.equals(command)) {
             ssh.run {
                 session(ssh.remotes.role('all')) {
@@ -98,6 +103,30 @@ class MaprClusterCheckApplication implements CommandLineRunner {
                 }
             }
         }
+        return tmpPath
+    }
+
+    @Bean("localExecutionTmpDir")
+    @DependsOn("ssh")
+    String tmpExecutionPath() {
+        def tmpPath = globalYamlConfig().getOrDefault("local_tmp_dir", "/tmp/.clustercheck")
+
+        log.info("Local tmp dir on nodes for execution: ${tmpPath}")
+
+        if (CMD_RUN.equals(command)) {
+
+            Path path = Paths.get(tmpPath)
+
+            if (!Files.exists(path))
+            {
+                Files.createDirectories(path)
+                log.info("${tmpPath} created successfully")
+            } else {
+                log.error("Directory already exists")
+            }
+
+        }
+
         return tmpPath
     }
 
